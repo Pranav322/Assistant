@@ -358,6 +358,33 @@ services:
     command: ["dramatiq", "worker", "--processes", "4", "--threads", "2"]
 
   # ============================================
+  # EXPORTERS (For Prometheus)
+  # ============================================
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: chatbot-postgres-exporter
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/chatbot?sslmode=disable"
+      DATA_SOURCE_USER: "chatbot_user"
+      DATA_SOURCE_PASS: "${POSTGRES_PASSWORD}"
+    depends_on:
+      - postgres
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: chatbot-redis-exporter
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+    environment:
+      REDIS_ADDR: "redis://:${REDIS_PASSWORD}@redis:6379"
+    depends_on:
+      - redis
+
+  # ============================================
   # METRICS & MONITORING (Prometheus + Grafana)
   # ============================================
   prometheus:
@@ -864,7 +891,7 @@ BACKUP_FILE="$BACKUP_DIR/backup_$TIMESTAMP.sql"
 echo "📦 Starting backup..."
 
 # Backup database
-docker exec chatbot-postgres pg_dumpall -U chatbot_user > $BACKUP_FILE
+docker exec chatbot-postgres pg_dump -U chatbot_user -d chatbot > $BACKUP_FILE
 
 # Compress
 gzip $BACKUP_FILE

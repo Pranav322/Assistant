@@ -51,6 +51,7 @@ CREATE TABLE projects (
 
     -- Widget embedding: allowed origins for CSP + origin validation
     allowed_origins TEXT[] DEFAULT '{}',
+    plan TEXT DEFAULT 'free',  -- 'free', 'pro', 'business', 'enterprise'
 
     settings JSONB DEFAULT '{}'::jsonb,
     usage JSONB DEFAULT '{}'::jsonb,
