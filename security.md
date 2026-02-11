@@ -515,7 +515,7 @@ def reset_daily_tokens():
 
 ```html
 <!-- Customer embeds this -->
-<script src="https://widget.chatbot.com/embed.js?project=project-slug"></script>
+<script src="https://widget.chatbot.com/embed.js?project_id=project-uuid"></script>
 
 <!-- Generates: -->
 <div id="chatbot-widget-container">
