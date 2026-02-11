@@ -1,7 +1,6 @@
 import hashlib
 import uuid
-from typing import BinaryIO, Optional
-from datetime import datetime
+from typing import Optional
 import pdfplumber
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -9,6 +8,8 @@ from app.models import Source, Chunk, Embedding
 from app.core.chunking import DocumentChunker
 from app.services.embedding import EmbeddingService
 from app.schemas.chunk import ProcessedChunk
+from app.services.ingestion_validation import validate_file_content
+from markdownify import markdownify
 import io
 
 
@@ -24,14 +25,19 @@ class IngestionService:
         filename: str,
         project_id: uuid.UUID,
         file_type: str = "pdf",
-        metadata: dict = None,
+        metadata: dict | None = None,
         source_id: Optional[uuid.UUID] = None,
     ) -> Source:
         """
         Process a file: extract text, chunk, embed, and save.
         """
-        if metadata is None:
-            metadata = {}
+        metadata = metadata or {}
+        validation = validate_file_content(
+            file_content,
+            filename,
+            file_type=file_type,
+            content_type=metadata.get("content_type"),
+        )
 
         # 1. Compute Content Hash
         content_hash = hashlib.sha256(file_content).hexdigest()
@@ -47,7 +53,13 @@ class IngestionService:
                 project_id=project_id,
                 type=file_type,
                 content_hash=content_hash,
-                metadata_={**metadata, "filename": filename},
+                metadata_={
+                    **metadata,
+                    "filename": filename,
+                    "content_type": validation.mime_type,
+                    "size_bytes": validation.size_bytes,
+                    "page_count": validation.page_count,
+                },
                 status="processing",
             )
             self.db.add(source)
@@ -61,26 +73,66 @@ class IngestionService:
             )
             source = result.scalar_one()
             source.status = "processing"
+            source.metadata_ = {
+                **(source.metadata_ or {}),
+                "content_type": validation.mime_type,
+                "size_bytes": validation.size_bytes,
+                "page_count": validation.page_count,
+            }
             await self.db.flush()
 
         try:
             # 4. Extract Text
             # ... (rest of the logic remains same, but we'll use 'source' object)
             text_content = ""
+            page_chunks: list[ProcessedChunk] = []
             if file_type == "pdf":
-                text_content = self._extract_text_from_pdf(file_content)
-            elif file_type in ["text", "markdown", "md", "txt"]:
-                text_content = file_content.decode("utf-8")
+                pages = self._extract_pdf_pages(file_content)
+                for page_number, page_text in pages:
+                    if not page_text.strip():
+                        continue
+                    page_chunks.extend(
+                        self.chunker.chunk_document(
+                            page_text,
+                            metadata={
+                                "source_id": str(source.id),
+                                "page_number": page_number,
+                                "confidence": 1.0,
+                            },
+                        )
+                    )
             else:
-                text_content = file_content.decode("utf-8", errors="ignore")
+                content_type = metadata.get("content_type") or ""
+                if content_type.startswith("text/html") or file_type == "url":
+                    text_content = markdownify(
+                        file_content.decode("utf-8", errors="ignore"),
+                        heading_style="ATX",
+                    )
+                else:
+                    text_content = file_content.decode("utf-8", errors="ignore")
 
-            if not text_content.strip():
+            if not page_chunks and not text_content.strip():
                 raise ValueError("Extracted text is empty")
 
             # 5. Chunking
-            chunks: list[ProcessedChunk] = self.chunker.chunk_document(
-                text_content, metadata={"source_id": str(source.id)}
-            )
+            if not page_chunks:
+                page_chunks = self.chunker.chunk_document(
+                    text_content,
+                    metadata={
+                        "source_id": str(source.id),
+                        "confidence": 1.0,
+                    },
+                )
+
+            chunks: list[ProcessedChunk] = page_chunks
+            for idx, chunk in enumerate(chunks):
+                chunk.metadata["chunk_index"] = idx
+                chunk.metadata["total_chunks"] = len(chunks)
+                chunk.metadata["chunking_strategy"] = self.chunker.strategy
+                chunk.metadata["embedding_model"] = (
+                    self.embedder.deployment_name or "text-embedding-3-small"
+                )
+                chunk.metadata["embedding_version"] = "v1.0"
 
             # 6. Embedding (Batch)
             texts_to_embed = [c.text for c in chunks]
@@ -147,6 +199,14 @@ class IngestionService:
                 if page_text:
                     text += page_text + "\n"
         return text
+
+    def _extract_pdf_pages(self, file_content: bytes) -> list[tuple[int, str]]:
+        pages: list[tuple[int, str]] = []
+        with pdfplumber.open(io.BytesIO(file_content)) as pdf:
+            for index, page in enumerate(pdf.pages, start=1):
+                page_text = page.extract_text() or ""
+                pages.append((index, page_text))
+        return pages
 
     def _is_text_file(self, filename: str) -> bool:
         return filename.endswith((".txt", ".md", ".json", ".csv", ".xml"))

@@ -2,7 +2,7 @@ from typing import AsyncGenerator
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy import select
@@ -30,7 +30,7 @@ async def get_redis() -> AsyncGenerator[redis.Redis, None]:
     try:
         yield client
     finally:
-        await client.aclose()
+        await client.close()
 
 
 @dataclass

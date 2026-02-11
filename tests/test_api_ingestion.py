@@ -2,7 +2,7 @@ import pytest
 import uuid
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from app.models import Project, User, Source, ApiKey
 from app.core.security import generate_api_key, hash_api_key
 from sqlalchemy import select
@@ -139,3 +139,47 @@ async def test_get_source_status(client: AsyncClient, db: AsyncSession):
     assert data["id"] == str(source.id)
     assert data["status"] == "completed"
     assert data["filename"] == "status.txt"
+
+
+@pytest.mark.asyncio
+async def test_ingest_url_endpoint(client: AsyncClient, db: AsyncSession):
+    user = User(email=f"url_api_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(name="URL API Project", owner_id=user.id)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    api_key_value = generate_api_key()
+    api_key = ApiKey(project_id=project.id, key_hash=hash_api_key(api_key_value))
+    db.add(api_key)
+    await db.commit()
+
+    with patch("app.api.v1.endpoints.ingestion.validate_url", new_callable=AsyncMock):
+        with patch("app.worker.tasks.process_ingestion_task.send") as mock_send:
+            response = await client.post(
+                f"/api/v1/ingestion/url?project_id={project.id}",
+                json={"url": "https://example.com"},
+                headers={"X-API-Key": api_key_value},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "source_id" in data
+
+            result = await db.execute(
+                select(Source).where(
+                    Source.id == uuid.UUID(data["source_id"]),
+                    Source.project_id == project.id,
+                )
+            )
+            source = result.scalar_one_or_none()
+            assert source is not None
+            assert source.type == "url"
+            source_url = (source.metadata_ or {}).get("source_url")
+            assert source_url is not None
+            assert source_url.rstrip("/") == "https://example.com"
+            mock_send.assert_called_once()

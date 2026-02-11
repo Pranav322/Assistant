@@ -3,6 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.services.audit import log_audit_event
 from app.services.storage import StorageService
+from app.services.ingestion_validation import derive_file_type, validate_file_content
+from app.services.url_fetcher import validate_url
+from app.schemas.ingestion import UrlIngestRequest
 from app.models import Source
 from app.worker.tasks import process_ingestion_task
 import uuid
@@ -27,6 +30,17 @@ async def upload_document(
     content = await file.read()
     filename = cast(str, file.filename) if file.filename else "upload"
     content_hash = hashlib.sha256(content).hexdigest()
+
+    file_type = derive_file_type(filename, file.content_type)
+    try:
+        validation = validate_file_content(
+            content,
+            filename,
+            file_type=file_type,
+            content_type=file.content_type,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # 2. Check project exists
     # (In a real app, this would be validated by auth/ownership)
@@ -53,21 +67,17 @@ async def upload_document(
         # If pending/failed, we might want to re-process. For now, let's continue.
 
     if not source:
-        extension = filename.split(".")[-1].lower() if "." in filename else ""
-        type_map = {
-            "txt": "text",
-            "text": "text",
-            "md": "markdown",
-            "markdown": "markdown",
-            "pdf": "pdf",
-        }
-        source_type = type_map.get(extension, "text")
         # Create Source record
         source = Source(
             project_id=project_id,
-            type=source_type,
+            type=file_type,
             content_hash=content_hash,
-            metadata_={"filename": filename},
+            metadata_={
+                "filename": filename,
+                "content_type": validation.mime_type,
+                "size_bytes": validation.size_bytes,
+                "page_count": validation.page_count,
+            },
             status="pending",
         )
         db.add(source)
@@ -85,10 +95,19 @@ async def upload_document(
     # 4. Storage (Optional but recommended)
     storage_service = StorageService()
     storage_path = f"{project_id}/sources/{source.id}_{filename}"
-    uploaded_path = await storage_service.upload_file(content, storage_path)
+    uploaded_path = await storage_service.upload_file(
+        content,
+        storage_path,
+        content_type=validation.mime_type,
+        metadata={"content_hash": content_hash},
+    )
 
     if uploaded_path:
         source.storage_location = uploaded_path
+        source.metadata_ = {
+            **(source.metadata_ or {}),
+            "storage_path": uploaded_path,
+        }
         await db.commit()
 
     import base64
@@ -143,4 +162,58 @@ async def get_source_status(
         "type": source.type,
         "filename": (source.metadata_ or {}).get("filename"),
         "error": (source.metadata_ or {}).get("error"),
+    }
+
+
+@router.post("/url", status_code=status.HTTP_201_CREATED)
+async def ingest_url(
+    project_id: uuid.UUID,
+    payload: UrlIngestRequest,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.api_key_required("ingestion")),
+):
+    url = str(payload.url)
+    try:
+        await validate_url(url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    content_hash = hashlib.sha256(url.encode()).hexdigest()
+    from sqlalchemy import select
+
+    existing_source = await db.execute(
+        select(Source).where(
+            Source.project_id == project_id,
+            Source.content_hash == content_hash,
+        )
+    )
+    source = existing_source.scalar_one_or_none()
+    if source:
+        return {"source_id": source.id, "status": source.status}
+
+    source = Source(
+        project_id=project_id,
+        type="url",
+        content_hash=content_hash,
+        metadata_={"source_url": url},
+        status="pending",
+    )
+    db.add(source)
+    await db.commit()
+    await db.refresh(source)
+
+    process_ingestion_task.send(
+        source_id=str(source.id),
+        project_id=str(project_id),
+        filename="url",
+        file_type="url",
+        storage_path=None,
+        file_content=None,
+        source_url=url,
+    )
+
+    return {
+        "source_id": source.id,
+        "status": source.status,
+        "message": "Ingestion started",
     }

@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     S3_SECRET_ACCESS_KEY: str | None = None
     S3_BUCKET: str = "chatbot-files"
     S3_PUBLIC_URL: str | None = None
+    S3_SSE: str | None = "AES256"
 
     # Rate Limiting
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 60
@@ -52,6 +53,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_INGEST_PER_MINUTE: int = 10
     RATE_LIMIT_CHAT_PER_MINUTE: int = 30
     RATE_LIMIT_TOKEN_REFRESH_PER_MINUTE: int = 1000
+
+    # Ingestion limits
+    MAX_FILE_SIZE_MB: int = 50
+    MAX_PDF_PAGES: int = 1000
+    URL_FETCH_TIMEOUT_SECONDS: int = 30
+    URL_FETCH_MAX_REDIRECTS: int = 5
 
 
 settings = Settings()

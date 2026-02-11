@@ -73,18 +73,18 @@ Definition of done:
 - [x] CI updated for required secrets or env vars
 
 Phase 2 - Ingestion hardening and storage (security.md, retrieval.md)
-- [ ] File size/type validation and MIME sniffing
-- [ ] PDF safety checks (page count, JS detection)
-- [ ] URL ingestion with SSRF protections
-- [ ] Storage encryption and metadata tracking
-- [ ] Chunk metadata schema aligned with `retrieval.md`
-- [ ] Tests: file validation matrix, SSRF blocklist tests, worker ingestion tests
-- [ ] CI/CD: add any new test fixtures or dependencies
+- [x] File size/type validation and MIME sniffing
+- [x] PDF safety checks (page count, JS detection)
+- [x] URL ingestion with SSRF protections
+- [x] Storage encryption and metadata tracking
+- [x] Chunk metadata schema aligned with `retrieval.md`
+- [x] Tests: file validation matrix, SSRF blocklist tests, worker ingestion tests
+- [x] CI/CD: add any new test fixtures or dependencies (no workflow changes needed)
 Definition of done:
-- [ ] File and URL ingestion validated per `security.md`
-- [ ] Storage metadata and chunk metadata aligned to `retrieval.md`
-- [ ] Ingestion tests cover validation and worker flow
-- [ ] CI updated for new fixtures or deps
+- [x] File and URL ingestion validated per `security.md`
+- [x] Storage metadata and chunk metadata aligned to `retrieval.md`
+- [x] Ingestion tests cover validation and worker flow
+- [x] CI updated for new fixtures or deps
 
 Phase 3 - Retrieval core (retrieval.md Phase 1)
 - [ ] Vector search (pgvector HNSW) with tenant filtering

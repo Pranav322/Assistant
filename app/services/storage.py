@@ -5,6 +5,7 @@ import structlog
 
 logger = structlog.get_logger()
 
+
 class StorageService:
     def __init__(self):
         self.session = aioboto3.Session()
@@ -13,13 +14,23 @@ class StorageService:
         self.access_key = settings.S3_ACCESS_KEY_ID
         self.secret_key = settings.S3_SECRET_ACCESS_KEY
         self.region = settings.S3_REGION
+        self.sse = settings.S3_SSE
 
-    async def upload_file(self, file_content: bytes, destination_path: str) -> Optional[str]:
+    async def upload_file(
+        self,
+        file_content: bytes,
+        destination_path: str,
+        content_type: str | None = None,
+        metadata: dict | None = None,
+    ) -> Optional[str]:
         """
         Uploads a file to S3/R2 and returns the path/key.
         """
         if not all([self.endpoint, self.access_key, self.secret_key]):
-            logger.warning("storage_not_configured", message="S3/R2 credentials missing, skipping upload.")
+            logger.warning(
+                "storage_not_configured",
+                message="S3/R2 credentials missing, skipping upload.",
+            )
             return None
 
         try:
@@ -33,7 +44,10 @@ class StorageService:
                 await s3.put_object(
                     Bucket=self.bucket,
                     Key=destination_path,
-                    Body=file_content
+                    Body=file_content,
+                    ContentType=content_type or "application/octet-stream",
+                    Metadata=metadata or {},
+                    **({"ServerSideEncryption": self.sse} if self.sse else {}),
                 )
                 logger.info("file_uploaded", path=destination_path)
                 return destination_path
