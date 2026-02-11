@@ -30,7 +30,11 @@ async def get_redis() -> AsyncGenerator[redis.Redis, None]:
     try:
         yield client
     finally:
-        await client.close()
+        close_method = getattr(client, "aclose", None)
+        if close_method:
+            await close_method()
+        else:
+            await client.close()
 
 
 @dataclass
