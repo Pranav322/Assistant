@@ -100,16 +100,16 @@ Definition of done:
 - [x] CI updated for pgvector dependency if required
 
 Phase 4 - Chat endpoint and conversation storage (api_spec.md)
-- [ ] `POST /projects/{project_id}/chat` with retrieval + LLM response
-- [ ] Conversation and message persistence
-- [ ] Token usage tracking
-- [ ] Tests: chat API integration, conversation storage, citations formatting
-- [ ] CI/CD: update env vars for LLM provider mocks if needed
+- [x] `POST /projects/{project_id}/chat` with retrieval + LLM response
+- [x] Conversation and message persistence
+- [x] Token usage tracking
+- [x] Tests: chat API integration, conversation storage, citations formatting
+- [x] CI/CD: update env vars for LLM provider mocks if needed (no workflow changes needed)
 Definition of done:
-- [ ] Chat endpoint returns responses with citations
-- [ ] Conversations and messages persisted
-- [ ] Token usage tracking working
-- [ ] Chat tests pass in CI
+- [x] Chat endpoint returns responses with citations
+- [x] Conversations and messages persisted
+- [x] Token usage tracking working
+- [x] Chat tests pass in CI
 
 Phase 5 - Retrieval optimization (retrieval.md Phase 2)
 - [ ] Embedding cache (Redis hot cache + Postgres cold cache)
