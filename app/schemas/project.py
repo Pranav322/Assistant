@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 
 
 class ProjectCreate(BaseModel):
-    owner_id: str
+    owner_id: Optional[str] = None
     name: str
     allowed_origins: Optional[List[str]] = None
     settings: Optional[Dict[str, Any]] = None

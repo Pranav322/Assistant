@@ -67,3 +67,49 @@ async def test_project_admin_flow(client: AsyncClient, db: AsyncSession):
     ).scalar_one_or_none()
     assert db_key is not None
     assert db_key.revoked_at is not None
+
+
+@pytest.mark.asyncio
+async def test_project_user_flow(client: AsyncClient):
+    register = await client.post(
+        "/api/v1/auth/register",
+        json={"email": f"user_{uuid.uuid4()}@example.com", "password": "password123"},
+    )
+    assert register.status_code == 200
+
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": register.json()["email"], "password": "password123"},
+    )
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+
+    create_project = await client.post(
+        "/api/v1/projects",
+        json={"name": "User Project"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert create_project.status_code == 200
+    project_id = create_project.json()["id"]
+
+    list_projects = await client.get(
+        "/api/v1/projects",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert list_projects.status_code == 200
+    assert any(p["id"] == project_id for p in list_projects.json())
+
+    get_project = await client.get(
+        f"/api/v1/projects/{project_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert get_project.status_code == 200
+    assert get_project.json()["name"] == "User Project"
+
+    key_resp = await client.post(
+        f"/api/v1/projects/{project_id}/api-keys",
+        json={"name": "User Key"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert key_resp.status_code == 200
+    assert key_resp.json()["api_key"]

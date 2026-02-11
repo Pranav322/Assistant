@@ -13,11 +13,8 @@ router = APIRouter()
 async def get_usage(
     project_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    auth: deps.AuthContext = Depends(deps.api_key_required("usage")),
+    auth: deps.AuthContext = Depends(deps.project_access_required("usage")),
 ):
-    if auth.project_id != project_id:
-        raise HTTPException(status_code=403, detail="Project mismatch")
-
     result = await db.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
     if not project:

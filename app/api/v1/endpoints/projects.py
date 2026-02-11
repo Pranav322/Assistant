@@ -17,9 +17,16 @@ router = APIRouter()
 @router.get("/projects", response_model=list[ProjectResponse])
 async def list_projects(
     db: AsyncSession = Depends(deps.get_db),
-    _: None = Depends(deps.admin_required()),
+    access: deps.AccessContext = Depends(deps.admin_or_user_required()),
 ):
-    result = await db.execute(select(Project).where(Project.deleted_at.is_(None)))
+    if access.is_admin:
+        result = await db.execute(select(Project).where(Project.deleted_at.is_(None)))
+    else:
+        result = await db.execute(
+            select(Project).where(
+                Project.deleted_at.is_(None), Project.owner_id == access.user_id
+            )
+        )
     projects = result.scalars().all()
     return [
         ProjectResponse(
@@ -39,12 +46,17 @@ async def list_projects(
 async def create_project(
     payload: ProjectCreate,
     db: AsyncSession = Depends(deps.get_db),
-    _: None = Depends(deps.admin_required()),
+    access: deps.AccessContext = Depends(deps.admin_or_user_required()),
 ):
-    try:
-        owner_id = uuid.UUID(payload.owner_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid owner_id") from exc
+    if access.is_admin:
+        if not payload.owner_id:
+            raise HTTPException(status_code=400, detail="owner_id required")
+        try:
+            owner_id = uuid.UUID(payload.owner_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid owner_id") from exc
+    else:
+        owner_id = access.user_id
 
     project = Project(
         owner_id=owner_id,
@@ -82,11 +94,8 @@ async def create_project(
 async def get_project(
     project_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    auth: deps.AuthContext = Depends(deps.api_key_required("projects")),
+    auth: deps.AuthContext = Depends(deps.project_access_required("projects")),
 ):
-    if auth.project_id != project_id:
-        raise HTTPException(status_code=403, detail="Project mismatch")
-
     result = await db.execute(
         select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
     )
@@ -110,7 +119,7 @@ async def create_api_key(
     project_id: uuid.UUID,
     payload: ApiKeyCreate,
     db: AsyncSession = Depends(deps.get_db),
-    _: None = Depends(deps.admin_required()),
+    _: deps.AuthContext = Depends(deps.project_access_required("projects")),
 ):
     project_exists = await db.execute(
         select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
@@ -162,7 +171,7 @@ async def create_api_key(
 async def list_api_keys(
     project_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    _: None = Depends(deps.admin_required()),
+    _: deps.AuthContext = Depends(deps.project_access_required("projects")),
 ):
     result = await db.execute(select(ApiKey).where(ApiKey.project_id == project_id))
     keys = result.scalars().all()
@@ -189,7 +198,7 @@ async def revoke_api_key(
     project_id: uuid.UUID,
     api_key_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    _: None = Depends(deps.admin_required()),
+    _: deps.AuthContext = Depends(deps.project_access_required("projects")),
 ):
     result = await db.execute(
         select(ApiKey).where(

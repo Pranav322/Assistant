@@ -10,12 +10,13 @@ import redis.asyncio as redis
 from app.core.config import settings
 from app.core.security import (
     API_KEY_PREFIX,
+    decode_user_token,
     decode_widget_token,
     hash_widget_token,
     validate_origin,
     verify_api_key,
 )
-from app.models import ApiKey, BrowserToken, Project
+from app.models import ApiKey, BrowserToken, Project, User
 from app.services.rate_limit import RateLimiter
 from app.services.audit import log_audit_event
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
@@ -45,6 +46,12 @@ class AuthContext:
     auth_type: str
 
 
+@dataclass
+class AccessContext:
+    is_admin: bool
+    user_id: uuid.UUID | None
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
@@ -68,6 +75,11 @@ def _get_client_ip(request: Request) -> str:
 
 async def _load_project(project_id: uuid.UUID, db: AsyncSession) -> Project | None:
     result = await db.execute(select(Project).where(Project.id == project_id))
+    return result.scalar_one_or_none()
+
+
+async def _load_user(user_id: uuid.UUID, db: AsyncSession) -> User | None:
+    result = await db.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
 
 
@@ -290,5 +302,98 @@ def admin_required():
         if not admin_key or admin_key != settings.ADMIN_API_KEY:
             record_auth_failure("admin_key_invalid")
             raise HTTPException(status_code=401, detail="Admin key required")
+
+    return _dependency
+
+
+def admin_or_user_required():
+    async def _dependency(
+        request: Request,
+        db: AsyncSession = Depends(get_db),
+    ) -> AccessContext:
+        admin_key = request.headers.get("x-admin-key")
+        if admin_key and settings.ADMIN_API_KEY and admin_key == settings.ADMIN_API_KEY:
+            return AccessContext(is_admin=True, user_id=None)
+
+        token = _extract_bearer_token(request.headers.get("authorization"))
+        if not token:
+            record_auth_failure("user_token_missing")
+            raise HTTPException(status_code=401, detail="Bearer token required")
+
+        try:
+            claims = decode_user_token(token)
+        except Exception as exc:
+            record_auth_failure("user_token_invalid")
+            raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+        if claims.get("type") != "user_token":
+            record_auth_failure("user_token_invalid")
+            raise HTTPException(status_code=401, detail="Invalid token type")
+
+        try:
+            user_id = uuid.UUID(str(claims.get("sub")))
+        except ValueError as exc:
+            record_auth_failure("user_token_invalid")
+            raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+        user = await _load_user(user_id, db)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        request.state.user_id = user.id
+        return AccessContext(is_admin=False, user_id=user.id)
+
+    return _dependency
+
+
+def project_access_required(endpoint: str):
+    async def _dependency(
+        project_id: uuid.UUID,
+        request: Request,
+        redis_client: redis.Redis = Depends(get_redis),
+        db: AsyncSession = Depends(get_db),
+    ) -> AuthContext:
+        admin_key = request.headers.get("x-admin-key")
+        if admin_key and settings.ADMIN_API_KEY and admin_key == settings.ADMIN_API_KEY:
+            return AuthContext(
+                project_id=project_id, api_key_id=None, auth_type="admin"
+            )
+
+        auth_header = request.headers.get("authorization") or ""
+        if auth_header.lower().startswith("bearer "):
+            token = _extract_bearer_token(auth_header)
+            try:
+                claims = decode_user_token(token or "")
+            except Exception as exc:
+                record_auth_failure("user_token_invalid")
+                raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+            if claims.get("type") != "user_token":
+                record_auth_failure("user_token_invalid")
+                raise HTTPException(status_code=401, detail="Invalid token type")
+
+            try:
+                user_id = uuid.UUID(str(claims.get("sub")))
+            except ValueError as exc:
+                record_auth_failure("user_token_invalid")
+                raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+            project = await db.execute(
+                select(Project).where(
+                    Project.id == project_id, Project.owner_id == user_id
+                )
+            )
+            if not project.scalar_one_or_none():
+                raise HTTPException(status_code=403, detail="Project mismatch")
+
+            request.state.user_id = user_id
+            return AuthContext(project_id=project_id, api_key_id=None, auth_type="user")
+
+        return await api_key_required(endpoint)(
+            project_id=project_id,
+            request=request,
+            redis_client=redis_client,
+            db=db,
+        )
 
     return _dependency
