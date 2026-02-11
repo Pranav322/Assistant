@@ -15,7 +15,7 @@ async def chat(
     project_id: uuid.UUID,
     payload: ChatRequest,
     db: AsyncSession = Depends(deps.get_db),
-    auth: deps.AuthContext = Depends(deps.api_key_required("chat")),
+    auth: deps.AuthContext = Depends(deps.chat_auth_required()),
     redis_client: redis.Redis = Depends(deps.get_redis),
 ):
     service = ChatService(db, redis_client=redis_client)

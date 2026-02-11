@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Union
 import bcrypt
 import hashlib
@@ -62,7 +62,7 @@ def create_widget_token(
     token_id: str | None = None,
     expires_in_seconds: int | None = None,
 ) -> str:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expires_in = expires_in_seconds or settings.WIDGET_TOKEN_EXPIRE_SECONDS
     exp = now + timedelta(seconds=expires_in)
     jti = token_id or str(uuid.uuid4())

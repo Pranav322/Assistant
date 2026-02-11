@@ -125,15 +125,15 @@ Definition of done:
 - [x] CI updated for new dependencies or model setup
 
 Phase 6 - Widget and RUM metrics (widget_protocol.md, observability.md)
-- [ ] `/tokens/widget` endpoint
+- [x] `/tokens/widget` endpoint
 - [ ] Widget origin handshake and postMessage protocol
-- [ ] `/metrics/widget` ingestion
-- [ ] Tests: Playwright E2E for widget flow, RUM ingestion tests
+- [x] `/metrics/widget` ingestion
+- [x] Tests: Playwright E2E for widget flow, RUM ingestion tests (API tests only)
 - [ ] CI/CD: add Playwright setup when harness is added
 Definition of done:
-- [ ] Widget token issuance and origin validation working
+- [x] Widget token issuance and origin validation working
 - [ ] Widget protocol implemented and tested
-- [ ] RUM metrics ingestion live and tested
+- [x] RUM metrics ingestion live and tested
 - [ ] E2E tests documented and runnable in CI
 
 Phase 7 - Observability and readiness (observability.md)

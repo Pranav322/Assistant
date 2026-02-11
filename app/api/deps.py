@@ -174,6 +174,7 @@ def api_key_required(endpoint: str):
 def widget_token_required(endpoint: str):
     async def _dependency(
         request: Request,
+        redis_client: redis.Redis = Depends(get_redis),
         db: AsyncSession = Depends(get_db),
     ) -> AuthContext:
         token = _extract_bearer_token(request.headers.get("authorization"))
@@ -213,6 +214,26 @@ def widget_token_required(endpoint: str):
             token_row.last_used_at = datetime.now(timezone.utc)
             await db.flush()
 
+        limiter = RateLimiter(redis_client)
+        allowed = await limiter.check(
+            ip=_get_client_ip(request),
+            api_key_prefix=None,
+            endpoint=endpoint,
+            project_id=str(project_id),
+        )
+        if not allowed:
+            await log_audit_event(
+                db,
+                action="rate_limit_exceeded",
+                project_id=project_id,
+                resource_type="widget_token",
+                resource_id=claims.get("jti"),
+                ip_address=_get_client_ip(request),
+                user_agent=request.headers.get("user-agent"),
+                detail={"endpoint": endpoint},
+            )
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+
         request.state.project_id = project_id
         request.state.api_key_id = token_row.api_key_id if token_row else None
 
@@ -220,6 +241,34 @@ def widget_token_required(endpoint: str):
             project_id=project_id,
             api_key_id=request.state.api_key_id,
             auth_type="widget",
+        )
+
+    return _dependency
+
+
+def chat_auth_required():
+    async def _dependency(
+        project_id: uuid.UUID,
+        request: Request,
+        redis_client: redis.Redis = Depends(get_redis),
+        db: AsyncSession = Depends(get_db),
+    ) -> AuthContext:
+        auth_header = request.headers.get("authorization") or ""
+        if auth_header.lower().startswith("bearer "):
+            widget_ctx = await widget_token_required("chat")(
+                request=request,
+                redis_client=redis_client,
+                db=db,
+            )
+            if widget_ctx.project_id != project_id:
+                raise HTTPException(status_code=403, detail="Project mismatch")
+            return widget_ctx
+
+        return await api_key_required("chat")(
+            project_id=project_id,
+            request=request,
+            redis_client=redis_client,
+            db=db,
         )
 
     return _dependency

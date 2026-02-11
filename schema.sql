@@ -327,6 +327,22 @@ CREATE INDEX idx_retrieval_metrics_performance
 ON retrieval_metrics(retrieval_time_ms);
 
 -- =========================================================
+-- WIDGET METRICS (RUM TELEMETRY)
+-- =========================================================
+
+CREATE TABLE widget_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    value NUMERIC(12,4) NOT NULL,
+    tags JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_widget_metrics_project_time
+ON widget_metrics(project_id, created_at);
+
+-- =========================================================
 -- RATE LIMIT AUDIT
 -- =========================================================
 
