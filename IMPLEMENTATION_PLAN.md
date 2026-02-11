@@ -152,7 +152,7 @@ Definition of done:
 - [x] `/metrics` and `/health/ready` implemented and tested
 - [x] Structured logging and tracing active
 - [x] Observability tests pass in CI
-- [ ] Dashboards or exporter configs documented
+- [x] Dashboards or exporter configs documented
 
 Ongoing maintenance
 - [ ] Keep `AGENTS.md` aligned with `.context/` and this plan
