@@ -1973,6 +1973,15 @@ wheels = [
 ]
 
 [[package]]
+name = "prometheus-client"
+version = "0.24.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/58/a794d23feb6b00fc0c72787d7e87d872a6730dd9ed7c7b3e954637d8f280/prometheus_client-0.24.1.tar.gz", hash = "sha256:7e0ced7fbbd40f7b84962d5d2ab6f17ef88a72504dcf7c0b40737b43b2a461f9", size = 85616, upload-time = "2026-01-14T15:26:26.965Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/74/c3/24a2f845e3917201628ecaba4f18bab4d18a337834c1df2a159ee9d22a42/prometheus_client-0.24.1-py3-none-any.whl", hash = "sha256:150db128af71a5c2482b36e588fc8a6b95e498750da4b17065947c16070f4055", size = 64057, upload-time = "2026-01-14T15:26:24.42Z" },
+]
+
+[[package]]
 name = "propcache"
 version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2469,6 +2478,7 @@ dependencies = [
     { name = "passlib" },
     { name = "pdfplumber" },
     { name = "pgvector" },
+    { name = "prometheus-client" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "python-jose", extra = ["cryptography"] },
@@ -2515,6 +2525,7 @@ requires-dist = [
     { name = "passlib", specifier = ">=1.7.4" },
     { name = "pdfplumber", specifier = ">=0.10.4" },
     { name = "pgvector", specifier = ">=0.2.5" },
+    { name = "prometheus-client", specifier = ">=0.20.0" },
     { name = "pydantic-settings", specifier = ">=2.2.1" },
     { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },

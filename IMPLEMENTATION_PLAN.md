@@ -130,6 +130,11 @@ Phase 6 - Widget and RUM metrics (widget_protocol.md, observability.md)
 - [x] `/metrics/widget` ingestion
 - [x] Tests: Playwright E2E for widget flow, RUM ingestion tests (API tests only)
 - [ ] CI/CD: add Playwright setup when harness is added
+Notes for frontend implementation:
+- Implement the widget iframe protocol (`postMessage` handshake, resize, token refresh, toggle)
+- Enforce origin validation in the iframe before processing messages
+- Parent page should never call the API directly; only the iframe does
+- Add Playwright E2E coverage for parent + iframe flows
 Definition of done:
 - [x] Widget token issuance and origin validation working
 - [ ] Widget protocol implemented and tested
@@ -137,16 +142,16 @@ Definition of done:
 - [ ] E2E tests documented and runnable in CI
 
 Phase 7 - Observability and readiness (observability.md)
-- [ ] `/metrics` endpoint with required labels
-- [ ] Structured logging with standard fields
-- [ ] OpenTelemetry tracing for API, DB, Redis, LLM calls
-- [ ] `/health/ready` with DB/Redis/S3 checks
-- [ ] Tests: readiness probe integration, metrics endpoint smoke tests
-- [ ] CI/CD: add observability env vars or exporters if required
+- [x] `/metrics` endpoint with required labels
+- [x] Structured logging with standard fields
+- [x] OpenTelemetry tracing for API, DB, Redis, LLM calls
+- [x] `/health/ready` with DB/Redis/S3 checks
+- [x] Tests: readiness probe integration, metrics endpoint smoke tests
+- [x] CI/CD: add observability env vars or exporters if required (no workflow changes needed)
 Definition of done:
-- [ ] `/metrics` and `/health/ready` implemented and tested
-- [ ] Structured logging and tracing active
-- [ ] Observability tests pass in CI
+- [x] `/metrics` and `/health/ready` implemented and tested
+- [x] Structured logging and tracing active
+- [x] Observability tests pass in CI
 - [ ] Dashboards or exporter configs documented
 
 Ongoing maintenance

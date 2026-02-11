@@ -18,6 +18,7 @@ from app.core.security import (
 from app.models import ApiKey, BrowserToken, Project
 from app.services.rate_limit import RateLimiter
 from app.services.audit import log_audit_event
+from app.observability.metrics import record_auth_failure, record_rate_limit_hit
 
 engine = create_async_engine(settings.DATABASE_URL, echo=True)
 AsyncSessionLocal = async_sessionmaker(
@@ -106,6 +107,7 @@ def api_key_required(endpoint: str):
                 ip_address=_get_client_ip(request),
                 user_agent=request.headers.get("user-agent"),
             )
+            record_auth_failure("api_key_missing")
             raise HTTPException(status_code=401, detail="API key required")
 
         project = await _load_project(project_id, db)
@@ -122,6 +124,7 @@ def api_key_required(endpoint: str):
                 user_agent=request.headers.get("user-agent"),
                 detail={"api_key_prefix": api_key_value[:12]},
             )
+            record_auth_failure("api_key_invalid")
             raise HTTPException(status_code=401, detail="Invalid API key")
 
         origin = _get_request_origin(request)
@@ -138,6 +141,7 @@ def api_key_required(endpoint: str):
                     user_agent=request.headers.get("user-agent"),
                     detail={"origin": origin},
                 )
+                record_auth_failure("origin_mismatch")
                 raise HTTPException(status_code=403, detail="Origin not allowed")
 
         limiter = RateLimiter(redis_client)
@@ -159,6 +163,7 @@ def api_key_required(endpoint: str):
                 user_agent=request.headers.get("user-agent"),
                 detail={"endpoint": endpoint},
             )
+            record_rate_limit_hit(endpoint)
             raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
         request.state.project_id = project_id
@@ -179,10 +184,12 @@ def widget_token_required(endpoint: str):
     ) -> AuthContext:
         token = _extract_bearer_token(request.headers.get("authorization"))
         if not token:
+            record_auth_failure("token_missing")
             raise HTTPException(status_code=401, detail="Bearer token required")
 
         claims = decode_widget_token(token)
         if claims.get("type") != "widget_token":
+            record_auth_failure("token_invalid")
             raise HTTPException(status_code=401, detail="Invalid token type")
 
         origin = _get_request_origin(request)
@@ -197,6 +204,7 @@ def widget_token_required(endpoint: str):
                 user_agent=request.headers.get("user-agent"),
                 detail={"origin": origin},
             )
+            record_auth_failure("origin_mismatch")
             raise HTTPException(status_code=403, detail="Origin not allowed")
 
         project_id = uuid.UUID(claims["sub"])
@@ -209,6 +217,7 @@ def widget_token_required(endpoint: str):
         )
         token_row = result.scalar_one_or_none()
         if token_row and token_row.revoked_at is not None:
+            record_auth_failure("token_revoked")
             raise HTTPException(status_code=401, detail="Token revoked")
         if token_row:
             token_row.last_used_at = datetime.now(timezone.utc)
@@ -232,6 +241,7 @@ def widget_token_required(endpoint: str):
                 user_agent=request.headers.get("user-agent"),
                 detail={"endpoint": endpoint},
             )
+            record_rate_limit_hit(endpoint)
             raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
         request.state.project_id = project_id

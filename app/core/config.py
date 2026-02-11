@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "RAG Chatbot Platform"
     ENVIRONMENT: str = "development"
+    SERVICE_NAME: str = "api"
+    GIT_SHA: str = "dev"
+    OTEL_ENABLED: bool = True
+    OTEL_SAMPLE_RATE: float = 0.01
+    LOG_LEVEL: str = "INFO"
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]

@@ -8,6 +8,7 @@ from app.core.security import create_widget_token, hash_widget_token, validate_o
 from app.models import BrowserToken, Project
 from app.services.rate_limit import RateLimiter
 from app.services.audit import log_audit_event
+from app.observability.metrics import record_auth_failure, record_rate_limit_hit
 
 
 router = APIRouter()
@@ -37,6 +38,7 @@ async def create_widget_token_endpoint(
             ip_address=deps._get_client_ip(request),
             user_agent=request.headers.get("user-agent"),
         )
+        record_auth_failure("api_key_missing")
         raise HTTPException(status_code=401, detail="API key required")
 
     project = await deps._load_project(project_id, db)
@@ -53,6 +55,7 @@ async def create_widget_token_endpoint(
             user_agent=request.headers.get("user-agent"),
             detail={"api_key_prefix": api_key_value[:12]},
         )
+        record_auth_failure("api_key_invalid")
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     limiter = RateLimiter(redis_client)
@@ -64,6 +67,7 @@ async def create_widget_token_endpoint(
         api_key_rate_limit=api_key.rate_limit,
     )
     if not allowed:
+        record_rate_limit_hit("token_refresh")
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
     origin = str(payload.origin).rstrip("/")
@@ -78,6 +82,7 @@ async def create_widget_token_endpoint(
             user_agent=request.headers.get("user-agent"),
             detail={"origin": origin},
         )
+        record_auth_failure("origin_mismatch")
         raise HTTPException(status_code=403, detail="Origin not allowed")
 
     token_id = uuid.uuid4()

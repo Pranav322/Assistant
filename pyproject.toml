@@ -38,6 +38,7 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "aioboto3>=15.5.0",
     "nest-asyncio>=1.6.0",
+    "prometheus-client>=0.20.0",
 ]
 
 [build-system]

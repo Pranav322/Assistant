@@ -28,6 +28,11 @@ Required env vars (minimum for local dev):
 - `S3_SECRET_ACCESS_KEY`
 
 Optional overrides:
+- `LOG_LEVEL`
+- `SERVICE_NAME`
+- `GIT_SHA`
+- `OTEL_ENABLED`
+- `OTEL_SAMPLE_RATE`
 - `JWT_ISSUER`
 - `JWT_AUDIENCE`
 - `WIDGET_TOKEN_EXPIRE_SECONDS`
