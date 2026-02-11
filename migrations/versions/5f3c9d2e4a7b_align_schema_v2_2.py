@@ -20,6 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto")
+    op.execute("CREATE EXTENSION IF NOT EXISTS btree_gin")
 
     op.execute(
         """
@@ -203,6 +204,10 @@ def upgrade() -> None:
         "uq_sources_project_content_hash", "sources", ["project_id", "content_hash"]
     )
 
+    op.execute(
+        "UPDATE sources SET type = 'text' WHERE type IS NULL "
+        "OR type NOT IN ('pdf','url','text','markdown')"
+    )
     op.create_check_constraint(
         "ck_sources_type", "sources", "type IN ('pdf','url','text','markdown')"
     )

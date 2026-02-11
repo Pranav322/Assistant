@@ -44,13 +44,13 @@ Status keys:
 - [x] Done
 
 Phase 0 - Spec alignment and repo hygiene
-- [ ] Align Alembic migrations and ORM models with `schema.sql` (tables, indexes, triggers)
-- [ ] Add missing tables in ORM: cache, rate_limits, ingestion_dead_letter
-- [ ] Ensure `search_tsvector` column and indexes exist for keyword search
-- [ ] Remove hardcoded secrets from `docker-compose.yml` and use env vars
-- [ ] Update docs for new env vars or local setup changes
-- [ ] Tests: migration apply/rollback smoke, run `uv run pytest tests/ --cov=app`
-- [ ] CI/CD: update workflows if migrations or env vars change
+- [x] Align Alembic migrations and ORM models with `schema.sql` (tables, indexes, triggers)
+- [x] Add missing tables in ORM: cache, rate_limits, ingestion_dead_letter
+- [x] Ensure `search_tsvector` column and indexes exist for keyword search
+- [x] Remove hardcoded secrets from `docker-compose.yml` and use env vars
+- [x] Update docs for new env vars or local setup changes
+- [x] Tests: migration apply (upgrade) smoke, run `uv run pytest tests/ --cov=app`
+- [x] CI/CD: update workflows if migrations or env vars change (no workflow changes needed)
 Definition of done:
 - [ ] Schema alignment complete (ORM + migrations reflect `schema.sql`)
 - [ ] Secrets removed from dev compose and documented env vars added
