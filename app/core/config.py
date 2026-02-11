@@ -22,6 +22,9 @@ class Settings(BaseSettings):
 
     # Security
     JWT_SECRET: str
+    JWT_ISSUER: str = "chatbot-platform"
+    JWT_AUDIENCE: str = "widget-api"
+    WIDGET_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # Azure OpenAI
@@ -45,6 +48,10 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 60
     RATE_LIMIT_TOKENS_PER_MINUTE: int = 100000
+    RATE_LIMIT_IP_PER_MINUTE: int = 1000
+    RATE_LIMIT_INGEST_PER_MINUTE: int = 10
+    RATE_LIMIT_CHAT_PER_MINUTE: int = 30
+    RATE_LIMIT_TOKEN_REFRESH_PER_MINUTE: int = 1000
 
 
 settings = Settings()

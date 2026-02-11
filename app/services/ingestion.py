@@ -5,11 +5,12 @@ from datetime import datetime
 import pdfplumber
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import Source, Chunk, Embedding, Project
+from app.models import Source, Chunk, Embedding
 from app.core.chunking import DocumentChunker
 from app.services.embedding import EmbeddingService
 from app.schemas.chunk import ProcessedChunk
 import io
+
 
 class IngestionService:
     def __init__(self, db: AsyncSession):
@@ -17,13 +18,15 @@ class IngestionService:
         self.chunker = DocumentChunker()
         self.embedder = EmbeddingService()
 
-    async def process_file(self, 
-                          file_content: bytes, 
-                          filename: str, 
-                          project_id: uuid.UUID, 
-                          file_type: str = "pdf",
-                          metadata: dict = None,
-                          source_id: Optional[uuid.UUID] = None) -> Source:
+    async def process_file(
+        self,
+        file_content: bytes,
+        filename: str,
+        project_id: uuid.UUID,
+        file_type: str = "pdf",
+        metadata: dict = None,
+        source_id: Optional[uuid.UUID] = None,
+    ) -> Source:
         """
         Process a file: extract text, chunk, embed, and save.
         """
@@ -45,13 +48,17 @@ class IngestionService:
                 type=file_type,
                 content_hash=content_hash,
                 metadata_={**metadata, "filename": filename},
-                status="processing"
+                status="processing",
             )
             self.db.add(source)
-            await self.db.flush() # get ID
+            await self.db.flush()  # get ID
         else:
             # Load existing source
-            result = await self.db.execute(select(Source).where(Source.id == source_id))
+            result = await self.db.execute(
+                select(Source).where(
+                    Source.id == source_id, Source.project_id == project_id
+                )
+            )
             source = result.scalar_one()
             source.status = "processing"
             await self.db.flush()
@@ -72,8 +79,7 @@ class IngestionService:
 
             # 5. Chunking
             chunks: list[ProcessedChunk] = self.chunker.chunk_document(
-                text_content, 
-                metadata={"source_id": str(source.id)}
+                text_content, metadata={"source_id": str(source.id)}
             )
 
             # 6. Embedding (Batch)
@@ -86,7 +92,7 @@ class IngestionService:
                     project_id=project_id,
                     source_id=source.id,
                     text=chunk_data.text,
-                    metadata_=chunk_data.metadata
+                    metadata_=chunk_data.metadata,
                 )
                 self.db.add(chunk_record)
                 await self.db.flush()
@@ -96,20 +102,24 @@ class IngestionService:
                         chunk_id=chunk_record.id,
                         project_id=project_id,
                         embedding=embeddings_list[i],
-                        model_name=self.embedder.deployment_name or "azure-openai"
+                        model_name=self.embedder.deployment_name or "azure-openai",
                     )
                     self.db.add(emb_record)
 
             # 8. Update Source Status
             source.status = "completed"
             await self.db.commit()
-            
+
             return source
 
         except Exception as e:
             await self.db.rollback()
             # Update status to failed
-            result = await self.db.execute(select(Source).where(Source.id == source.id))
+            result = await self.db.execute(
+                select(Source).where(
+                    Source.id == source.id, Source.project_id == project_id
+                )
+            )
             fail_source = result.scalar_one()
             fail_source.status = "failed"
             # We could log the error in metadata
@@ -119,11 +129,12 @@ class IngestionService:
             await self.db.commit()
             raise e
 
-    async def get_source_by_hash(self, project_id: uuid.UUID, content_hash: str) -> Optional[Source]:
+    async def get_source_by_hash(
+        self, project_id: uuid.UUID, content_hash: str
+    ) -> Optional[Source]:
         result = await self.db.execute(
             select(Source).where(
-                Source.project_id == project_id,
-                Source.content_hash == content_hash
+                Source.project_id == project_id, Source.content_hash == content_hash
             )
         )
         return result.scalar_one_or_none()
@@ -138,4 +149,4 @@ class IngestionService:
         return text
 
     def _is_text_file(self, filename: str) -> bool:
-        return filename.endswith(('.txt', '.md', '.json', '.csv', '.xml'))
+        return filename.endswith((".txt", ".md", ".json", ".csv", ".xml"))

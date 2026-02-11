@@ -33,6 +33,7 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "passlib>=1.7.4",
     "argon2-cffi>=25.1.0",
+    "bcrypt>=4.1.2",
     "markdownify>=1.2.2",
     "beautifulsoup4>=4.14.3",
     "aioboto3>=15.5.0",

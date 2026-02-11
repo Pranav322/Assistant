@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
+from app.services.audit import log_audit_event
 from app.services.storage import StorageService
-from app.models import Source, Project
+from app.models import Source
 from app.worker.tasks import process_ingestion_task
 import uuid
-from typing import List, cast
+from typing import cast
 import hashlib
 
 router = APIRouter()
@@ -16,6 +17,7 @@ async def upload_document(
     project_id: uuid.UUID,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.api_key_required("ingestion")),
 ):
     """
     Upload a document for processing.
@@ -72,6 +74,14 @@ async def upload_document(
         await db.commit()
         await db.refresh(source)
 
+        await log_audit_event(
+            db,
+            action="file_uploaded",
+            project_id=project_id,
+            resource_type="source",
+            resource_id=str(source.id),
+        )
+
     # 4. Storage (Optional but recommended)
     storage_service = StorageService()
     storage_path = f"{project_id}/sources/{source.id}_{filename}"
@@ -106,14 +116,22 @@ async def upload_document(
 
 @router.get("/{source_id}", response_model=dict)
 async def get_source_status(
-    source_id: uuid.UUID, db: AsyncSession = Depends(deps.get_db)
+    source_id: uuid.UUID,
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.api_key_required("ingestion")),
 ):
     """
     Get the status of a source processing task.
     """
     from sqlalchemy import select
 
-    result = await db.execute(select(Source).where(Source.id == source_id))
+    result = await db.execute(
+        select(Source).where(
+            Source.id == source_id,
+            Source.project_id == project_id,
+        )
+    )
     source = result.scalar_one_or_none()
 
     if not source:

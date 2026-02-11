@@ -13,13 +13,13 @@ Stop conditions:
 - Do not guess credentials or external service details.
 
 Required inputs and decisions (confirm before work that depends on them):
-- [ ] Primary LLM provider and model (Azure OpenAI vs OpenAI, model name)
-- [ ] Embedding provider and deployment/model name
-- [ ] Widget and API base domains (for origin validation and CSP)
-- [ ] Object storage provider (S3/R2 endpoint, bucket, public URL)
-- [ ] Secrets source and rotation approach (JWT_SECRET, ENCRYPTION_MASTER_KEY)
-- [ ] Reranker strategy (local model vs external service)
-- [ ] Cron strategy (pg_cron vs system cron vs Dramatiq periodic)
+- [x] Primary LLM provider and model (Azure OpenAI vs OpenAI, model name)
+- [x] Embedding provider and deployment/model name
+- [ ] Widget and API base domains (for origin validation and CSP) - prod domains pending
+- [x] Object storage provider (S3/R2 endpoint, bucket, public URL)
+- [x] Secrets source and rotation approach (JWT_SECRET, ENCRYPTION_MASTER_KEY)
+- [x] Reranker strategy (local model vs external service)
+- [x] Cron strategy (pg_cron vs system cron vs Dramatiq periodic)
 
 Decision log (lock choices here and reuse across phases):
 | Decision | Value | Date | Owner | Notes |
@@ -52,25 +52,25 @@ Phase 0 - Spec alignment and repo hygiene
 - [x] Tests: migration apply (upgrade) smoke, run `uv run pytest tests/ --cov=app`
 - [x] CI/CD: update workflows if migrations or env vars change (no workflow changes needed)
 Definition of done:
-- [ ] Schema alignment complete (ORM + migrations reflect `schema.sql`)
-- [ ] Secrets removed from dev compose and documented env vars added
-- [ ] Tests for migrations added and passing
-- [ ] CI updated for new env vars or migrations
+- [x] Schema alignment complete (ORM + migrations reflect `schema.sql`)
+- [x] Secrets removed from dev compose and documented env vars added
+- [x] Tests for migrations added and passing
+- [x] CI updated for new env vars or migrations
 
 Phase 1 - Auth and security foundation (security.md)
-- [ ] API key auth using bcrypt (create, verify, revoke)
-- [ ] JWT widget tokens with issuer/audience/origin validation
-- [ ] Origin validation utility and CSP header generation
-- [ ] Require `project_id` filtering on all DB queries
-- [ ] Rate limiting (IP, API key, endpoint)
-- [ ] Audit logging for auth, access, and ingestion events
-- [ ] Tests: unit tests for auth/origin/rate limit, integration tests for protected endpoints
-- [ ] CI/CD: ensure secrets and env vars exist in test workflow
+- [x] API key auth using bcrypt (create, verify, revoke)
+- [x] JWT widget tokens with issuer/audience/origin validation
+- [x] Origin validation utility and CSP header generation
+- [x] Require `project_id` filtering on all DB queries
+- [x] Rate limiting (IP, API key, endpoint)
+- [x] Audit logging for auth, access, and ingestion events
+- [x] Tests: unit tests for auth/origin/rate limit, integration tests for protected endpoints
+- [x] CI/CD: ensure secrets and env vars exist in test workflow
 Definition of done:
-- [ ] Auth and origin checks enforced on all protected endpoints
-- [ ] Rate limiting and audit logging active
-- [ ] Test coverage for auth/origin/rate limit added and passing
-- [ ] CI updated for required secrets or env vars
+- [x] Auth and origin checks enforced on all protected endpoints
+- [x] Rate limiting and audit logging active
+- [x] Test coverage for auth/origin/rate limit added and passing
+- [x] CI updated for required secrets or env vars
 
 Phase 2 - Ingestion hardening and storage (security.md, retrieval.md)
 - [ ] File size/type validation and MIME sniffing
