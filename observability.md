@@ -5,35 +5,16 @@
 
 ---
 
-## **📊 OVERVIEW**
+## **📋 OVERVIEW**
 
-Observability is implemented across three pillars: **Metrics** (Prometheus), **Logs** (structured JSON), and **Traces** (OpenTelemetry). Loki/Jaeger are optional backends for logs/traces.
+Comprehensive observability strategy using open-source standards (Prometheus, OpenTelemetry, Grafana) to ensure reliability, performance, and business insights.
 
-### **Architecture:**
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ FastAPI │ │ Workers │ │ Widget │
-│ Service │────│ (Dramatiq)│────│ (Browser) │
-└─────────────┘ └─────────────┘ └─────────────┘
-│ │ │
-▼ ▼ ▼
-┌────────────────────────────────────────────────────┐
-│ OpenTelemetry Instrumentation │
-└────────────────────────────────────────────────────┘
-│ │ │
-▼ ▼ ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ Prometheus │ │ Loki │ │ Jaeger │
-│ (Metrics) │ │ (Logs) │ │ (Traces) │
-└─────────────┘ └─────────────┘ └─────────────┘
-│ │ │
-└──────────────────┼──────────────────┘
-▼
-┌─────────────┐
-│ Grafana │
-│ (Dashboards)│
-└─────────────┘
-
-text
+### **Monitoring Pillars:**
+1. **Metrics:** Real-time numerical data (Prometheus)
+2. **Logs:** Structured events (structlog → Loki/CloudWatch)
+3. **Traces:** Distributed request tracing (OpenTelemetry → Jaeger/Tempo)
+4. **Health:** Synthetics and uptime checks
+5. **Business Intelligence:** Usage and cost tracking
 
 ---
 
@@ -43,696 +24,306 @@ text
 | Service | SLO Target | Error Budget | Measurement Method |
 |---------|------------|--------------|-------------------|
 | **API Availability** | 99.9% | 43m/month | Uptime checks every 1m |
-| **Retrieval Latency** | P95 < 500ms | 5% | Prometheus histogram |
-| **Ingestion Success** | 99% | 1% | Background job success rate |
-| **Widget Load Time** | < 2s P95 | 5% | Real User Monitoring |
-| **LLM Response Time** | < 5s P95 | 5% | End-to-end tracing |
+| **P95 Latency (Chat)** | < 2000ms | 5% of requests | Prometheus histogram |
+| **P95 Latency (Search)** | < 500ms | 5% of requests | Prometheus histogram |
+| **Ingestion Success** | 99.5% | 0.5% failures | Background job status |
+| **Widget Load Time** | < 500ms | 10% slow loads | RUM metrics |
 
-### **Business SLOs:**
-| Metric | Target | Why It Matters |
-|--------|--------|----------------|
-| **User Satisfaction** | > 4/5 stars | Product quality |
-| **Answer Relevance** | > 80% | Retrieval effectiveness |
-| **Support Tickets** | < 1/100 users | User experience |
-| **Revenue Growth** | 10% MoM | Business health |
+### **RPO/RTO Targets:**
+- **Recovery Point Objective (RPO):** 1 hour (max data loss)
+- **Recovery Time Objective (RTO):** 4 hours (max downtime)
 
-### **Error Budget Policy:**
-```yaml
-error_budgets:
-  api_availability:
-    monthly_budget: 43 minutes
-    burn_rate_thresholds:
-      fast_burn: 2.0  # 2x faster than budget
-      slow_burn: 0.1  # 10% of budget used
-    actions:
-      fast_burn: "Immediate investigation, stop deploys"
-      slow_burn: "Weekly review, proceed with caution"
-      
-  retrieval_latency:
-    monthly_budget: 36 hours > 500ms
-    alert_when: "Budget burned by 50% in 1 day"
-📈 METRICS COLLECTION
-Prometheus Metrics Schema:
-1. HTTP Metrics (FastAPI):
+---
 
-python
-from prometheus_fastapi_instrumentator import Instrumentator
+## **📊 METRICS STRATEGY (Prometheus)**
 
-# Auto-instrument FastAPI
-Instrumentator().instrument(app).expose(app)
+### **Standard Labels:**
+All metrics must include:
+- `env`: production/staging
+- `service`: api/worker
+- `version`: git_sha
+- `project_id`: (where applicable)
 
-# Custom metrics
-REQUEST_DURATION = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request duration in seconds',
-    ['method', 'endpoint', 'status']
-)
+### **1. API Metrics:**
+| Metric Name | Type | Description |
+|-------------|------|-------------|
+| `http_requests_total` | Counter | Total requests by method, path, status |
+| `http_request_duration_seconds` | Histogram | Latency distribution (buckets: 0.1, 0.5, 1, 2, 5, 10) |
+| `http_requests_in_flight` | Gauge | Current active requests |
+| `auth_failures_total` | Counter | Failed auth attempts by reason |
+| `rate_limit_hits_total` | Counter | Throttled requests |
 
-TOKENS_USED = Counter(
-    'llm_tokens_total',
-    'Total tokens used',
-    ['project_id', 'model', 'type']  # type: prompt/completion
-)
-2. Database Metrics:
+### **2. Database Metrics (PostgreSQL):**
+| Metric Name | Type | Description |
+|-------------|------|-------------|
+| `pg_stat_activity_count` | Gauge | Active connections |
+| `pg_stat_database_tup_fetched` | Counter | Rows read |
+| `pg_stat_database_tup_inserted` | Counter | Rows written |
+| `pg_stat_database_deadlocks` | Counter | Deadlocks detected |
+| `pg_vector_index_size_bytes` | Gauge | Size of HNSW indexes |
 
-python
-# PostgreSQL metrics via pg_stat_statements
-POSTGRES_METRICS = [
-    'pg_stat_database_numbackends',
-    'pg_stat_database_xact_commit',
-    'pg_stat_database_xact_rollback',
-    'pg_stat_user_tables_n_tup_ins',
-    'pg_stat_user_tables_n_tup_upd',
-    'pg_stat_user_tables_n_tup_del',
-]
+### **3. Business Metrics:**
+| Metric Name | Type | Description |
+|-------------|------|-------------|
+| `projects_active_total` | Gauge | Total active projects |
+| `sources_ingested_total` | Counter | Total documents processed |
+| `chunks_total` | Gauge | Total vectors stored |
+| `messages_sent_total` | Counter | Total chat messages |
+| `tokens_consumed_total` | Counter | LLM tokens used (input/output) |
+| `revenue_estimated_usd` | Gauge | Real-time cost estimation |
 
-# Vector search performance
-VECTOR_SEARCH_DURATION = Histogram(
-    'vector_search_duration_seconds',
-    'Vector search query duration',
-    ['project_id', 'result_count']
-)
-3. Business Metrics:
+### **4. AI/ML Metrics:**
+| Metric Name | Type | Description |
+|-------------|------|-------------|
+| `llm_request_duration_seconds` | Histogram | Latency of LLM calls |
+| `llm_token_count` | Histogram | Token usage distribution |
+| `embedding_generation_seconds` | Histogram | Latency of embedding API |
+| `retrieval_precision_at_k` | Gauge | Relevance score (offline eval) |
+| `cache_hit_ratio` | Gauge | Embedding/Response cache effectiveness |
 
-python
-# User engagement
-ACTIVE_PROJECTS = Gauge(
-    'projects_active_total',
-    'Number of active projects'
-)
+---
 
-QUERIES_PER_PROJECT = Counter(
-    'project_queries_total',
-    'Total queries per project',
-    ['project_id']
-)
+## **📝 LOGGING STRATEGY**
 
-REVENUE_GENERATED = Counter(
-    'revenue_usd_total',
-    'Total revenue in USD'
-)
-4. AI/ML Quality Metrics:
+### **Format:**
+JSON structured logging using `structlog` (Python).
 
-python
-# Retrieval quality
-RETRIEVAL_PRECISION = Histogram(
-    'retrieval_precision_at_k',
-    'Precision@k for retrieval',
-    ['project_id', 'k']  # k=1,3,5,10
-)
+### **Standard Fields:**
+```json
+{
+  "timestamp": "2026-02-12T10:30:00Z",
+  "level": "info",
+  "service": "api",
+  "request_id": "req_abc123",
+  "project_id": "proj_xyz789",
+  "user_id": "user_456",
+  "module": "chat_service",
+  "message": "Chat response generated",
+  "duration_ms": 1245,
+  "tokens": 342,
+  "model": "gpt-4o-mini"
+}
+```
 
-HALLUCINATION_RATE = Gauge(
-    'hallucination_rate',
-    'Percentage of answers with hallucinations',
-    ['project_id']
-)
+### **Usage Guide:**
 
-USER_FEEDBACK = Counter(
-    'user_feedback_total',
-    'User feedback counts',
-    ['project_id', 'sentiment']  # positive, negative
-)
-Metrics Export Configuration:
-yaml
-# prometheus.yml
-scrape_configs:
-  - job_name: 'chatbot-api'
-    static_configs:
-      - targets: ['api:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 15s
-    
-  # Optional exporters (add services in deployment.md if you use them)
-  # - job_name: 'chatbot-workers'
-  #   static_configs:
-  #     - targets: ['worker:9191']
-  #   scrape_interval: 30s
-  #
-  # - job_name: 'postgres'
-  #   static_configs:
-  #     - targets: ['postgres-exporter:9187']
-  #
-  # - job_name: 'redis'
-  #   static_configs:
-  #     - targets: ['redis-exporter:9121']
-  #
-  # - job_name: 'node'
-  #   static_configs:
-  #     - targets: ['node-exporter:9100']
-📝 STRUCTURED LOGGING
-Logging Configuration:
-python
+**Do:**
+- Log context (IDs, status)
+- Log actionable events
+- Log structured data, not strings
+- Log stack traces only on ERROR
+
+**Don't:**
+- ❌ Log PII (emails, names, phone numbers)
+- ❌ Log verify tokens or secrets
+- ❌ Log message content (privacy)
+- ❌ Log health check success (spam)
+
+### **Implementation (Python):**
+```python
 import structlog
-import logging
-import sys
 
-# Configure structlog
-structlog.configure(
-    processors=[
-        structlog.contextvars.merge_contextvars,
-        structlog.processors.add_log_level,
-        structlog.processors.StackInfoRenderer(),
-        structlog.dev.set_exc_info,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer(),
-    ],
-    wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
-    context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-# Get logger
 logger = structlog.get_logger()
 
-# Usage with context
-logger = logger.bind(
-    service="chatbot-api",
-    environment=os.getenv("ENVIRONMENT", "development"),
-    version="1.0.0"
-)
-Log Categories:
-1. Security Logs:
-
-python
-async def log_security_event(event_type: str, **kwargs):
-    logger.warning(
-        "security_event",
-        event_type=event_type,
-        **kwargs,
-        # Auto-redacted fields
-        _redact=["api_key", "password", "token"]
-    )
-2. Performance Logs:
-
-python
-@contextmanager
-def log_performance(operation: str, **context):
-    start = time.perf_counter()
-    try:
-        yield
-    finally:
-        duration = time.perf_counter() - start
-        logger.info(
-            "performance",
-            operation=operation,
-            duration_ms=round(duration * 1000, 2),
-            **context
-        )
-3. Business Logs:
-
-python
-def log_conversation(project_id: str, message: dict, response: dict):
-    logger.info(
-        "conversation",
-        project_id=project_id,
-        user_message=message['content'][:200],  # Truncate
-        response_time_ms=response.get('metadata', {}).get('response_time_ms'),
-        tokens_used=response.get('usage', {}).get('total_tokens'),
-        # Never log full messages in production
-        _sensitive=["user_message", "response_text"]
-    )
-Log Retention Policy:
-yaml
-logging:
-  retention:
-    # Loki retention
-    production:
-      stream:
-        period: 24h    # Keep in hot storage
-        period_units: hours
-      chunk:
-        period: 168h   # Keep in warm storage (7 days)
-        period_units: hours
-      index:
-        period: 720h   # Keep index (30 days)
-        period_units: hours
-        
-  storage:
-    hot:  # SSD storage
-      size: 50GB
-    warm:  # HDD storage  
-      size: 200GB
-      
-  backup:
-    s3_bucket: "chatbot-logs-backup"
-    retention_days: 365
-🔍 DISTRIBUTED TRACING
-OpenTelemetry Configuration:
-python
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
-from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
-
-# Setup tracing
-trace.set_tracer_provider(TracerProvider())
-
-# Jaeger exporter
-jaeger_exporter = JaegerExporter(
-    agent_host_name="jaeger",
-    agent_port=6831,
-)
-trace.get_tracer_provider().add_span_processor(
-    BatchSpanProcessor(jaeger_exporter)
+# Good
+logger.info("ingestion_started", 
+    source_id=source.id, 
+    file_type=source.type,
+    size_bytes=file.size
 )
 
-# Instrument everything
-FastAPIInstrumentor.instrument_app(app)
-RedisInstrumentor().instrument()
-Psycopg2Instrumentor().instrument()
+# Bad
+logger.info(f"Started ingesting {source.id}")
+```
 
-# Get tracer
-tracer = trace.get_tracer(__name__)
-Trace Spans for Key Operations:
-1. Chat Request Flow:
-
-python
-async def handle_chat_request(request: Request, query: str):
-    with tracer.start_as_current_span("chat_request") as span:
-        span.set_attributes({
-            "project_id": request.state.project_id,
-            "query_length": len(query),
-            "conversation_id": request.state.conversation_id
-        })
-        
-        # Sub-spans for each component
-        with tracer.start_as_current_span("query_processing"):
-            processed_query = await process_query(query)
-            
-        with tracer.start_as_current_span("retrieval"):
-            chunks = await retrieve_chunks(processed_query)
-            span.set_attribute("chunks_retrieved", len(chunks))
-            
-        with tracer.start_as_current_span("llm_generation"):
-            response = await generate_response(chunks, query)
-            span.set_attribute("tokens_used", response.usage.total_tokens)
-            
-        return response
-2. Ingestion Pipeline:
-
-python
-async def ingest_source(source: Source):
-    with tracer.start_as_current_span("ingest_source") as span:
-        span.set_attributes({
-            "source_id": str(source.id),
-            "source_type": source.type,
-            "project_id": str(source.project_id)
-        })
-        
-        # Trace each step
-        steps = ["download", "parse", "chunk", "embed", "store"]
-        for step in steps:
-            with tracer.start_as_current_span(f"ingest_{step}"):
-                await perform_step(step, source)
-                
-        span.set_status(StatusCode.OK)
-Trace Sampling Strategy:
-python
-# Sample rates based on importance
-SAMPLING_RATES = {
-    "production": {
-        "high_importance": 1.0,    # 100% - Security events, errors
-        "medium_importance": 0.1,   # 10% - Regular requests
-        "low_importance": 0.01,     # 1% - Health checks, monitoring
-    },
-    "development": {
-        "all": 1.0  # Sample everything in dev
-    }
-}
-
-# Configure sampler
-from opentelemetry.sdk.trace.sampling import TraceIdRatioBased
-
-def dynamic_sampler(parent_context, trace_id, name, kind, attributes, links):
-    # Sample based on endpoint
-    if attributes.get("http.route") in ["/health", "/metrics"]:
-        return Decision.DROP  # Don't sample health checks
-        
-    if attributes.get("http.status_code", 200) >= 500:
-        return Decision.RECORD_AND_SAMPLE  # Always sample errors
-        
-    # Default sampling rate
-    return TraceIdRatioBased(0.1)
-🚨 ALERTING & NOTIFICATIONS
-Alert Rules (Prometheus):
-yaml
-# alert_rules.yml
-groups:
-  - name: chatbot_critical
-    rules:
-      - alert: APIHighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
-        for: 5m
-        labels:
-          severity: critical
-          service: api
-        annotations:
-          summary: "High error rate ({{ $value }} errors/second)"
-          description: "API error rate above 5% for 5 minutes"
-          runbook: "https://chatbot.com/runbooks/api-errors"
-          
-      - alert: DatabaseHighConnections
-        expr: pg_stat_database_numbackends{database="chatbot"} > 150
-        for: 2m
-        labels:
-          severity: warning
-          service: database
-        annotations:
-          summary: "High database connections ({{ $value }})"
-          
-      - alert: RedisMemoryHigh
-        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
-        for: 5m
-        labels:
-          severity: warning
-          service: redis
-  
-  - name: chatbot_business
-    rules:
-      - alert: HighTokenUsage
-        expr: rate(llm_tokens_total[1h]) > 1000000
-        for: 15m
-        labels:
-          severity: warning
-          service: billing
-        annotations:
-          summary: "High token usage detected"
-          description: "Project {{ $labels.project_id }} using {{ $value }} tokens/hour"
-          
-      - alert: UserFeedbackNegative
-        expr: rate(user_feedback_total{sentiment="negative"}[1h]) / rate(user_feedback_total[1h]) > 0.3
-        for: 1h
-        labels:
-          severity: warning
-          service: quality
-Alert Manager Configuration:
-yaml
-# alertmanager.yml
-global:
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'alerts@chatbot.com'
-  smtp_auth_username: 'alerts@chatbot.com'
-  smtp_auth_password: '${SMTP_PASSWORD}'
-
-route:
-  group_by: ['alertname', 'severity']
-  group_wait: 30s
-  group_interval: 5m
-  repeat_interval: 4h
-  
-  routes:
-    - match:
-        severity: critical
-      receiver: critical-alerts
-      continue: false
-      
-    - match:
-        severity: warning
-      receiver: warning-alerts
-
-receivers:
-  - name: critical-alerts
-    email_configs:
-      - to: 'oncall@chatbot.com'
-        headers:
-          Subject: '[CRITICAL] Chatbot Alert: {{ .GroupLabels.alertname }}'
-    slack_configs:
-      - api_url: '${SLACK_WEBHOOK_URL}'
-        channel: '#alerts-critical'
-        title: '{{ .GroupLabels.alertname }}'
-        text: '{{ .CommonAnnotations.summary }}'
-        
-  - name: warning-alerts
-    email_configs:
-      - to: 'engineering@chatbot.com'
-        headers:
-          Subject: '[WARNING] Chatbot Alert: {{ .GroupLabels.alertname }}'
-    slack_configs:
-      - channel: '#alerts-warning'
-Escalation Policy:
-yaml
-escalation_policy:
-  level_1:
-    duration: 15 minutes
-    notify: ["engineering@chatbot.com", "slack:#alerts"]
-    
-  level_2:
-    duration: 30 minutes
-    notify: ["oncall@chatbot.com", "sms:+15551234567"]
-    
-  level_3:
-    duration: 60 minutes
-    notify: ["cto@chatbot.com", "sms:+15559876543"]
-    
-  level_4:
-    duration: 120 minutes
-    notify: ["ceo@chatbot.com", "all-hands meeting"]
-📊 GRAFANA DASHBOARDS
-Dashboard Requirements:
-1. Executive Dashboard:
-
-Active projects
-
-Monthly recurring revenue (MRR)
-
-User growth
-
-Customer satisfaction (CSAT)
-
-Top queries
-
-2. Engineering Dashboard:
-
-System health (CPU, memory, disk)
-
-API performance (latency, error rate)
-
-Database metrics (connections, queries)
-
-Queue depths (background jobs)
-
-Cache hit rates
-
-3. AI/ML Dashboard:
-
-Retrieval quality (precision@k, recall@k)
-
-LLM performance (latency, token usage)
-
-Embedding cache effectiveness
-
-Hallucination rate
-
-User feedback trends
-
-4. Business Dashboard:
-
-Revenue
-
-Customer acquisition cost (CAC)
-
-Lifetime value (LTV)
-
-Churn rate
-
-Support ticket volume
-
-Dashboard Configuration:
-json
-{
-  "dashboard": {
-    "title": "Chatbot Platform - Engineering",
-    "tags": ["chatbot", "engineering", "production"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "title": "API Request Rate",
-        "type": "graph",
-        "targets": [{
-          "expr": "rate(http_requests_total[5m])",
-          "legendFormat": "{{method}} {{handler}}"
-        }]
-      },
-      {
-        "title": "Error Rate",
-        "type": "singlestat",
-        "targets": [{
-          "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100",
-          "format": "percent"
-        }],
-        "thresholds": "65,80"
-      }
-    ],
-    "refresh": "30s"
-  }
-}
-Real User Monitoring (RUM):
-javascript
-// Widget RUM implementation
-class WidgetMetrics {
-  constructor() {
-    this.metrics = {
-      performance: {},
-      errors: [],
-      userActions: []
-    };
-    
-    this.initPerformanceMonitoring();
-    this.initErrorTracking();
-    this.initUserActionTracking();
-  }
-  
-  initPerformanceMonitoring() {
-    // Navigation timing
-    const timing = performance.timing;
-    this.metrics.performance = {
-      loadTime: timing.loadEventEnd - timing.navigationStart,
-      domReady: timing.domContentLoadedEventEnd - timing.navigationStart,
-      ttfb: timing.responseStart - timing.requestStart
-    };
-    
-    // Send to backend
-    this.sendMetrics('performance', this.metrics.performance);
-  }
-  
-  sendMetrics(type, data) {
-    // RUM ingest endpoint is optional and not defined in api_spec.md.
-    // Send via beacon API (doesn't block page unload)
-    // Implement a dedicated metrics ingest endpoint if needed.
-    navigator.sendBeacon('https://metrics.chatbot.com/rum', JSON.stringify({
-      type: type,
-      data: data,
-      session_id: this.sessionId,
-      timestamp: Date.now()
-    }));
-  }
-}
-🔧 MONITORING AS CODE
-Terraform Configuration:
-hcl
-# monitoring.tf
-resource "grafana_dashboard" "engineering" {
-  config_json = file("${path.module}/dashboards/engineering.json")
-  folder = var.environment
-}
-
-resource "grafana_dashboard" "business" {
-  config_json = file("${path.module}/dashboards/business.json")
-  folder = var.environment
-}
-
-resource "grafana_alert_notification" "slack" {
-  name = "slack-alerts"
-  type = "slack"
-  settings = jsonencode({
-    url = var.slack_webhook_url
-  })
-}
-
-resource "prometheus_rule" "chatbot_rules" {
-  name = "chatbot-alerts"
-  group = "chatbot"
-  rule {
-    alert = "APIHighErrorRate"
-    expr = "rate(http_requests_total{status=~\"5..\"}[5m]) > 0.05"
-    for = "5m"
-    labels = {
-      severity = "critical"
-    }
-    annotations = {
-      summary = "High error rate detected"
-    }
-  }
-}
-Kubernetes Monitoring (Future):
-yaml
-# k8s/monitoring.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: chatbot-api
-spec:
-  selector:
-    matchLabels:
-      app: chatbot-api
-  endpoints:
-  - port: http
-    path: /metrics
-    interval: 15s
-    
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: chatbot-rules
-spec:
-  groups:
-  - name: chatbot
-    rules:
-    - alert: PodRestartFrequently
-      expr: kube_pod_container_status_restarts_total{pod=~"chatbot-api-.*"} > 5
-      for: 5m
-📋 HEALTH CHECKS
-Synthetic Monitoring:
-python
-# health_checks.py
-class HealthChecks:
-    async def check_api(self):
-        """Check API endpoints are responding"""
-        checks = {
-            "api_health": await self.check_endpoint("/health"),
-            # Optional: add authenticated /v1/projects/{project_id}/chat probe
-        }
-        return all(checks.values())
-    
-    async def check_database(self):
-        """Check database connectivity and performance"""
-        try:
-            # Simple query
-            result = await db.fetch_one("SELECT 1")
-            
-            # Check replication lag if applicable
-            lag = await db.fetch_val("SELECT pg_current_wal_lsn()")
-            
-            return True
-        except Exception as e:
-            logger.error("database_health_check_failed", error=str(e))
-            return False
-    
-    async def check_storage(self):
-        """Check object storage accessibility"""
-        try:
-            # Test write/read/delete
-            test_key = f"healthcheck/{uuid.uuid4()}"
-            await storage.write(test_key, b"test")
-            data = await storage.read(test_key)
-            await storage.delete(test_key)
-            
-            return data == b"test"
-        except Exception as e:
-            logger.error("storage_health_check_failed", error=str(e))
-            return False
-External Monitoring (UptimeRobot):
-yaml
-uptime_checks:
-  - name: "API Health"
-    url: "https://api.chatbot.com/health"
-    interval: 60
-    expected_status: 200
-    alert_contacts: ["Primary", "Secondary"]
-    
-  - name: "Widget Load"
-    url: "https://widget.chatbot.com/health"
-    interval: 60
-    expected_content: '"status":"healthy"'
-    
-  - name: "Chat End-to-End"
-    url: "https://api.chatbot.com/v1/chat"
-    method: POST
-    body: '{"query":"test"}'
-    headers:
-      Authorization: "Bearer test_token"
+
+## **🕵️ DISTRIBUTED TRACING (OpenTelemetry)**
+
+### **Trace Sampling:**
+- **Production:** 1% of read requests, 100% of write/error requests
+- **Staging:** 100% of all requests
+
+### **Key Spans:**
+1. **HTTP Request:** Full duration
+   - `http.method`
+   - `http.route`
+   - `http.status_code`
+
+2. **Database Query:** SQL execution
+   - `db.system`: postgresql
+   - `db.statement`: SELECT...
+
+3. **LLM Call:** External API call
+   - `llm.provider`: openai
+   - `llm.model`: gpt-4o-mini
+   - `llm.tokens`: 120
+
+4. **Vector Search:**
+   - `vector.collection`: chunks
+   - `vector.k`: 10
+   - `vector.latency`: 45ms
+
+### **Instrumentation:**
+```python
+from opentelemetry import trace
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+
+# Auto-instrumentation
+FastAPIInstrumentor.instrument_app(app)
+SQLAlchemyInstrumentor().instrument(engine=engine)
+RedisInstrumentor().instrument()
+
+# Manual spans
+tracer = trace.get_tracer(__name__)
+
+with tracer.start_as_current_span("generate_embeddings"):
+    span = trace.get_current_span()
+    span.set_attribute("batch_size", len(texts))
+    # ... code ...
+```
+
+---
+
+## **🚨 ALERTING RULES**
+
+### **Severity Levels:**
+1. **P1 (Critical):** Wake up call (PageDuty). System down, data loss, >5% error rate.
+2. **P2 (Warning):** Slack notification. Degraded performance, high latency, capacity warning.
+3. **P3 (Info):** Dashboard only. Deployment success, daily reports.
+
+### **Alert Definitions:**
+
+| Alert Name | Severity | Condition | Action |
+|------------|----------|-----------|--------|
+| `API_Down` | P1 | `up{job="api"} == 0` for 1m | Restart service, check logs |
+| `High_Error_Rate` | P1 | `rate(5xx[5m]) > 5%` | Check release, db connection |
+| `DB_Connection_Spike` | P2 | `pg_connections > 90%` | Scale pgbouncer, check leaks |
+| `Worker_Queue_Backlog` | P2 | `queue_depth > 1000` for 10m | Scale workers |
+| `High_Latency_Chat` | P2 | `P95_latency > 5s` for 5m | Check LLM provider status |
+| `Disk_Space_Low` | P2 | `disk_free < 10%` | Clean logs, expand volume |
+| `Rate_Limit_Abuse` | P3 | `rate_limit_hits > 1000/m` | Investigate IP |
+
+---
+
+## **📊 GRAFANA DASHBOARDS**
+
+### **1. Executive / Business Dashboard:**
+- Current active users (Real-time)
+- Total revenue today (Est.)
+- Total questions answered
+- Average cost per query
+- Usage by plan (Free vs Pro)
+
+### **2. API Performance Dashboard:**
+- Request rate (RPS)
+- Latency (P50, P95, P99)
+- Error rate (%)
+- Endpoint breakdown
+- Active connections
+
+### **3. RAG Pipeline Dashboard:**
+- Ingestion queue depth
+- Embedding generation latency
+- Vector search latency
+- Reranking latency
+- Cache hit rates (Embedding/Response)
+- Token usage per provider
+
+### **4. Database Health Dashboard:**
+- CPU/Memory usage
+- IOPS
+- Connection pool status
+- Cache hit ratio
+- Vacuum status
+- Deadlocks
+
+---
+
+## **🚦 HEALTH CHECKS**
+
+### **Liveness Probe (Is it running?):**
+`GET /health`
+- Returns 200 OK if process is up.
+- Fast, no dependencies checked.
+
+### **Readiness Probe (Can it serve traffic?):**
+`GET /health/ready`
+- Checks DB connection
+- Checks Redis connection
+- Checks S3 access
+- Returns 200 OK only if all healthy.
+
+### **Synthetic Monitoring:**
+Runs every 5 minutes from external location:
+1. Login (get token)
+2. Create project
+3. Upload small text
+4. Query chat
+5. Verify response
+6. Delete project
+
+---
+
+## **📱 REAL USER MONITORING (RUM)**
+
+### **Widget Telemetry:**
+The widget reports client-side metrics to `POST /metrics/widget` (batched):
+
+```json
+{
+  "metrics": [
+    {
+      "name": "widget_load_time",
+      "value": 450,
+      "tags": { "browser": "chrome", "os": "mac" }
+    },
+    {
+      "name": "first_contentful_paint",
+      "value": 800,
+      "tags": { "page": "/pricing" }
+    }
+  ]
+}
+```
+
+### **Browser Constraints:**
+- Use `navigator.sendBeacon` for reliability
+- Batch metrics to minimize requests
+- Sample 10% of sessions to reduce noise
+
+---
+
+## **🛠️ TOOLING STACK**
+
+| Component | Tool (Self-Hosted) | Managed Alternative |
+|-----------|--------------------|---------------------|
+| **Metrics** | Prometheus | Grafana Cloud / AWS Managed Prometheus |
+| **Visuals** | Grafana | Grafana Cloud |
+| **Logs** | Loki + Promtail | Datadog / CloudWatch Logs |
+| **Tracing** | Jaeger | Honeycomb / AWS X-Ray |
+| **Alerts** | Alertmanager | PagerDuty / OpsGenie |
+| **Synthetics** | Blackbox Exporter | Checkly / Pingdom |
+
+---
+
+## **✅ SETUP CHECKLIST**
+
+### **Day 1:**
+- [ ] Configure structured logging (JSON)
+- [ ] Expose `/metrics` endpoint in API
+- [ ] Set up Prometheus scraping
+- [ ] Import Grafana dashboards
+
+### **Day 2:**
+- [ ] Add OpenTelemetry instrumentation
+- [ ] Configure Jaeger/Tempo
+- [ ] Set up basic alerts (Uptime, Errors)
+
+### **Day 3:**
+- [ ] Implement business metrics
+- [ ] Set up SLO tracking
+- [ ] Create synthetic tests
+- [ ] Document runbooks for alerts

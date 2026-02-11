@@ -34,7 +34,7 @@ The RAG chatbot platform is designed for low operational cost with clear scaling
 | **Error Tracking** | Sentry | Free | $0 | Error monitoring |
 | **Domain** | Cloudflare | Basic | $10/year ($0.83/mo) | chatbot.com |
 | **Email** | Mailgun | Free | $0 | Notifications |
-| ****Total Fixed** | | | **$24.83** | |
+| **Total Fixed** | | | **$24.83** | |
 
 *Note: Free tiers are sufficient for up to 10,000 active users. Beyond that, costs scale linearly.*
 
@@ -100,9 +100,14 @@ Variable Costs:
   - Database: 100k queries @ $0.0001 = $10.00
 Total Variable: $210.50
 Total Monthly: $235.33
-🏷️ PRICING STRATEGY
-Free Tier (Acquisition):
-json
+```
+
+---
+
+## **🏷️ PRICING STRATEGY**
+
+### **Free Tier (Acquisition):**
+```json
 {
   "name": "Free",
   "price": "$0/month",
@@ -124,8 +129,10 @@ json
   "target": "Hobbyists, students, small projects",
   "conversion_goal": "5% to paid plans"
 }
-Pro Tier (Revenue Workhorse):
-json
+```
+
+### **Pro Tier (Revenue Workhorse):**
+```json
 {
   "name": "Pro",
   "price": "$49/month",
@@ -149,8 +156,10 @@ json
   "margin": "50-70%",
   "target": "Startups, small businesses, agencies"
 }
-Business Tier (High Value):
-json
+```
+
+### **Business Tier (High Value):**
+```json
 {
   "name": "Business",
   "price": "$299/month",
@@ -176,8 +185,10 @@ json
   "margin": "50-75%",
   "target": "Enterprises, large teams, high-volume"
 }
-Enterprise Tier (Custom):
-json
+```
+
+### **Enterprise Tier (Custom):**
+```json
 {
   "name": "Enterprise",
   "price": "$1,500+/month",
@@ -193,40 +204,56 @@ json
   ],
   "target": "Fortune 500, regulated industries"
 }
-Add-ons (Incremental Revenue):
-Add-on	Price	Description
-Additional Projects	$10/month each	Extra projects beyond plan limit
-Additional Queries	$10/100k queries	Pay-as-you-go overages
-Premium Support	$99/month	1h response time, dedicated contact
-White Label	$199/month	Remove branding, custom CSS
-API Only	$99/month	Higher rate limits, no widget
-📊 FINANCIAL PROJECTIONS
-Year 1 Projections (Conservative):
-Month	Users (Total)	Paid Users	MRR	Costs	Profit/Loss
-1	100	5	$245	$75	+$170
-3	500	25	$1,225	$150	+$1,075
-6	2,000	100	$4,900	$500	+$4,400
-12	10,000	500	$24,500	$2,500	+$22,000
-Assumptions: 5% conversion to paid, 80% Pro ($49), 20% Business ($299), 2% monthly churn.
+```
 
-Year 2 Projections (Growth):
-Month	Users (Total)	Paid Users	MRR	Costs	Profit
-18	50,000	2,500	$122,500	$12,500	+$110,000
-24	200,000	10,000	$490,000	$50,000	+$440,000
-Assumptions: Word-of-mouth growth, 10% month-over-month, improved conversion to 10%.
+### **Add-ons (Incremental Revenue):**
+| Add-on | Price | Description |
+|--------|-------|-------------|
+| **Additional Projects** | $10/month each | Extra projects beyond plan limit |
+| **Additional Queries** | $10/100k queries | Pay-as-you-go overages |
+| **Premium Support** | $99/month | 1h response time, dedicated contact |
+| **White Label** | $199/month | Remove branding, custom CSS |
+| **API Only** | $99/month | Higher rate limits, no widget |
 
-Break-even Analysis:
-yaml
+---
+
+## **📊 FINANCIAL PROJECTIONS**
+
+### **Year 1 Projections (Conservative):**
+| Month | Users (Total) | Paid Users | MRR | Costs | Profit/Loss |
+|-------|---------------|------------|-----|-------|-------------|
+| 1 | 100 | 5 | $245 | $75 | +$170 |
+| 3 | 500 | 25 | $1,225 | $150 | +$1,075 |
+| 6 | 2,000 | 100 | $4,900 | $500 | +$4,400 |
+| 12 | 10,000 | 500 | $24,500 | $2,500 | +$22,000 |
+
+*Assumptions: 5% conversion to paid, 80% Pro ($49), 20% Business ($299), 2% monthly churn.*
+
+### **Year 2 Projections (Growth):**
+| Month | Users (Total) | Paid Users | MRR | Costs | Profit |
+|-------|---------------|------------|-----|-------|--------|
+| 18 | 50,000 | 2,500 | $122,500 | $12,500 | +$110,000 |
+| 24 | 200,000 | 10,000 | $490,000 | $50,000 | +$440,000 |
+
+*Assumptions: Word-of-mouth growth, 10% month-over-month, improved conversion to 10%.*
+
+### **Break-even Analysis:**
+```yaml
 Fixed Monthly Costs: $24.83
 Average Revenue Per User (ARPU): $49 (Pro plan)
 Contribution Margin: 70% ($34.30 after variable costs)
 Break-even Users: 1 user (covers fixed costs)
 Profitability Threshold: 3 users (> $100/month profit)
-💡 COST OPTIMIZATION STRATEGIES
-Technical Optimizations:
-1. Caching Strategy (70% cost reduction):
+```
 
-python
+---
+
+## **💡 COST OPTIMIZATION STRATEGIES**
+
+### **Technical Optimizations:**
+
+**1. Caching Strategy (70% cost reduction):**
+```python
 # Embedding cache hit rate targets
 TARGET_HIT_RATES = {
     "embeddings": 0.70,  # 70% of queries hit cache
@@ -240,9 +267,10 @@ REDIS_CONFIG = {
     "response_cache_ttl": 7 * 86400,    # 7 days
     "max_cache_size_mb": 1024           # 1GB max
 }
-2. Token Optimization:
+```
 
-yaml
+**2. Token Optimization:**
+```yaml
 Strategies:
   - Chunk size optimization: 384 tokens optimal
   - Context window management: Trim to necessary context
@@ -253,30 +281,29 @@ Targets:
   - Tokens per query: < 1,000
   - Embeddings cached: > 70%
   - Chunk reuse: > 50%
-3. Batch Processing:
+```
 
-python
+**3. Batch Processing:**
+```python
 # Instead of per-request embedding
 embeddings = await embed_texts([chunk1, chunk2, chunk3])  # 1 API call
 
 # Instead of per-file processing
 process_batch([file1, file2, file3])  # Better resource utilization
-Business Optimizations:
-1. Tiered Service Levels:
+```
 
-Free: Community support, slower processing
+### **Business Optimizations:**
 
-Pro: Email support, standard processing
+**1. Tiered Service Levels:**
+- **Free:** Community support, slower processing
+- **Pro:** Email support, standard processing
+- **Business:** Priority support, faster processing
+- **Enterprise:** Dedicated resources
 
-Business: Priority support, faster processing
+**2. Usage-Based Billing:**
+*This assumes a future plan model (no plan fields in schema.sql yet).*
 
-Enterprise: Dedicated resources
-
-2. Usage-Based Billing:
-
-This assumes a future plan model (no plan fields in schema.sql yet).
-
-python
+```python
 def calculate_usage_cost(project):
     base_cost = PLAN_PRICES[project.plan]
     overage_cost = 0
@@ -286,43 +313,47 @@ def calculate_usage_cost(project):
         overage_cost = overage * 0.0001  # $0.10 per 1,000 queries
     
     return base_cost + overage_cost
-⚠️ HIDDEN & UNEXPECTED COSTS
-Often Overlooked:
-Payment Processing: 2.9% + $0.30 per transaction (Stripe)
+```
 
-Compliance: GDPR/CCPA legal consultation ($5,000 one-time)
+---
 
-Security: Annual penetration test ($3,000-$10,000)
+## **⚠️ HIDDEN & UNEXPECTED COSTS**
 
-Insurance: Professional liability insurance ($1,500/year)
+### **Often Overlooked:**
+- **Payment Processing:** 2.9% + $0.30 per transaction (Stripe)
+- **Compliance:** GDPR/CCPA legal consultation ($5,000 one-time)
+- **Security:** Annual penetration test ($3,000-$10,000)
+- **Insurance:** Professional liability insurance ($1,500/year)
+- **Accounting:** Bookkeeping, taxes ($200/month)
+- **Marketing:** Content, ads, conferences ($500-$5,000/month)
 
-Accounting: Bookkeeping, taxes ($200/month)
+### **Scaling Costs:**
+| Stage | Unexpected Costs | Mitigation |
+|-------|------------------|------------|
+| Early | Support time (2-4h/week per 100 users) | Better documentation, FAQ |
+| Growth | Infrastructure complexity | Managed services, automation |
+| Scale | Compliance, security, legal | Budget 20% for "unknown unknowns" |
+| Enterprise | Custom demands, SLAs | Clear contracts, scope definition |
 
-Marketing: Content, ads, conferences ($500-$5,000/month)
+### **Opportunity Costs:**
+- **Development Time:** 40 hours/week @ $100/hour = $16,000/month
+- **Marketing Time:** 10 hours/week @ $50/hour = $2,000/month
+- **Support Time:** 20 hours/week @ $30/hour = $2,400/month
+- **Total opportunity cost:** ~$20,400/month (for solo founder with market-rate skills)
 
-Scaling Costs:
-Stage	Unexpected Costs	Mitigation
-Early	Support time (2-4h/week per 100 users)	Better documentation, FAQ
-Growth	Infrastructure complexity	Managed services, automation
-Scale	Compliance, security, legal	Budget 20% for "unknown unknowns"
-Enterprise	Custom demands, SLAs	Clear contracts, scope definition
-Opportunity Costs:
-Development Time: 40 hours/week @ $100/hour = $16,000/month
+---
 
-Marketing Time: 10 hours/week @ $50/hour = $2,000/month
+## **🎯 PRICING PSYCHOLOGY**
 
-Support Time: 20 hours/week @ $30/hour = $2,400/month
-
-Total opportunity cost: ~$20,400/month (for solo founder with market-rate skills)
-
-🎯 PRICING PSYCHOLOGY
-Price Anchoring:
-text
+### **Price Anchoring:**
+```text
 Business: $299/month
 Pro: $49/month  ← Looks like great value
 Free: $0/month
-Feature Grading:
-yaml
+```
+
+### **Feature Grading:**
+```yaml
 Free:
   - ✓ Basic chatbot
   - ✓ 10 sources
@@ -342,16 +373,19 @@ Business:
   - ✓ SSO/SAML
   - ✓ Priority support
   - ✓ SLA guarantee
-Annual Discount:
-Monthly: $49/month
+```
 
-Annual: $490/year (16% discount = $40.83/month)
+### **Annual Discount:**
+- **Monthly:** $49/month
+- **Annual:** $490/year (16% discount = $40.83/month)
+- **Effect:** Improves cash flow, reduces churn
 
-Effect: Improves cash flow, reduces churn
+---
 
-📋 COST MONITORING DASHBOARD
-Key Metrics to Track Daily:
-sql
+## **📋 COST MONITORING DASHBOARD**
+
+### **Key Metrics to Track Daily:**
+```sql
 -- Daily cost report
 SELECT
     DATE(m.created_at) as day,
@@ -362,8 +396,10 @@ FROM messages m
 JOIN conversations c ON c.id = m.conversation_id
 WHERE m.created_at >= NOW() - INTERVAL '1 day'
 GROUP BY DATE(m.created_at);
-Cost Alerts:
-yaml
+```
+
+### **Cost Alerts:**
+```yaml
 alerts:
   - metric: daily_cost_per_user
     threshold: > $0.50
@@ -380,8 +416,10 @@ alerts:
   - metric: support_costs_per_user
     threshold: > $5/month
     action: Improve documentation/onboarding
-Monthly Cost Report Template:
-markdown
+```
+
+### **Monthly Cost Report Template:**
+```markdown
 # Monthly Cost Report - March 2026
 
 ## Summary
@@ -405,43 +443,39 @@ markdown
 1. Implement response caching (save ~$100/month)
 2. Add usage alerts for high-volume users
 3. Consider tiered embeddings (free=small, paid=large)
-🔄 COST REVIEW PROCESS
-Monthly Review:
-Compare actual vs projected costs
+```
 
-Identify cost outliers (projects/users)
+---
 
-Review optimization opportunities
+## **🔄 COST REVIEW PROCESS**
 
-Adjust pricing if necessary
+### **Monthly Review:**
+- Compare actual vs projected costs
+- Identify cost outliers (projects/users)
+- Review optimization opportunities
+- Adjust pricing if necessary
+- Update financial projections
 
-Update financial projections
+### **Quarterly Review:**
+- Benchmark against competitors
+- Review market pricing trends
+- Evaluate feature/price alignment
+- Plan infrastructure upgrades
+- Budget for next quarter
 
-Quarterly Review:
-Benchmark against competitors
+### **Annual Review:**
+- Comprehensive financial audit
+- Pricing strategy overhaul
+- Infrastructure cost optimization
+- Plan for scaling (12-24 months)
+- Set financial goals for next year
 
-Review market pricing trends
+---
 
-Evaluate feature/price alignment
+## **🚀 GROWTH FUNDING REQUIREMENTS**
 
-Plan infrastructure upgrades
-
-Budget for next quarter
-
-Annual Review:
-Comprehensive financial audit
-
-Pricing strategy overhaul
-
-Infrastructure cost optimization
-
-Plan for scaling (12-24 months)
-
-Set financial goals for next year
-
-🚀 GROWTH FUNDING REQUIREMENTS
-Bootstrapped Path:
-yaml
+### **Bootstrapped Path:**
+```yaml
 Phase 1 (Months 1-6): 
   - Investment: $5,000 savings
   - Goal: 100 users, $500 MRR
@@ -456,8 +490,10 @@ Phase 3 (Year 2):
   - Investment: $50,000 revenue
   - Goal: 10,000 users, $50,000 MRR
   - Focus: Team hire, marketing
-Venture Funding Path:
-yaml
+```
+
+### **Venture Funding Path:**
+```yaml
 Pre-seed ($250k):
   - Valuation: $2M
   - Use: 12 months runway
@@ -472,57 +508,46 @@ Series A ($5M):
   - Valuation: $30M
   - Use: Scale team (20), enterprise sales
   - Goal: 100,000 users, $500,000 MRR
-✅ COST MANAGEMENT CHECKLIST
-Monthly Tasks:
-Review AWS/Cloud bills
+```
 
-Analyze OpenAI API usage
+---
 
-Check cache hit rates
+## **✅ COST MANAGEMENT CHECKLIST**
 
-Review support time/costs
+### **Monthly Tasks:**
+- [ ] Review AWS/Cloud bills
+- [ ] Analyze OpenAI API usage
+- [ ] Check cache hit rates
+- [ ] Review support time/costs
+- [ ] Update financial projections
+- [ ] Send invoices to customers
 
-Update financial projections
+### **Quarterly Tasks:**
+- [ ] Benchmark infrastructure costs
+- [ ] Review pricing competitiveness
+- [ ] Optimize database/indexes
+- [ ] Evaluate new cost-saving technologies
+- [ ] Plan capacity upgrades
 
-Send invoices to customers
+### **Annual Tasks:**
+- [ ] Renegotiate provider contracts
+- [ ] Complete financial audit
+- [ ] Set annual budget
+- [ ] Review insurance coverage
+- [ ] Plan major infrastructure changes
 
-Quarterly Tasks:
-Benchmark infrastructure costs
+---
 
-Review pricing competitiveness
+## **📞 FINANCIAL CONTACTS**
 
-Optimize database/indexes
+### **Service Providers:**
+- **AWS/Cloud:** billing@chatbot.com
+- **OpenAI:** api-support@openai.com
+- **Payment Processor:** stripe@chatbot.com
+- **Accounting:** accounting@chatbot.com
 
-Evaluate new cost-saving technologies
-
-Plan capacity upgrades
-
-Annual Tasks:
-Renegotiate provider contracts
-
-Complete financial audit
-
-Set annual budget
-
-Review insurance coverage
-
-Plan major infrastructure changes
-
-📞 FINANCIAL CONTACTS
-Service Providers:
-AWS/Cloud: billing@chatbot.com
-
-OpenAI: api-support@openai.com
-
-Payment Processor: stripe@chatbot.com
-
-Accounting: accounting@chatbot.com
-
-Internal Contacts:
-Financial Decisions: CEO/Founder
-
-Billing Issues: Support team
-
-Cost Optimization: Engineering lead
-
-Budget Approval: Founder + Advisor
+### **Internal Contacts:**
+- **Financial Decisions:** CEO/Founder
+- **Billing Issues:** Support team
+- **Cost Optimization:** Engineering lead
+- **Budget Approval:** Founder + Advisor

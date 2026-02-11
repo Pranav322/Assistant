@@ -9,17 +9,11 @@
 The widget is embedded as an iframe on customer websites. All communication between the widget (iframe) and parent page uses the `postMessage` API with strict origin validation and message format enforcement.
 
 ### **Embedding Flow:**
-Customer adds script tag to their site
-
-Script creates iframe with JWT token
-
-Iframe loads, validates token
-
-Handshake establishes secure channel
-
-Regular chat communication begins
-
-text
+1. Customer adds script tag to their site
+2. Script creates iframe with JWT token
+3. Iframe loads, validates token
+4. Handshake establishes secure channel
+5. Regular chat communication begins
 
 ---
 
@@ -41,26 +35,32 @@ text
     allow="clipboard-write"
   ></iframe>
 </div>
-Manual Iframe Method:
-html
+```
+
+### **Manual Iframe Method:**
+```html
 <iframe
   src="https://widget.chatbot.com/widget.html?token=JWT_TOKEN&project_id=PROJECT_ID&config={config}"
   style="width: 400px; height: 600px; border: none;"
   sandbox="allow-scripts allow-same-origin allow-forms"
 ></iframe>
-Configuration Parameters:
-Parameter	Required	Description
-token	Yes	JWT token from /tokens/widget endpoint
-project_id	Yes	Project ID (UUID)
-config	No	JSON-encoded configuration (client-side only)
-theme	No	light, dark, or auto (default)
-language	No	Language code (default: browser language)
-initial_message	No	Pre-populate chat input
-hide_logo	No	true/false (default: false)
-z_index	No	CSS z-index (default: 999999)
-Example config:
+```
 
-javascript
+### **Configuration Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `token` | Yes | JWT token from `/tokens/widget` endpoint |
+| `project_id` | Yes | Project ID (UUID) |
+| `config` | No | JSON-encoded configuration (client-side only) |
+| `theme` | No | `light`, `dark`, or `auto` (default) |
+| `language` | No | Language code (default: browser language) |
+| `initial_message` | No | Pre-populate chat input |
+| `hide_logo` | No | `true`/`false` (default: `false`) |
+| `z_index` | No | CSS z-index (default: `999999`) |
+
+### **Example config:**
+```javascript
 const config = {
   theme: 'dark',
   position: { bottom: 20, right: 20 },
@@ -80,11 +80,16 @@ const config = {
 
 const encoded = encodeURIComponent(JSON.stringify(config));
 const iframeSrc = `https://widget.chatbot.com/widget.html?token=...&config=${encoded}`;
-📨 MESSAGE PROTOCOL
-Message Structure:
+```
+
+---
+
+## **📨 MESSAGE PROTOCOL**
+
+### **Message Structure:**
 All messages must follow this format:
 
-javascript
+```javascript
 {
   // REQUIRED FIELDS
   "type": "chatbot:message_type",  // See message types below
@@ -96,24 +101,24 @@ javascript
   "version": "1.0.0",             // Protocol version
   "origin": "https://customer.com", // For validation
 }
-Message Validation Rules:
-Origin Check: Must validate event.origin against allowed origins
+```
 
-Timestamp: Must be within ±5 minutes of current time
+### **Message Validation Rules:**
+1. **Origin Check:** Must validate `event.origin` against allowed origins
+2. **Timestamp:** Must be within ±5 minutes of current time
+3. **Format:** Must contain all required fields
+4. **Size:** Payload must be < 10KB
+5. **Rate Limit:** Client-side guardrail only (server-side rate limiting is enforced per security.md)
 
-Format: Must contain all required fields
+---
 
-Size: Payload must be < 10KB
+## **📤 WIDGET → PARENT MESSAGES**
 
-Rate Limit: Client-side guardrail only (no server-side enforcement)
-
-📤 WIDGET → PARENT MESSAGES
-chatbot:ready
+### **`chatbot:ready`**
 Widget loaded and ready for communication
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "widgetId": "widget_abc123",
   "dimensions": {
@@ -125,12 +130,13 @@ json
     "version": "1.0.0"
   }
 }
-chatbot:message
+```
+
+### **`chatbot:message`**
 User sends a message through the widget
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "text": "How do I reset my password?",
   "sessionId": "session_abc123",
@@ -139,104 +145,110 @@ json
     "timestamp": "2026-02-12T10:30:00Z"
   }
 }
-chatbot:token_expiring
+```
+
+### **`chatbot:token_expiring`**
 JWT token is about to expire (1 hour remaining)
 
-Payload:
-
-json
+**Payload:**
+```json
 {
-  "expiresIn": 1800,  // seconds
+  "expiresIn": 1800,
   "currentToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
 }
-Parent should: Call /tokens/refresh endpoint and send new token via chatbot:token_refreshed
+```
 
-chatbot:error
+Parent should: Call `/tokens/refresh` endpoint and send new token via `chatbot:token_refreshed`
+
+### **`chatbot:error`**
 Widget encountered an error
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "code": "network_error",
   "message": "Failed to connect to API",
   "details": {},
   "recoverable": true
 }
-Error Codes:
+```
 
-network_error - Failed to connect to backend
+**Error Codes:**
+- `network_error` — Failed to connect to backend
+- `auth_error` — Token expired or invalid
+- `config_error` — Invalid configuration
+- `render_error` — UI rendering failed
+- `message_error` — Message validation failed
 
-auth_error - Token expired or invalid
-
-config_error - Invalid configuration
-
-render_error - UI rendering failed
-
-message_error - Message validation failed
-
-chatbot:resize
+### **`chatbot:resize`**
 Request parent to resize iframe
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "width": 400,
   "height": 500,
   "reason": "message_history_grew"
 }
-chatbot:close
+```
+
+### **`chatbot:close`**
 User closed the widget
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "sessionId": "session_abc123",
   "messageCount": 5,
-  "duration": 120  // seconds
+  "duration": 120
 }
-chatbot:feedback
+```
+
+### **`chatbot:feedback`**
 User provided feedback (thumbs up/down)
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "messageId": "msg_abc123",
-  "feedback": "positive",  // "positive", "negative"
+  "feedback": "positive",
   "comment": "Very helpful!",
   "rating": 5
 }
-chatbot:typing
+```
+
+### **`chatbot:typing`**
 User is typing (for typing indicators)
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "isTyping": true,
   "sessionId": "session_abc123"
 }
-📥 PARENT → WIDGET MESSAGES
-chatbot:ack
+```
+
+---
+
+## **📥 PARENT → WIDGET MESSAGES**
+
+### **`chatbot:ack`**
 Acknowledge receipt of message
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "received": true,
   "requestId": "uuid-of-original-message",
   "processedAt": "2026-02-12T10:30:01Z"
 }
-chatbot:response
+```
+
+### **`chatbot:response`**
 Send chat response from backend
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "text": "To reset your password, go to Settings > Security...",
   "messageId": "msg_abc123",
@@ -253,23 +265,25 @@ json
     "responseTime": 1245
   }
 }
-chatbot:token_refreshed
+```
+
+### **`chatbot:token_refreshed`**
 Provide new JWT token
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
   "expiresIn": 86400,
   "expiresAt": "2026-02-13T10:30:00Z"
 }
-chatbot:config_update
+```
+
+### **`chatbot:config_update`**
 Update widget configuration
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "theme": "light",
   "greeting": "New greeting message",
@@ -277,39 +291,47 @@ json
     "primary": "#10b981"
   }
 }
-chatbot:ping
+```
+
+### **`chatbot:ping`**
 Keepalive/health check
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "timestamp": "2026-02-12T10:30:00Z"
 }
-Widget should respond with: chatbot:pong
+```
 
-chatbot:clear
+Widget should respond with: `chatbot:pong`
+
+### **`chatbot:clear`**
 Clear chat history
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "sessionId": "session_abc123",
   "reason": "user_requested"
 }
-chatbot:focus
+```
+
+### **`chatbot:focus`**
 Focus the widget input
 
-Payload:
-
-json
+**Payload:**
+```json
 {
   "sessionId": "session_abc123"
 }
-🔐 SECURITY IMPLEMENTATION
-Parent Page Code (Customer Website):
-javascript
+```
+
+---
+
+## **🔐 SECURITY IMPLEMENTATION**
+
+### **Parent Page Code (Customer Website):**
+```javascript
 class ChatbotWidgetManager {
   constructor(allowedOrigin = 'https://widget.chatbot.com') {
     this.allowedOrigin = allowedOrigin;
@@ -466,8 +488,10 @@ class ChatbotWidgetManager {
     return data.token;
   }
 }
-Widget Code (Inside Iframe):
-javascript
+```
+
+### **Widget Code (Inside Iframe):**
+```javascript
 class ChatbotWidget {
   constructor() {
     this.parentOrigin = null;
@@ -747,18 +771,20 @@ class ChatbotWidget {
 document.addEventListener('DOMContentLoaded', () => {
   window.widget = new ChatbotWidget();
 });
-🚨 ERROR HANDLING
-Connection Issues:
-Widget can't reach parent: Queue messages, retry every 5 seconds
+```
 
-Parent can't reach widget: Show error in parent console, attempt re-initialization
+---
 
-Token expired: Auto-refresh with exponential backoff (1s, 2s, 4s, 8s... max 64s)
+## **🚨 ERROR HANDLING**
 
-API unreachable: Show user-friendly message, retry button
+### **Connection Issues:**
+- **Widget can't reach parent:** Queue messages, retry every 5 seconds
+- **Parent can't reach widget:** Show error in parent console, attempt re-initialization
+- **Token expired:** Auto-refresh with exponential backoff (1s, 2s, 4s, 8s... max 64s)
+- **API unreachable:** Show user-friendly message, retry button
 
-Recovery Strategies:
-javascript
+### **Recovery Strategies:**
+```javascript
 class ConnectionManager {
   constructor(widget) {
     this.widget = widget;
@@ -791,9 +817,14 @@ class ConnectionManager {
     }
   }
 }
-📊 ANALYTICS & METRICS
-Widget Metrics to Track:
-javascript
+```
+
+---
+
+## **📊 ANALYTICS & METRICS**
+
+### **Widget Metrics to Track:**
+```javascript
 const metrics = {
   performance: {
     loadTime: 0,        // Time to widget ready
@@ -812,8 +843,10 @@ const metrics = {
     validationErrors: 0
   }
 };
-Send Metrics to Parent:
-javascript
+```
+
+### **Send Metrics to Parent:**
+```javascript
 // Periodic metric reporting
 setInterval(() => {
   widget.sendToParent({
@@ -822,24 +855,23 @@ setInterval(() => {
     requestId: widget.generateRequestId()
   });
 }, 60000); // Every minute
-🔧 TESTING PROTOCOL
-Test Message Sequence:
-Parent sends chatbot:ping
+```
 
-Widget responds with chatbot:pong
+---
 
-Widget sends chatbot:ready
+## **🔧 TESTING PROTOCOL**
 
-Parent responds with chatbot:ack
+### **Test Message Sequence:**
+1. Parent sends `chatbot:ping`
+2. Widget responds with `chatbot:pong`
+3. Widget sends `chatbot:ready`
+4. Parent responds with `chatbot:ack`
+5. Simulate user message flow
+6. Test error conditions
+7. Test token refresh flow
 
-Simulate user message flow
-
-Test error conditions
-
-Test token refresh flow
-
-Integration Test Script:
-javascript
+### **Integration Test Script:**
+```javascript
 // test-widget-integration.js
 async function testWidgetIntegration() {
   console.log('Starting widget integration test...');
@@ -890,25 +922,25 @@ function waitForMessage(type, timeout) {
     check();
   });
 }
-📝 VERSIONING & COMPATIBILITY
-Protocol Versioning:
-Major changes: Breaking changes to message format
+```
 
-Minor changes: New message types, optional fields
+---
 
-Patch changes: Bug fixes, documentation updates
+## **📝 VERSIONING & COMPATIBILITY**
 
-Backward Compatibility:
-New fields are always optional
+### **Protocol Versioning:**
+- **Major changes:** Breaking changes to message format
+- **Minor changes:** New message types, optional fields
+- **Patch changes:** Bug fixes, documentation updates
 
-Old message types remain supported for 6 months
+### **Backward Compatibility:**
+- New fields are always optional
+- Old message types remain supported for 6 months
+- Deprecation warnings in console
+- Version negotiation during handshake
 
-Deprecation warnings in console
-
-Version negotiation during handshake
-
-Version Detection:
-javascript
+### **Version Detection:**
+```javascript
 // During handshake
 widget.sendToParent({
   type: 'chatbot:handshake',
@@ -917,3 +949,4 @@ widget.sendToParent({
     supportedVersions: ['1.0.0', '0.9.0']
   }
 });
+```

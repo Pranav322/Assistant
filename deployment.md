@@ -11,31 +11,32 @@
 This guide covers deploying the RAG chatbot platform to production. The architecture is designed for solo-developer operations with clear scaling paths.
 
 ### **Architecture Diagram:**
-┌─────────────────────────────────────────────────────────┐
-│ Cloudflare (DNS/CDN) │
-└───────────────────────┬─────────────────────────────────┘
-│ HTTPS
-┌───────────────────────▼─────────────────────────────────┐
-│ Load Balancer (Nginx) │
-└───────┬──────────────────────┬──────────────────────┬───┘
-│ │ │
-┌───────▼──────┐ ┌───────▼──────┐ ┌────────▼──────┐
-│ API Server │ │ API Server │ │ Background │
-│ (FastAPI) │ │ (FastAPI) │ │ Workers │
-│ VPS #1 │ │ VPS #2 │ │ VPS #3 │
-└───────┬──────┘ └───────┬──────┘ └────────┬──────┘
-│ │ │
-└──────────────────────┼──────────────────────┘
-│
-┌──────────▼──────────┐
-│ Managed Services │
-├─────────────────────┤
-│ • PostgreSQL (Neon)│
-│ • Redis (Upstash) │
-│ • S3 (Cloudflare R2)│
-└─────────────────────┘
 
-text
+```text
+┌─────────────────────────────────────────────────────────┐
+│                 Cloudflare (DNS/CDN)                    │
+└───────────────────────┬─────────────────────────────────┘
+                        │ HTTPS
+┌───────────────────────▼─────────────────────────────────┐
+│                 Load Balancer (Nginx)                   │
+└───────┬──────────────────────┬──────────────────────┬───┘
+        │                      │                      │
+┌───────▼──────┐       ┌───────▼──────┐       ┌────────▼──────┐
+│  API Server  │       │  API Server  │       │   Background  │
+│   (FastAPI)  │       │   (FastAPI)  │       │    Workers    │
+│    VPS #1    │       │    VPS #2    │       │    VPS #3    │
+└───────┬──────┘       └───────┬──────┘       └────────┬──────┘
+        │                      │                       │
+└──────────────────────┼──────────────────────┘
+                       │
+             ┌──────────▼──────────┐
+             │   Managed Services  │
+             ├─────────────────────┤
+             │ • PostgreSQL (Neon) │
+             │ • Redis (Upstash)   │
+             │ • S3 (Cloudflare R2)│
+             └─────────────────────┘
+```
 
 ---
 
@@ -69,22 +70,23 @@ Scaling Requirements (10,000 users):
 - Redis Cluster: 4GB RAM
 - Object Storage: 1TB+
 - Load Balancer
-3. Service Accounts:
-Cloudflare Account (DNS, CDN, R2 storage)
+```
 
-GitHub/GitLab (Code repository)
+### **3. Service Accounts:**
+- **Cloudflare Account:** DNS, CDN, R2 storage
+- **GitHub/GitLab:** Code repository
+- **Docker Hub:** Container registry (optional)
+- **Sentry Account:** Error tracking (optional)
+- **PostgreSQL Provider:** Neon, Supabase, or AWS RDS
 
-Docker Hub (Container registry, optional)
+---
 
-Sentry Account (Error tracking, optional)
+## **⚙️ ENVIRONMENT CONFIGURATION**
 
-PostgreSQL Provider (Neon, Supabase, AWS RDS)
+### **Required Environment Variables:**
+Create `.env.production` file:
 
-⚙️ ENVIRONMENT CONFIGURATION
-Required Environment Variables:
-Create .env.production file:
-
-bash
+```bash
 # ============================================
 # DATABASE
 # ============================================
@@ -150,8 +152,10 @@ SMTP_PORT=587
 SMTP_USER="noreply@chatbot.com"
 SMTP_PASSWORD="app-password"
 EMAIL_FROM="Chatbot <noreply@chatbot.com>"
-Generating Secrets:
-bash
+```
+
+### **Generating Secrets:**
+```bash
 # Generate encryption keys
 openssl rand -base64 32  # For ENCRYPTION_MASTER_KEY
 openssl rand -base64 32  # For JWT_SECRET
@@ -162,11 +166,16 @@ openssl rand -base64 24  # For PostgreSQL
 
 # Generate Redis password
 openssl rand -base64 24  # For Redis
-🐳 DOCKER DEPLOYMENT
-Docker Compose Configuration:
-Create docker-compose.production.yml:
+```
 
-yaml
+---
+
+## **🐳 DOCKER DEPLOYMENT**
+
+### **Docker Compose Configuration:**
+Create `docker-compose.production.yml`:
+
+```yaml
 version: '3.8'
 
 # ============================================
@@ -186,6 +195,8 @@ volumes:
   postgres_data:
   redis_data:
   logs:
+  prometheus_data:
+  grafana_data:
 
 # ============================================
 # SERVICES
@@ -407,8 +418,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-Dockerfile for API:
-dockerfile
+```
+
+### **Dockerfile for API:**
+```dockerfile
 # Dockerfile.api
 FROM python:3.11-slim as builder
 
@@ -459,9 +472,29 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
-Dockerfile for Workers:
-dockerfile
+```
+
+### **Dockerfile for Workers:**
+```dockerfile
 # Dockerfile.worker
+FROM python:3.11-slim as builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Production stage
 FROM python:3.11-slim
 
 # Install system dependencies for PDF processing
@@ -469,24 +502,27 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     tesseract-ocr \
     libmagic1 \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Create non-root user
 RUN useradd -m -u 1000 worker
 USER worker
 WORKDIR /app
 
-# Copy virtual environment from builder (same as API)
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
 # Copy application code
 COPY --chown=worker:worker . .
 
 # Run worker
 CMD ["dramatiq", "worker", "--processes", "4", "--threads", "2"]
-Nginx Configuration:
-nginx
+```
+
+### **Nginx Configuration:**
+```nginx
 # nginx.conf
 events {
     worker_connections 1024;
@@ -530,8 +566,7 @@ http {
     # Upstream API servers
     upstream api_backend {
         least_conn;
-        server api1:8000 max_fails=3 fail_timeout=30s;
-        server api2:8000 max_fails=3 fail_timeout=30s;
+        server api:8000 max_fails=3 fail_timeout=30s;
         keepalive 32;
     }
 
@@ -539,7 +574,7 @@ http {
     server {
         listen 80;
         listen [::]:80;
-    server_name api.chatbot.com widget.chatbot.com;
+        server_name api.chatbot.com widget.chatbot.com;
         
         # Redirect to HTTPS
         location / {
@@ -646,8 +681,10 @@ http {
         }
     }
 }
-PostgreSQL Configuration:
-conf
+```
+
+### **PostgreSQL Configuration:**
+```conf
 # postgres.conf
 # Performance tuning for pgvector
 shared_buffers = 1GB
@@ -678,8 +715,10 @@ autovacuum = on
 autovacuum_max_workers = 3
 autovacuum_vacuum_scale_factor = 0.1
 autovacuum_analyze_scale_factor = 0.05
-Prometheus Configuration:
-yaml
+```
+
+### **Prometheus Configuration:**
+```yaml
 # prometheus.yml
 global:
   scrape_interval: 15s
@@ -705,9 +744,14 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: ['node-exporter:9100']
-🚀 DEPLOYMENT SCRIPTS
-Initial Setup Script:
-bash
+```
+
+---
+
+## **🚀 DEPLOYMENT SCRIPTS**
+
+### **Initial Setup Script:**
+```bash
 #!/bin/bash
 # setup-server.sh
 set -e
@@ -756,8 +800,10 @@ echo "✅ Setup complete! Next steps:"
 echo "1. Edit /opt/chatbot/.env.production"
 echo "2. Copy docker-compose.yml to /opt/chatbot/"
 echo "3. Run: docker compose up -d"
-Deployment Script:
-bash
+```
+
+### **Deployment Script:**
+```bash
 #!/bin/bash
 # deploy.sh
 set -e
@@ -803,8 +849,10 @@ fi
 docker image prune -f
 
 echo "Deployment completed at $(date)"
-Backup Script:
-bash
+```
+
+### **Backup Script:**
+```bash
 #!/bin/bash
 # backup.sh
 set -e
@@ -830,8 +878,10 @@ fi
 find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
 
 echo "✅ Backup completed: $BACKUP_FILE.gz"
-Monitoring Script:
-bash
+```
+
+### **Monitoring Script:**
+```bash
 #!/bin/bash
 # monitor.sh
 set -e
@@ -858,9 +908,14 @@ docker exec chatbot-redis redis-cli -a $REDIS_PASSWORD LLEN dramatiq:default
 # Database connections
 echo -e "\nDatabase Connections:"
 docker exec chatbot-postgres psql -U chatbot_user -d chatbot -c "SELECT count(*) FROM pg_stat_activity;"
-☁️ CLOUD DEPLOYMENT
-Option 1: DigitalOcean (Simplest)
-bash
+```
+
+---
+
+## **☁️ CLOUD DEPLOYMENT**
+
+### **Option 1: DigitalOcean (Simplest)**
+```bash
 # 1. Create Droplet
 doctl compute droplet create chatbot-server \
   --size s-2vcpu-4gb \
@@ -871,8 +926,10 @@ doctl compute droplet create chatbot-server \
 # 2. Deploy using our scripts
 scp -r deployment/ user@droplet_ip:/opt/chatbot
 ssh user@droplet_ip "cd /opt/chatbot && bash setup-server.sh"
-Option 2: AWS EC2
-bash
+```
+
+### **Option 2: AWS EC2**
+```bash
 # 1. Create EC2 instance
 aws ec2 run-instances \
   --image-id ami-0c55b159cbfafe1f0 \
@@ -883,30 +940,36 @@ aws ec2 run-instances \
 
 # 2. Attach Elastic IP
 aws ec2 associate-address --instance-id i-123456 --public-ip 1.2.3.4
-Option 3: Managed PostgreSQL (Recommended)
-Neon.tech (Serverless Postgres with pgvector):
+```
 
-bash
+### **Option 3: Managed PostgreSQL (Recommended)**
+
+**Neon.tech (Serverless Postgres with pgvector):**
+```bash
 # 1. Create project in Neon
 # 2. Get connection string
 # 3. Update DATABASE_URL in .env.production
 DATABASE_URL="postgresql://user:pass@ep-cool-bird-123456.us-east-2.aws.neon.tech/chatbot?sslmode=require"
-Supabase:
+```
 
-Includes PostgreSQL, Auth, Storage
+**Supabase:**
+- Includes PostgreSQL, Auth, Storage
+- Free tier up to 500MB database
 
-Free tier up to 500MB database
-
-Option 4: Managed Redis
-Upstash (Serverless Redis):
-
-bash
+### **Option 4: Managed Redis**
+**Upstash (Serverless Redis):**
+```bash
 # 1. Create database in Upstash
 # 2. Get connection string
 REDIS_URL="redis://:password@global-cool-bird-12345.upstash.io:6379/0"
-🔒 SECURITY HARDENING
-Firewall Configuration (UFW):
-bash
+```
+
+---
+
+## **🔒 SECURITY HARDENING**
+
+### **Firewall Configuration (UFW):**
+```bash
 # Allow only necessary ports
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
@@ -925,8 +988,10 @@ sudo ufw deny 8000/tcp comment 'FastAPI'
 
 # Enable firewall
 sudo ufw enable
-SSL Certificates (Let's Encrypt):
-bash
+```
+
+### **SSL Certificates (Let's Encrypt):**
+```bash
 # Install certbot
 sudo apt-get install certbot python3-certbot-nginx
 
@@ -940,10 +1005,11 @@ sudo certbot --nginx \
 
 # Auto-renewal
 sudo certbot renew --dry-run
-Security Headers:
-Add to Nginx configuration:
+```
 
-nginx
+### **Security Headers:**
+Add to Nginx configuration:
+```nginx
 # Security headers
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 add_header X-Frame-Options "DENY" always;
@@ -952,8 +1018,10 @@ add_header X-XSS-Protection "1; mode=block" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header Content-Security-Policy "default-src 'self';" always;
 add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
-Docker Security:
-bash
+```
+
+### **Docker Security:**
+```bash
 # Run as non-root user in containers
 docker run --user 1000:1000 myapp
 
@@ -965,9 +1033,14 @@ docker run --security-opt no-new-privileges myapp
 
 # Drop capabilities
 docker run --cap-drop ALL --cap-add NET_BIND_SERVICE myapp
-📈 SCALING STRATEGY
-Vertical Scaling (First):
-yaml
+```
+
+---
+
+## **📈 SCALING STRATEGY**
+
+### **Vertical Scaling (First):**
+```yaml
 # Increase resources in docker-compose
 api:
   deploy:
@@ -982,32 +1055,38 @@ worker:
       limits:
         cpus: '4.0'
         memory: 4G
-Horizontal Scaling (Add more instances):
-bash
+```
+
+### **Horizontal Scaling (Add more instances):**
+```bash
 # Add more API servers
 docker-compose scale api=3
 
 # Add more workers
 docker-compose scale worker=4
-Database Scaling:
-Add Read Replicas: For read-heavy workloads
+```
 
-Connection Pooling: PgBouncer (already configured)
+### **Database Scaling:**
+- **Add Read Replicas:** For read-heavy workloads
+- **Connection Pooling:** PgBouncer (already configured)
+- **Query Optimization:** Indexes, query tuning
+- **Partitioning:** For chunks table > 10M rows
 
-Query Optimization: Indexes, query tuning
+### **When to Scale:**
+| Metric | Threshold | Action |
+|--------|-----------|--------|
+| **CPU Usage** | > 70% sustained | Add more instances |
+| **Memory Usage** | > 80% | Increase memory or instances |
+| **Response Time** | P95 > 1000ms | Optimize or scale |
+| **Database Connections** | > 150 active | Add read replica |
+| **Queue Depth** | > 1000 items | Add more workers |
 
-Partitioning: For chunks table > 10M rows
+---
 
-When to Scale:
-Metric	Threshold	Action
-CPU Usage	> 70% sustained	Add more instances
-Memory Usage	> 80%	Increase memory or instances
-Response Time	P95 > 1000ms	Optimize or scale
-Database Connections	> 150 active	Add read replica
-Queue Depth	> 1000 items	Add more workers
-🔄 CI/CD PIPELINE
-GitHub Actions Workflow:
-yaml
+## **🔄 CI/CD PIPELINE**
+
+### **GitHub Actions Workflow:**
+```yaml
 # .github/workflows/deploy.yml
 name: Deploy to Production
 
@@ -1039,55 +1118,59 @@ jobs:
             cd /opt/chatbot
             git pull origin main
             ./deploy.sh production
-🚨 DISASTER RECOVERY
-Recovery Procedures:
-1. Database Corruption:
+```
 
-bash
+---
+
+## **🚨 DISASTER RECOVERY**
+
+### **Recovery Procedures:**
+
+**1. Database Corruption:**
+```bash
 # Restore from backup
 docker stop chatbot-postgres
 docker run --rm -v chatbot_postgres_data:/var/lib/postgresql/data -v /backup:/backup alpine \
     sh -c "rm -rf /var/lib/postgresql/data/* && tar -xzf /backup/latest.tar.gz -C /var/lib/postgresql/data"
 docker start chatbot-postgres
-2. Data Loss:
+```
 
-bash
+**2. Data Loss:**
+```bash
 # Re-ingest all sources
 curl -X POST https://api.chatbot.com/admin/projects/{id}/reindex \
   -H "X-API-Key: admin-key"
-3. Complete Server Failure:
+```
 
-bash
+**3. Complete Server Failure:**
+```bash
 # 1. Launch new VPS
 # 2. Run setup-server.sh
 # 3. Restore database from S3 backup
 # 4. Update DNS
 # 5. Run deploy.sh
-Backup Schedule:
-Database: Hourly (keep 24), Daily (keep 7), Weekly (keep 4)
+```
 
-File Storage: Daily incremental, Weekly full
+### **Backup Schedule:**
+- **Database:** Hourly (keep 24), Daily (keep 7), Weekly (keep 4)
+- **File Storage:** Daily incremental, Weekly full
+- **Configuration:** Version controlled in Git
+- **Secrets:** Stored in password manager + encrypted backup
 
-Configuration: Version controlled in Git
+---
 
-Secrets: Stored in password manager + encrypted backup
+## **📊 MONITORING DASHBOARDS**
 
-📊 MONITORING DASHBOARDS
-Grafana Dashboards to Create:
-System Health: CPU, Memory, Disk, Network
+### **Grafana Dashboards to Create:**
+- **System Health:** CPU, Memory, Disk, Network
+- **API Performance:** Request rate, latency, error rate
+- **Database:** Connections, queries, replication lag
+- **Redis:** Memory usage, hit rate, connections
+- **Business Metrics:** Active projects, queries, token usage
+- **Retrieval Quality:** Precision@k, recall@k, latency
 
-API Performance: Request rate, latency, error rate
-
-Database: Connections, queries, replication lag
-
-Redis: Memory usage, hit rate, connections
-
-Business Metrics: Active projects, queries, token usage
-
-Retrieval Quality: Precision@k, recall@k, latency
-
-Alerting Rules:
-yaml
+### **Alerting Rules:**
+```yaml
 # alert_rules.yml
 groups:
   - name: chatbot_alerts
@@ -1111,51 +1194,43 @@ groups:
         for: 5m
         labels:
           severity: warning
-✅ DEPLOYMENT CHECKLIST
-Pre-Deployment:
-Domain registered and DNS configured
+```
 
-SSL certificates obtained
+---
 
-Environment variables set
+## **✅ DEPLOYMENT CHECKLIST**
 
-Database initialized with schema
+### **Pre-Deployment:**
+- [ ] Domain registered and DNS configured
+- [ ] SSL certificates obtained
+- [ ] Environment variables set
+- [ ] Database initialized with schema
+- [ ] Backups configured
+- [ ] Monitoring set up
+- [ ] Firewall configured
 
-Backups configured
+### **Post-Deployment:**
+- [ ] API endpoints accessible
+- [ ] Widget loads correctly
+- [ ] File upload works
+- [ ] Chat responses generated
+- [ ] Background jobs processing
+- [ ] Metrics collecting
+- [ ] Alerts tested
+- [ ] Backup restored (test)
 
-Monitoring set up
+### **Ongoing:**
+- [ ] Logs monitored daily
+- [ ] Backups verified weekly
+- [ ] Security updates applied monthly
+- [ ] Performance reviewed quarterly
 
-Firewall configured
+---
 
-Post-Deployment:
-API endpoints accessible
+## **📞 SUPPORT & MAINTENANCE**
 
-Widget loads correctly
-
-File upload works
-
-Chat responses generated
-
-Background jobs processing
-
-Metrics collecting
-
-Alerts tested
-
-Backup restored (test)
-
-Ongoing:
-Logs monitored daily
-
-Backups verified weekly
-
-Security updates applied monthly
-
-Performance reviewed quarterly
-
-📞 SUPPORT & MAINTENANCE
-Regular Maintenance Tasks:
-bash
+### **Regular Maintenance Tasks:**
+```bash
 # Daily
 ./monitor.sh
 docker system prune -f
@@ -1169,8 +1244,10 @@ docker volume prune -f
 certbot renew
 apt-get update && apt-get upgrade
 docker-compose pull
-Troubleshooting Commands:
-bash
+```
+
+### **Troubleshooting Commands:**
+```bash
 # Check logs
 docker logs chatbot-api --tail 100 -f
 docker logs chatbot-worker --tail 100 -f
@@ -1186,3 +1263,4 @@ docker-compose restart api worker
 
 # Scale workers
 docker-compose up -d --scale worker=4
+```
