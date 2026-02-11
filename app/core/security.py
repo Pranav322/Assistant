@@ -16,18 +16,36 @@ API_KEY_TOKEN_LENGTH = 32
 
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: timedelta | None = None
+    subject: Union[str, Any],
+    expires_delta: timedelta | None = None,
+    token_type: str = "user_token",
 ) -> str:
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
-    to_encode = {"exp": expire, "sub": str(subject)}
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "type": token_type,
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.USER_JWT_AUDIENCE,
+    }
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def decode_user_token(token: str) -> dict[str, Any]:
+    return jwt.decode(
+        token,
+        settings.JWT_SECRET,
+        algorithms=[ALGORITHM],
+        audience=settings.USER_JWT_AUDIENCE,
+        issuer=settings.JWT_ISSUER,
+    )
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

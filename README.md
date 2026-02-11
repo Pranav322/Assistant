@@ -29,6 +29,8 @@ Required env vars (minimum for local dev):
 
 Optional overrides:
 - `ADMIN_API_KEY`
+- `USER_JWT_AUDIENCE`
+- `MIN_PASSWORD_LENGTH`
 - `LOG_LEVEL`
 - `SERVICE_NAME`
 - `GIT_SHA`

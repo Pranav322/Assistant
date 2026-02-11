@@ -30,8 +30,10 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str | None = None
     JWT_ISSUER: str = "chatbot-platform"
     JWT_AUDIENCE: str = "widget-api"
+    USER_JWT_AUDIENCE: str = "user-api"
     WIDGET_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    MIN_PASSWORD_LENGTH: int = 8
 
     # Azure OpenAI
     AZURE_OPENAI_API_KEY: str | None = None

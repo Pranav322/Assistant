@@ -7,6 +7,7 @@ from app.api.v1.endpoints import (
     projects,
     usage,
     admin,
+    auth,
 )
 
 api_router = APIRouter()
@@ -17,3 +18,4 @@ api_router.include_router(metrics.router, tags=["metrics"])
 api_router.include_router(projects.router, tags=["projects"])
 api_router.include_router(usage.router, tags=["usage"])
 api_router.include_router(admin.router, tags=["admin"])
+api_router.include_router(auth.router, tags=["auth"])

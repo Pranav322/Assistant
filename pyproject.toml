@@ -39,6 +39,7 @@ dependencies = [
     "aioboto3>=15.5.0",
     "nest-asyncio>=1.6.0",
     "prometheus-client>=0.20.0",
+    "email-validator>=2.1.1",
 ]
 
 [build-system]
