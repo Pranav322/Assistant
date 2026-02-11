@@ -1,7 +1,7 @@
 -- =========================================================
 -- UNIVERSAL RAG PLATFORM — LOCKED PRODUCTION SCHEMA
 -- PostgreSQL + pgvector
--- Version: 2.0 (Aligned with security.md v2.1)
+-- Version: 2.2 (Aligned with security.md v3.0)
 -- Updated: 2026-02-11
 -- =========================================================
 
@@ -114,6 +114,7 @@ CREATE TABLE browser_tokens (
     origin TEXT,                   -- the origin this token was issued for
 
     expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
     last_used_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -121,6 +122,8 @@ CREATE TABLE browser_tokens (
 CREATE INDEX idx_browser_tokens_expiry ON browser_tokens(expires_at);
 CREATE INDEX idx_browser_tokens_project ON browser_tokens(project_id);
 CREATE INDEX idx_browser_tokens_hash ON browser_tokens(token_hash);
+CREATE INDEX idx_browser_tokens_revoked ON browser_tokens(revoked_at)
+    WHERE revoked_at IS NOT NULL;
 
 -- =========================================================
 -- SOURCES
@@ -292,6 +295,36 @@ CREATE INDEX idx_cache_expiry ON cache(expires_at);
 CREATE INDEX idx_cache_lookup ON cache(project_id, cache_key, cache_type);
 
 -- =========================================================
+-- RETRIEVAL METRICS
+-- =========================================================
+
+CREATE TABLE retrieval_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id),
+    query_id UUID,  -- Links to conversation
+    query_length INT,
+    retrieval_time_ms INT,
+    chunks_considered INT,
+    chunks_returned INT,
+    reranker_used BOOLEAN DEFAULT false,
+    vector_search_time_ms INT,
+    keyword_search_time_ms INT,
+    fusion_time_ms INT,
+    rerank_time_ms INT,
+    cache_hit_rate DECIMAL(5,4),
+    avg_vector_score DECIMAL(5,4),
+    avg_keyword_score DECIMAL(5,4),
+    avg_reranker_score DECIMAL(5,4),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_retrieval_metrics_project_time
+ON retrieval_metrics(project_id, created_at);
+
+CREATE INDEX idx_retrieval_metrics_performance
+ON retrieval_metrics(retrieval_time_ms);
+
+-- =========================================================
 -- RATE LIMIT AUDIT
 -- =========================================================
 
@@ -404,5 +437,19 @@ BEGIN
     DELETE FROM projects
     WHERE deleted_at IS NOT NULL
       AND deleted_at < now() - INTERVAL '30 days';
+END;
+$$ LANGUAGE plpgsql;
+
+-- =========================================================
+-- AUDIT LOG RETENTION: Purge old logs (run via cron)
+-- Schedule: 0 2 * * * (2 AM daily)
+-- Retention: 1 year
+-- =========================================================
+
+CREATE OR REPLACE FUNCTION purge_old_audit_logs()
+RETURNS void AS $$
+BEGIN
+    DELETE FROM audit_logs
+    WHERE created_at < now() - INTERVAL '1 year';
 END;
 $$ LANGUAGE plpgsql;

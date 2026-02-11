@@ -2,7 +2,7 @@ RETRIEVAL.md — RAG Chatbot Platform
 markdown
 # RETRIEVAL PIPELINE SPECIFICATION
 **Version:** 1.0 (Production Ready)
-**Aligned with:** schema.sql v1.0, SECURITY.md v2.1
+**Aligned with:** schema.sql v2.2, SECURITY.md v3.0
 **Last Updated:** 2026-02-12
 
 ---
@@ -335,25 +335,23 @@ class EmbeddingRouter:
 Cache Table Schema (cache table):
 
 sql
--- cache table structure for embeddings
+-- cache table structure for embeddings (schema.sql v2.2)
 CREATE TABLE cache (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    cache_key TEXT NOT NULL,      -- SHA256(text + model + config_hash)
-    cache_type TEXT NOT NULL DEFAULT 'embedding',
-    data JSONB NOT NULL,          -- {"embedding": [0.1, 0.2, ...], "model": "..."}
-    size_bytes INT DEFAULT 0,     -- Approximate size
-    hits BIGINT DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    last_accessed_at TIMESTAMPTZ DEFAULT NOW(),
-    expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days'),
-    
+    cache_key TEXT,               -- SHA256(text + model + config_hash)
+    cache_type TEXT CHECK (cache_type IN ('embedding','response')),
+    data JSONB,
+    hits INT DEFAULT 0,
+    size_bytes INT,
+    expires_at TIMESTAMPTZ,
+    last_accessed_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE (project_id, cache_key, cache_type)
 );
 
--- Index for quick lookups
-CREATE INDEX idx_cache_embedding_lookup ON cache 
-USING HASH (cache_key) WHERE cache_type = 'embedding';
+-- Indexes for lookups and cleanup
+CREATE INDEX idx_cache_lookup ON cache(project_id, cache_key, cache_type);
+CREATE INDEX idx_cache_expiry ON cache(expires_at);
 Cache Implementation:
 
 python
@@ -1090,7 +1088,7 @@ class CitationGenerator:
 sql
 -- Tracking table for retrieval performance
 CREATE TABLE retrieval_metrics (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID REFERENCES projects(id),
     query_id UUID,  -- Links to conversation
     query_length INT,
@@ -1303,25 +1301,23 @@ WHERE project_id = :project_id
 SELECT settings->'retrieval', settings->'chunking'
 FROM projects 
 WHERE id = :project_id;
-7.2 Index Optimization for Retrieval
+7.2 Index Optimization for Retrieval (Aligned with schema.sql v2.2)
 sql
 -- Essential indexes for performance:
 -- 1. Vector search index (HNSW)
-CREATE INDEX idx_embeddings_hnsw ON embeddings 
-USING hnsw (embedding vector_cosine_ops)
-WITH (m = 16, ef_construction = 64);
+CREATE INDEX idx_embeddings_hnsw ON embeddings
+USING hnsw (embedding vector_cosine_ops);
 
--- 2. Full-text search index
-CREATE INDEX idx_chunks_tsvector ON chunks 
-USING GIN(search_tsvector);
+-- 2. Full-text search index with tenant filtering
+CREATE INDEX idx_chunks_project_tsv ON chunks
+USING GIN(project_id, search_tsvector);
 
--- 3. Composite index for tenant filtering
-CREATE INDEX idx_chunks_project_embedding ON chunks(project_id, id)
-INCLUDE (text, metadata);
+-- 3. Tenant filtering
+CREATE INDEX idx_chunks_project ON chunks(project_id);
+CREATE INDEX idx_chunks_source ON chunks(source_id);
 
--- 4. Covering index for common retrieval queries
-CREATE INDEX idx_retrieval_covering ON chunks(project_id, source_id, id)
-INCLUDE (text, metadata, search_tsvector);
+-- 4. Cache lookup index
+CREATE INDEX idx_cache_lookup ON cache(project_id, cache_key, cache_type);
 8. GETTING STARTED
 8.1 Quick Start Configuration
 python
@@ -1480,4 +1476,3 @@ Hierarchical chunking
 Semantic caching
 
 Real-time metrics dashboard
-
