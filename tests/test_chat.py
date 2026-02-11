@@ -13,6 +13,7 @@ from app.models import (
     ApiKey,
     Conversation,
     Message,
+    RetrievalMetric,
 )
 from app.core.security import generate_api_key, hash_api_key
 
@@ -26,7 +27,13 @@ async def test_chat_endpoint_creates_conversation(
     await db.commit()
     await db.refresh(user)
 
-    project = Project(name="Chat Project", owner_id=user.id)
+    project = Project(
+        name="Chat Project",
+        owner_id=user.id,
+        settings={
+            "retrieval": {"enable_query_expansion": False, "enable_reranking": False}
+        },
+    )
     db.add(project)
     await db.commit()
     await db.refresh(project)
@@ -68,7 +75,7 @@ async def test_chat_endpoint_creates_conversation(
 
     with patch("app.services.chat.AsyncAzureOpenAI", return_value=MagicMock()):
         with patch(
-            "app.services.chat.EmbeddingService.get_embeddings",
+            "app.services.retrieval.EmbeddingService.get_embeddings",
             new_callable=AsyncMock,
             return_value=[embedding_vector],
         ):
@@ -118,3 +125,14 @@ async def test_chat_endpoint_creates_conversation(
     project_row = project_usage.scalar_one()
     assert project_row.usage.get("requests") == 1
     assert project_row.usage.get("tokens_total") == 7
+
+    metrics = (
+        (
+            await db.execute(
+                select(RetrievalMetric).where(RetrievalMetric.project_id == project.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert metrics

@@ -6,7 +6,32 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from app.main import app
 from app.models import Base
 from app.core.config import settings
-from app.api.deps import get_db
+from app.api.deps import get_db, get_redis
+
+
+class FakeRedis:
+    def __init__(self) -> None:
+        self.store: dict[str, str] = {}
+
+    async def mget(self, keys: list[str]) -> list[str | None]:
+        return [self.store.get(key) for key in keys]
+
+    async def setex(self, key: str, _ttl: int, value: str) -> None:
+        self.store[key] = value
+
+    async def incr(self, key: str) -> int:
+        current = int(self.store.get(key, "0")) + 1
+        self.store[key] = str(current)
+        return current
+
+    async def expire(self, _key: str, _ttl: int) -> None:
+        return None
+
+    async def close(self) -> None:
+        return None
+
+    async def aclose(self) -> None:
+        return None
 
 
 @pytest.fixture
@@ -25,6 +50,7 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def client(db) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_redis] = lambda: FakeRedis()
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as c:

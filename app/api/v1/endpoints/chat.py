@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 from app.api import deps
 from app.schemas.chat import ChatRequest, ChatResponse
+import redis.asyncio as redis
 from app.services.chat import ChatService
 
 
@@ -15,8 +16,9 @@ async def chat(
     payload: ChatRequest,
     db: AsyncSession = Depends(deps.get_db),
     auth: deps.AuthContext = Depends(deps.api_key_required("chat")),
+    redis_client: redis.Redis = Depends(deps.get_redis),
 ):
-    service = ChatService(db)
+    service = ChatService(db, redis_client=redis_client)
     conversation_id = (
         uuid.UUID(payload.conversation_id) if payload.conversation_id else None
     )

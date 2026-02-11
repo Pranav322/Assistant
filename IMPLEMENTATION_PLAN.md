@@ -112,17 +112,17 @@ Definition of done:
 - [x] Chat tests pass in CI
 
 Phase 5 - Retrieval optimization (retrieval.md Phase 2)
-- [ ] Embedding cache (Redis hot cache + Postgres cold cache)
-- [ ] Query expansion and rewriting
-- [ ] Reranking (cross-encoder)
-- [ ] Retrieval metrics capture
-- [ ] Tests: cache hit/miss, reranker on/off, metrics persistence
-- [ ] CI/CD: add any new dependencies or model downloads
+- [x] Embedding cache (Redis hot cache + Postgres cold cache)
+- [x] Query expansion and rewriting
+- [x] Reranking (cross-encoder)
+- [x] Retrieval metrics capture
+- [x] Tests: cache hit/miss, reranker on/off, metrics persistence
+- [x] CI/CD: add any new dependencies or model downloads (no workflow changes needed)
 Definition of done:
-- [ ] Caching, query expansion, and reranking implemented per settings
-- [ ] Retrieval metrics recorded to database
-- [ ] Optimization tests pass and are stable
-- [ ] CI updated for new dependencies or model setup
+- [x] Caching, query expansion, and reranking implemented per settings
+- [x] Retrieval metrics recorded to database
+- [x] Optimization tests pass and are stable
+- [x] CI updated for new dependencies or model setup
 
 Phase 6 - Widget and RUM metrics (widget_protocol.md, observability.md)
 - [ ] `/tokens/widget` endpoint

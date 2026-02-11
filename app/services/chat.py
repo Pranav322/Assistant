@@ -9,24 +9,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models import Conversation, Message, Project
-from app.services.embedding import EmbeddingService
-from app.services.retrieval import (
-    VectorSearch,
-    KeywordSearch,
-    ReciprocalRankFusion,
-    ContextAssembler,
-    generate_citations,
-)
+from app.services.retrieval import RetrievalPipeline
 
 
 class ChatService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, redis_client: Any | None = None):
         self.db = db
-        self.embedder = EmbeddingService()
-        self.vector_search = VectorSearch(db)
-        self.keyword_search = KeywordSearch(db)
-        self.rrf = ReciprocalRankFusion()
-        self.context_assembler = ContextAssembler()
+        self.retrieval = RetrievalPipeline(db, redis_client=redis_client)
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
         self.client = AsyncAzureOpenAI(
             api_key=settings.AZURE_OPENAI_API_KEY,
@@ -50,21 +39,20 @@ class ChatService:
             token_count=len(self.tokenizer.encode(query)),
         )
 
-        embedding = await self._embed_query(query)
-        vector_results = await self.vector_search.search(embedding, project_id)
-        keyword_terms = self._extract_key_terms(query)
-        keyword_results = await self.keyword_search.search(keyword_terms, project_id)
-        fused_results = self.rrf.fuse(vector_results, keyword_results)
+        history = await self._get_conversation_history(conversation.id, limit=5)
+        retrieval = await self.retrieval.retrieve(
+            project_id,
+            query,
+            conversation_history=history,
+            query_id=conversation.id,
+        )
 
-        assembled = self.context_assembler.assemble(query, fused_results, max_chunks=10)
-        citations = generate_citations(assembled.selected_chunks)
-
-        response_text, usage = await self._chat_completion(assembled.full_text)
+        response_text, usage = await self._chat_completion(retrieval.context.full_text)
         await self._store_message(
             conversation.id,
             "assistant",
             response_text,
-            metadata={"citations": citations},
+            metadata={"citations": retrieval.citations},
             token_count=self._completion_tokens(response_text, usage),
         )
 
@@ -72,7 +60,7 @@ class ChatService:
 
         return {
             "response": response_text,
-            "citations": citations,
+            "citations": retrieval.citations,
             "conversation_id": str(conversation.id),
         }
 
@@ -114,26 +102,21 @@ class ChatService:
         self.db.add(message)
         await self.db.flush()
 
-    async def _embed_query(self, query: str) -> list[float]:
-        embeddings = await self.embedder.get_embeddings([query])
-        return embeddings[0]
-
-    def _extract_key_terms(self, query: str) -> list[str]:
-        stop_words = {
-            "what",
-            "how",
-            "why",
-            "the",
-            "a",
-            "an",
-            "is",
-            "are",
-            "can",
-            "do",
-        }
-        words = [word.strip().lower() for word in query.split()]
-        filtered = [word for word in words if word not in stop_words and len(word) > 2]
-        return filtered[:10]
+    async def _get_conversation_history(
+        self, conversation_id: uuid.UUID, limit: int
+    ) -> list[dict[str, str]]:
+        result = await self.db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.desc())
+            .limit(limit)
+        )
+        messages = list(reversed(result.scalars().all()))
+        history: list[dict[str, str]] = []
+        for message in messages:
+            if message.content:
+                history.append({"role": message.role, "content": message.content})
+        return history
 
     async def _chat_completion(self, prompt: str) -> tuple[str, dict[str, Any] | None]:
         system_prompt = (
