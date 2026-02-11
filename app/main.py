@@ -16,6 +16,19 @@ from app.api.v1.api_router import api_router
 configure_logging()
 logger = structlog.get_logger()
 
+
+def _apply_security_headers(response) -> None:
+    response.headers.setdefault(
+        "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+    )
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
+    )
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
@@ -47,6 +60,7 @@ async def metrics_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         status_code = response.status_code
+        _apply_security_headers(response)
         return response
     except Exception:
         logger.exception("request_failed", request_id=request_id)
@@ -64,16 +78,17 @@ async def metrics_middleware(request: Request, call_next):
             duration_seconds=duration,
             project_id=str(project_id) if project_id else None,
         )
-        logger.info(
-            "request_completed",
-            request_id=request_id,
-            project_id=str(project_id) if project_id else None,
-            method=request.method,
-            path=path,
-            status_code=status_code,
-            duration_ms=int(duration * 1000),
-            service=settings.SERVICE_NAME,
-        )
+        if path not in {"/health", "/health/ready", "/metrics"}:
+            logger.info(
+                "request_completed",
+                request_id=request_id,
+                project_id=str(project_id) if project_id else None,
+                method=request.method,
+                path=path,
+                status_code=status_code,
+                duration_ms=int(duration * 1000),
+                service=settings.SERVICE_NAME,
+            )
 
 
 @app.get("/health")

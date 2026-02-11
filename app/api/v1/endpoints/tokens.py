@@ -1,10 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
 import uuid
 from app.api import deps
 from app.schemas.widget import WidgetTokenRequest, WidgetTokenResponse
-from app.core.security import create_widget_token, hash_widget_token, validate_origin
+from app.core.security import (
+    create_widget_token,
+    hash_widget_token,
+    validate_origin,
+    decode_widget_token,
+)
 from app.models import BrowserToken, Project
 from app.services.rate_limit import RateLimiter
 from app.services.audit import log_audit_event
@@ -119,5 +125,94 @@ async def create_widget_token_endpoint(
 
     return WidgetTokenResponse(
         token=token,
+        expires_in=deps.settings.WIDGET_TOKEN_EXPIRE_SECONDS,
+    )
+
+
+@router.post("/tokens/refresh", response_model=WidgetTokenResponse)
+async def refresh_widget_token(
+    request: Request,
+    db: AsyncSession = Depends(deps.get_db),
+    redis_client=Depends(deps.get_redis),
+):
+    token = deps._extract_bearer_token(request.headers.get("authorization"))
+    if not token:
+        record_auth_failure("token_missing")
+        raise HTTPException(status_code=401, detail="Bearer token required")
+
+    try:
+        claims = decode_widget_token(token)
+    except Exception as exc:
+        record_auth_failure("token_invalid")
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
+
+    origin = (request.headers.get("origin") or "").rstrip("/")
+    if not origin or not validate_origin(origin, claims.get("origins", [])):
+        record_auth_failure("origin_mismatch")
+        raise HTTPException(status_code=403, detail="Origin not allowed")
+
+    project_id = uuid.UUID(claims["sub"])
+    limiter = RateLimiter(redis_client)
+    allowed = await limiter.check(
+        ip=deps._get_client_ip(request),
+        api_key_prefix=None,
+        endpoint="token_refresh",
+        project_id=str(project_id),
+    )
+    if not allowed:
+        record_rate_limit_hit("token_refresh")
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+
+    token_hash = hash_widget_token(token)
+    result = await db.execute(
+        select(BrowserToken).where(
+            BrowserToken.project_id == project_id,
+            BrowserToken.token_hash == token_hash,
+        )
+    )
+    existing = result.scalar_one_or_none()
+    if existing and existing.revoked_at is not None:
+        record_auth_failure("token_revoked")
+        raise HTTPException(status_code=401, detail="Token revoked")
+
+    if existing:
+        existing.revoked_at = datetime.now(timezone.utc)
+        await db.flush()
+
+    token_id = uuid.uuid4()
+    new_token = create_widget_token(
+        project_id=str(project_id),
+        origins=claims.get("origins", [origin]),
+        token_id=str(token_id),
+    )
+    new_hash = hash_widget_token(new_token)
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        seconds=deps.settings.WIDGET_TOKEN_EXPIRE_SECONDS
+    )
+
+    db.add(
+        BrowserToken(
+            token_id=token_id,
+            project_id=project_id,
+            api_key_id=existing.api_key_id if existing else None,
+            token_hash=new_hash,
+            origin=origin,
+            expires_at=expires_at,
+        )
+    )
+    await db.commit()
+
+    await log_audit_event(
+        db,
+        action="widget_token_refreshed",
+        project_id=project_id,
+        resource_type="widget_token",
+        resource_id=str(token_id),
+        detail={"origin": origin},
+        commit=True,
+    )
+
+    return WidgetTokenResponse(
+        token=new_token,
         expires_in=deps.settings.WIDGET_TOKEN_EXPIRE_SECONDS,
     )

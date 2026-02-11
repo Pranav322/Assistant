@@ -28,6 +28,7 @@ Required env vars (minimum for local dev):
 - `S3_SECRET_ACCESS_KEY`
 
 Optional overrides:
+- `ADMIN_API_KEY`
 - `LOG_LEVEL`
 - `SERVICE_NAME`
 - `GIT_SHA`

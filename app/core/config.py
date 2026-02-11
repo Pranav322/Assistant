@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # Security
     JWT_SECRET: str
+    ADMIN_API_KEY: str | None = None
     JWT_ISSUER: str = "chatbot-platform"
     JWT_AUDIENCE: str = "widget-api"
     WIDGET_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24

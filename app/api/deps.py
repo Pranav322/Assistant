@@ -282,3 +282,13 @@ def chat_auth_required():
         )
 
     return _dependency
+
+
+def admin_required():
+    async def _dependency(request: Request) -> None:
+        admin_key = request.headers.get("x-admin-key")
+        if not admin_key or admin_key != settings.ADMIN_API_KEY:
+            record_auth_failure("admin_key_invalid")
+            raise HTTPException(status_code=401, detail="Admin key required")
+
+    return _dependency

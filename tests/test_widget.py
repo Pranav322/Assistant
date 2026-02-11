@@ -72,3 +72,14 @@ async def test_widget_token_and_metrics_flow(client: AsyncClient, db: AsyncSessi
         .all()
     )
     assert metric_rows
+
+    refresh_response = await client.post(
+        "/api/v1/tokens/refresh",
+        headers={
+            "Authorization": f"Bearer {data['token']}",
+            "Origin": "https://example.com",
+        },
+    )
+    assert refresh_response.status_code == 200
+    refreshed = refresh_response.json()
+    assert refreshed["token"]
