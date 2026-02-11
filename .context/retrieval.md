@@ -264,9 +264,12 @@ def evaluate_chunk_quality(chunks: List[Chunk]) -> dict:
     
     return metrics
 2. EMBEDDING STRATEGY
-2.1 Embedding Models & Configuration
-Supported Models (embeddings table):
+## 2. Embedding Models
 
+We use **Azure OpenAI** for embeddings.
+- **Model:** `text-embedding-3-small` (deployed via Azure).
+- **Dimensions:** 1536.
+- **Rate Limits:** Configured in Azure Portal.
 sql
 -- Default model (stored in projects.settings)
 {

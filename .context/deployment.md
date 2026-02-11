@@ -117,10 +117,13 @@ ENCRYPTION_MASTER_KEY="c2VjcmV0LWtleS0zMi1ieXRlcy1sb25nCg=="
 JWT_SECRET="another-32-byte-secret-key-minimum-256-bits"
 
 # ============================================
-# API KEYS (External services)
+# API KEYS (Azure AI Services)
 # ============================================
-OPENAI_API_KEY="sk-..."  # For default embeddings
-# Optional: ANTHROPIC_API_KEY, COHERE_API_KEY, etc.
+AZURE_OPENAI_API_KEY="your-azure-key"
+AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+AZURE_OPENAI_API_VERSION="2023-05-15"
+AZURE_DEPLOYMENT_NAME="gpt-4-deployment"
+AZURE_EMBEDDING_DEPLOYMENT_NAME="text-embedding-3-small-deployment"
 
 # ============================================
 # APPLICATION SETTINGS
@@ -457,15 +460,21 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Install uv
+RUN pip install uv
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN uv venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Install dependencies
+WORKDIR /app
+COPY pyproject.toml .
+RUN uv pip install .
 
 # Production stage
 FROM python:3.11-slim
@@ -511,15 +520,21 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Install uv
+RUN pip install uv
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN uv venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Install dependencies
+WORKDIR /app
+COPY pyproject.toml .
+RUN uv pip install .
 
 # Production stage
 FROM python:3.11-slim
@@ -545,7 +560,7 @@ WORKDIR /app
 COPY --chown=worker:worker . .
 
 # Run worker
-CMD ["dramatiq", "worker", "--processes", "4", "--threads", "2"]
+CMD ["dramatiq", "worker", "app.worker.tasks", "--processes", "4", "--threads", "2"]
 ```
 
 ### **Nginx Configuration:**

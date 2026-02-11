@@ -1,108 +1,164 @@
-# Agent Guide for rag-prod
-# Purpose: help agentic coding tools work safely and consistently.
+# Agent Guide (rag-prod)
 
-## Repository reality check
-- This repo currently contains specification docs and a database schema only.
-- No application source code or build system files are present.
-- Do not invent commands or files; use only what exists in repo.
+This repository is primarily specification docs for a RAG chatbot platform.
+This file is a living summary derived from the specs below and can be updated.
 
-## Source-of-truth documents
-- `security.md` defines non-negotiable security rules.
-- `schema.sql` defines the production database schema and cron jobs.
-- `api_spec.md` defines the API surface and error contract.
-- `retrieval.md` defines the RAG retrieval pipeline behavior.
-- `observability.md` defines metrics, logs, and tracing expectations.
-- `widget_protocol.md` defines iframe postMessage protocol details.
-- `deployment.md` describes production deployment intent.
+## Primary Specification Files
+These files define the intended behavior of the system. Use them as the baseline
+for implementation decisions and update this guide if the specs change:
 
-## Build, lint, and test commands
-Not found in this repository:
-- No `package.json`, `pyproject.toml`, `requirements.txt`, `Makefile`, or CI config.
-- No test runner configuration or scripts.
+- **.context/Database:** `schema.sql` (Tables, RLS policies, Indexes)
+- **.context/API:** `api_spec.md` (Endpoints, Auth headers, Response formats)
+- **.context/Retrieval:** `retrieval.md` (Chunking, Embedding settings, Hybrid search logic)
+- **.context/Security:** `security.md` (Auth, Encryption, Rate limiting matches)
+- **.context/Observability:** `observability.md` (Metrics, Logging standards)
+- **.context/Deployment:** `deployment.md` (Env vars, Docker config)
+- **Protocol:** `widget_protocol.md` (Iframe communication)
+- **Cost:** `cost.md` (Resource usage limits)
+- **Testing:** `testing.md` (Test strategy)
 
-Documented but not present as files in the repo:
-- `deployment.md` references `docker-compose.*.yml`, `Dockerfile.api`,
-  `Dockerfile.worker`, and `docker-compose.test.yml`.
-- Treat these as design intent, not runnable commands here.
+If a rule is in one of the above files, prefer it over this summary.
 
-If you add implementation code later, update this section with real commands.
-Suggested single-test patterns (only after tools exist):
-- Python pytest: `pytest path/to/test_file.py::test_name`
-- JavaScript test: `npm test -- path/to/test_file.test.js`
+## Quick Facts
+- Language focus: Python 3.11 (FastAPI-style), SQL (Postgres/pgvector), Docker.
+- Testing framework: pytest.
+- Package manager: `uv` (PEP 621 compliant `pyproject.toml`).
+- Use `uv` for all dependency management and virtual environment creation.
 
-## Code style and conventions (from specs)
-General
-- Prefer explicitness over magic; security and multi-tenant isolation are core.
-- Keep implementations aligned with the specs above; deviations must be justified.
-- Avoid unnecessary comments; only explain non-obvious logic.
+If new tooling is added, update this file to match it.
 
-Python
-- Use `snake_case` for functions/variables and `PascalCase` for classes.
-- Type hints are expected in examples; keep them in new code.
-- Use `async`/`await` for I/O paths (FastAPI, DB, Redis) per examples.
-- Handle errors with structured exceptions and explicit error codes.
-- Use `structlog`-style structured logging if logging is introduced.
+## Flow of Work
+- Read `.context/*`, this guide, and `IMPLEMENTATION_PLAN.md` before changes.
+- Update `IMPLEMENTATION_PLAN.md` checkboxes as work is completed.
+- Always add or update tests for new behavior.
+- Update CI/CD workflows when tests, commands, or dependencies change.
+- Keep changes aligned with the specs and document any new tooling here.
 
-SQL
-- Schema is authoritative; do not change column names casually.
-- Use explicit `WHERE project_id = :project_id` in all queries.
-- Prefer parameterized queries; avoid string interpolation in SQL.
-- Keep extensions and indexes aligned with `schema.sql`.
+## When to Ask the User
+- Ask if a required input is missing (API keys, endpoints, domains, secrets, rate limits).
+- Ask before any destructive or irreversible action.
+- Ask when a choice materially changes behavior and is not defined in `.context/*`.
+- Do not guess credentials or external service details.
 
-JavaScript (widget / browser)
-- Use `camelCase` for variables and functions, `PascalCase` for classes.
-- Validate `postMessage` origin, payload shape, and timestamps.
-- Keep payloads under size limits (10KB) and avoid blocking UI threads.
+## Build / Lint / Test Commands
 
-API and JSON
-- Requests/responses use `snake_case` in JSON fields.
-- Error responses must follow the `api_spec.md` structure:
-  `error.code`, `error.message`, `error.details`, `error.request_id`,
-  `error.timestamp`.
-- Include `X-Request-ID` in responses and propagate it in logs.
+### Build
+- **Docker:**
+  - `docker-compose build`
+  - `docker build -f Dockerfile.api .`
+  - `docker build -f Dockerfile.worker .`
+- **Local:**
+  - `uv pip install -e .`
 
-## Security rules (must follow)
-- API keys: bcrypt only, never SHA-256 (`security.md`).
-- All data access queries must filter by `project_id`.
+### Lint / Format
+- **Black:** `uv run black app tests`
+- **Isort:** `uv run isort app tests`
+- **Mypy:** `uv run mypy app`
+
+### Tests (Primary)
+- Run all tests:
+  - `uv run pytest tests/ --cov=app`
+- Run a single test file:
+  - `uv run pytest tests/unit/test_chunking.py`
+- Run a single test function:
+  - `uv run pytest tests/unit/test_chunking.py::test_chunk_text_splits_correctly`
+- Run tests by keyword:
+  - `uv run pytest -k chunking`
+
+### Tests (Integration / Containers)
+- Run integration tests (requires Docker services up):
+  - `docker-compose up -d postgres redis`
+  - `uv run pytest tests/integration/`
+
+### E2E / Widget
+- Playwright is referenced for widget E2E testing (Python or Node). Command not
+  specified in repo docs; add it when a test harness is created.
+
+### Load Testing
+- Load testing tools mentioned: `k6` or `Locust` (no concrete commands).
+
+## Repository-Specific Rules
+
+### Security (Non-Negotiable)
+From `security.md`:
+- API keys: bcrypt only; NEVER SHA-256.
+- All DB queries MUST filter by `project_id` to avoid tenant leaks.
 - Never store secrets in code; use environment variables.
-- Enforce origin validation for widget and API tokens.
-- Redact sensitive fields in logs and audit records.
+- Origin validation for widget/iframe; no wildcard origins in production.
+- CSP headers must be generated from allowed origins.
 
-## Error handling expectations
-- Prefer deterministic, typed error codes from `api_spec.md`.
-- For background jobs, record failures with enough context for retries.
-- Avoid leaking internal details in client-facing errors.
+### Logging & Observability
+From `observability.md`:
+- Use JSON structured logging with `structlog`.
+- Log context fields (request_id, project_id, service, duration_ms, model).
+- Do NOT log PII, secrets, or message contents.
+- Log stack traces only on ERROR.
 
-## Observability expectations
-- Metrics: use Prometheus naming and labels as in `observability.md`.
-- Logs: structured JSON logs with context fields (service, env, version).
-- Tracing: OpenTelemetry spans around key operations (ingest, retrieve, LLM).
+### Data Handling
+- Treat uploaded files, URLs, and parsed content as untrusted input.
+- Enforce size/type/SSRF protections (see `security.md`).
 
-## Data access and multi-tenancy
-- Treat `project_id` as mandatory for every query and join.
-- Use tenant-aware indexes from `schema.sql` (project_id + tsvector, HNSW).
-- PgBouncer transaction pooling is assumed; do not rely on session vars.
+## Code Style Guidelines
 
-## Retrieval pipeline guidelines
-- Follow stages in `retrieval.md`: query processing, hybrid search, RRF, rerank.
-- Keep defaults aligned (chunk_size 384, overlap 58) unless specified.
-- Cache embedding lookups with Redis hot cache and Postgres cold cache.
+### General
+- Keep implementations aligned with the specs in:
+  - `testing.md`, `security.md`, `retrieval.md`, `observability.md`,
+    `deployment.md`, and `api_spec.md`.
+- Favor clarity and explicitness over cleverness.
+- Use ASCII-only text unless the file already contains Unicode.
 
-## Widget protocol guidelines
-- Enforce handshake, ACKs, and message format per `widget_protocol.md`.
-- Only accept messages from validated origins.
-- Use UUID request IDs and ISO-8601 timestamps.
+### Python
+- Use type hints for public functions and core services.
+- Prefer async I/O for API, DB, Redis, and external calls.
+- Keep business logic in services; keep FastAPI routes thin.
+- Follow pytest naming conventions:
+  - Files: `test_*.py`
+  - Functions: `test_*`
+- Use fixtures in `conftest.py` for shared setup (DB, Redis, clients).
 
-## Deployment intent (not local commands)
-- Containers: API server (FastAPI) and workers (Dramatiq).
-- Services: Postgres + pgvector, Redis, Nginx, Prometheus/Grafana.
-- Health endpoints: `/health` and `/metrics` must remain lightweight.
+### Imports
+- Standard library first, third-party second, local imports last.
+- Keep imports sorted and grouped; avoid unused imports.
 
-## Cursor/Copilot rules
-- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
-- If such files are added later, include them here verbatim.
+### Formatting
+- Use consistent, readable formatting; keep lines reasonable in length.
+- Prefer explicit keyword arguments for clarity in public APIs.
 
-## When updating this file
-- Keep this guide close to 150 lines for agent readability.
-- Prefer accurate statements over speculation.
-- Update build/test commands immediately when real configs are added.
+### Naming
+- snake_case for Python functions/variables.
+- PascalCase for classes.
+- UPPER_SNAKE_CASE for module-level constants.
+- SQL tables and columns: lowercase with underscores.
+
+### Errors & Validation
+- Validate inputs early (Pydantic models or explicit checks).
+- Use domain-specific exceptions where helpful; map to HTTP errors at edges.
+- Never leak secrets in error messages or logs.
+
+### Database Access
+- Always include `project_id` in WHERE clauses (tenant isolation).
+- Avoid reliance on connection-scoped variables due to PgBouncer pooling.
+- Use parameterized queries to prevent SQL injection.
+
+### Caching
+- Embedding and response caches should have explicit TTLs.
+- Prefer Redis hot cache + Postgres cold cache pattern per spec.
+
+### Security-Sensitive Code
+- JWT validation must check signature, expiry, audience, issuer, and origin.
+- API key verification must use bcrypt.compare/checkpw.
+- Never use wildcard origins in production.
+
+## Documentation Sources (Truth)
+- `testing.md` for test strategy and CI example.
+- `deployment.md` for docker-compose and runtime setup.
+- `security.md` for mandatory security rules.
+- `retrieval.md` for pipeline design and config defaults.
+- `observability.md` for logging/metrics/tracing standards.
+- `api_spec.md` for endpoint behavior and payloads.
+- `widget_protocol.md` for widget messaging and origin validation.
+
+## When Adding New Tooling
+- Update this file with exact build/lint/test commands.
+- Note how to run a single test for each test framework.
+- Record any formatter/linter rules that affect style.
