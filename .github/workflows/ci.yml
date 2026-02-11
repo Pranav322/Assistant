@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      # We can use a service container for Postgres (pgvector)
+      # OR just rely on the fact tests might mock DB or use docker-compose if we want integration tests.
+      # For now, let's spin up the exact pgvector image we use.
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_DB: chatbot_test
+          POSTGRES_USER: chatbot_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_HOST_AUTH_METHOD: trust
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Lint with Black
+        run: uv run black --check .
+
+      - name: Lint with Isort
+        run: uv run isort --check .
+      
+      # - name: Type check with Mypy
+      #   run: uv run mypy .
+
+      - name: Run Tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://chatbot_user:test_password@localhost:5432/chatbot_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+          JWT_SECRET: test_secret_key
+          LOG_LEVEL: DEBUG
+        run: uv run pytest tests/ --cov=app --cov-report=xml
+

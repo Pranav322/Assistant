@@ -1,0 +1,54 @@
+# Dockerfile.worker
+FROM python:3.11-slim as builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN pip install uv
+
+# Create virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN uv venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Install dependencies
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md .
+ENV UV_LINK_MODE=copy
+# Install dependencies from lockfile
+RUN uv sync --frozen --no-install-project --no-dev
+
+COPY . .
+RUN uv sync --frozen --no-dev
+
+# Production stage
+FROM python:3.11-slim
+
+# Install system dependencies for PDF processing
+RUN apt-get update && apt-get install -y \
+    poppler-utils \
+    tesseract-ocr \
+    libmagic1 \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /app/.venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Create non-root user
+RUN useradd -m -u 1000 worker
+USER worker
+WORKDIR /app
+
+# Copy application code
+COPY --chown=worker:worker . .
+
+# Run worker
+CMD ["dramatiq", "worker", "app.worker.tasks", "--processes", "4", "--threads", "2"]

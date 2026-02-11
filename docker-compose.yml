@@ -1,0 +1,66 @@
+version: '3.8'
+
+networks:
+  chatbot-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+
+services:
+  # Postgres service removed (using remote Neon DB)
+
+  redis:
+    image: redis:7-alpine
+    container_name: chatbot-redis
+    restart: unless-stopped
+    networks:
+      - chatbot-network
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: chatbot-api
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: chatbot-worker
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      WORKER_QUEUES: "default,ingestion,embeddings"
+    volumes:
+      - .:/app
