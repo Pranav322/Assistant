@@ -87,17 +87,17 @@ Definition of done:
 - [x] CI updated for new fixtures or deps
 
 Phase 3 - Retrieval core (retrieval.md Phase 1)
-- [ ] Vector search (pgvector HNSW) with tenant filtering
-- [ ] Keyword search (TSVECTOR) with tenant filtering
-- [ ] Reciprocal Rank Fusion (RRF)
-- [ ] Context assembly and citations
-- [ ] Tests: unit tests for fusion/assembly, integration tests for vector and keyword search
-- [ ] CI/CD: add pgvector container or fixtures if needed
+- [x] Vector search (pgvector HNSW) with tenant filtering
+- [x] Keyword search (TSVECTOR) with tenant filtering
+- [x] Reciprocal Rank Fusion (RRF)
+- [x] Context assembly and citations
+- [x] Tests: unit tests for fusion/assembly, integration tests for vector and keyword search
+- [x] CI/CD: add pgvector container or fixtures if needed (no workflow changes needed)
 Definition of done:
-- [ ] Vector + keyword search implemented with tenant filtering
-- [ ] RRF fusion and context assembly used by retrieval pipeline
-- [ ] Retrieval tests cover search and fusion paths
-- [ ] CI updated for pgvector dependency if required
+- [x] Vector + keyword search implemented with tenant filtering
+- [x] RRF fusion and context assembly used by retrieval pipeline
+- [x] Retrieval tests cover search and fusion paths
+- [x] CI updated for pgvector dependency if required
 
 Phase 4 - Chat endpoint and conversation storage (api_spec.md)
 - [ ] `POST /projects/{project_id}/chat` with retrieval + LLM response
