@@ -1,8 +1,10 @@
-from typing import Any
 import uuid
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import AuditLog
+
 from app.core.security import redact_sensitive
+from app.models import AuditLog
 
 
 async def log_audit_event(

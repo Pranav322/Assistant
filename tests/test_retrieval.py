@@ -1,13 +1,15 @@
-import pytest
 import uuid
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import User, Project, Source, Chunk, Embedding
+
+from app.models import Chunk, Embedding, Project, Source, User
 from app.services.retrieval import (
-    VectorSearch,
+    ContextAssembler,
     KeywordSearch,
     ReciprocalRankFusion,
-    ContextAssembler,
     SearchResult,
+    VectorSearch,
 )
 
 

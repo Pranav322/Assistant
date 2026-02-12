@@ -1,16 +1,18 @@
 import hashlib
+import io
 import uuid
 from typing import Optional
+
 import pdfplumber
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.models import Source, Chunk, Embedding
-from app.core.chunking import DocumentChunker
-from app.services.embedding import EmbeddingService
-from app.schemas.chunk import ProcessedChunk
-from app.services.ingestion_validation import validate_file_content
 from markdownify import markdownify
-import io
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.chunking import DocumentChunker
+from app.models import Chunk, Embedding, Source
+from app.schemas.chunk import ProcessedChunk
+from app.services.embedding import EmbeddingService
+from app.services.ingestion_validation import validate_file_content
 
 
 class IngestionService:

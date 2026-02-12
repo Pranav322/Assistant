@@ -1,7 +1,9 @@
-import aioboto3
-from app.core.config import settings
 from typing import BinaryIO, Optional
+
+import aioboto3
 import structlog
+
+from app.core.config import settings
 
 logger = structlog.get_logger()
 

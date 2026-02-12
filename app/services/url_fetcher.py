@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Optional
 import asyncio
 import ipaddress
 import socket
-from urllib.parse import urlparse, urljoin
+from typing import Optional
+from urllib.parse import urljoin, urlparse
+
 import aiohttp
+
 from app.core.config import settings
 
 BLOCKED_HOSTNAMES = {

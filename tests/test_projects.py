@@ -1,10 +1,12 @@
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
-from app.models import User, Project, ApiKey
+from app.models import ApiKey, Project, User
 
 
 @pytest.mark.asyncio

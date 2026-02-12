@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any
-import uuid
+
 import tiktoken
 from openai import AsyncAzureOpenAI
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.models import Conversation, Message, Project
 from app.services.retrieval import RetrievalPipeline

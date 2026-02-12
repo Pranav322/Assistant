@@ -1,9 +1,11 @@
-import pytest
-import uuid
 import base64
+import uuid
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
+from app.models import Project, Source, User
 from app.worker.tasks import process_ingestion_async
-from app.models import Source, Project, User
 
 
 @pytest.mark.asyncio

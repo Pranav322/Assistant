@@ -1,8 +1,10 @@
-from dataclasses import dataclass
-from typing import Optional
 import io
 import mimetypes
+from dataclasses import dataclass
+from typing import Optional
+
 import pdfplumber
+
 from app.core.config import settings
 
 

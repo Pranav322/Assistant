@@ -1,7 +1,9 @@
-from openai import AsyncAzureOpenAI
-from app.core.config import settings
 from typing import List
+
 import structlog
+from openai import AsyncAzureOpenAI
+
+from app.core.config import settings
 
 logger = structlog.get_logger()
 

@@ -1,12 +1,13 @@
 import pytest
+
+from app.core.config import settings
 from app.core.security import (
     generate_api_key,
     hash_api_key,
-    verify_api_key,
     validate_origin,
+    verify_api_key,
 )
 from app.services.rate_limit import RateLimiter
-from app.core.config import settings
 
 
 class FakeRedis:

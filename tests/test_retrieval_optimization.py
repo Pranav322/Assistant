@@ -1,9 +1,11 @@
-import pytest
 import uuid
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import User, Project
+
+from app.models import Project, User
 from app.services.embedding_cache import EmbeddingCache
-from app.services.retrieval import QueryProcessor, Reranker, FusedResult
+from app.services.retrieval import FusedResult, QueryProcessor, Reranker
 
 
 class FakeRedis:

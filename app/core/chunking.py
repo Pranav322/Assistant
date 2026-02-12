@@ -1,7 +1,9 @@
-import tiktoken
 import re
 from typing import List, Optional
+
+import tiktoken
 from markdownify import markdownify
+
 from app.schemas.chunk import ProcessedChunk
 
 

@@ -1,23 +1,25 @@
-import pytest
 import uuid
-from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from httpx import AsyncClient
-from app.models import (
-    User,
-    UserUsage,
-    Project,
-    Source,
-    Chunk,
-    Embedding,
-    ApiKey,
-    Conversation,
-    Message,
-    RetrievalMetric,
-)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.core.security import generate_api_key, hash_api_key
+from app.models import (
+    ApiKey,
+    Chunk,
+    Conversation,
+    Embedding,
+    Message,
+    Project,
+    RetrievalMetric,
+    Source,
+    User,
+    UserUsage,
+)
 
 
 @pytest.mark.asyncio

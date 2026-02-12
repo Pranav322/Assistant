@@ -1,20 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api import deps
-from app.models import User
-from app.schemas.auth import RegisterRequest, LoginRequest, AuthResponse, UserResponse
+from app.core.config import settings
 from app.core.security import (
-    get_password_hash,
-    verify_password,
     create_access_token,
     decode_user_token,
+    get_password_hash,
+    verify_password,
 )
-from app.core.config import settings
-from app.services.audit import log_audit_event
+from app.models import User
 from app.observability.metrics import record_auth_failure
+from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest, UserResponse
+from app.services.audit import log_audit_event
 
 router = APIRouter()
 

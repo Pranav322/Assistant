@@ -1,13 +1,15 @@
-from datetime import datetime, timedelta, timezone
-from typing import Any, Union
-import bcrypt
 import hashlib
 import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Any, Union
+from urllib.parse import urlparse
+
+import bcrypt
 from jose import jwt
 from passlib.context import CryptContext
+
 from app.core.config import settings
-from urllib.parse import urlparse
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 

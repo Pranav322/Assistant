@@ -1,12 +1,14 @@
-import pytest
 import asyncio
 from typing import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.api.deps import get_db, get_redis
+from app.core.config import settings
 from app.main import app
 from app.models import Base
-from app.core.config import settings
-from app.api.deps import get_db, get_redis
 
 
 class FakeRedis:

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-from sqlalchemy import text
+
 import redis.asyncio as redis
+from sqlalchemy import text
+
 from app.api.deps import AsyncSessionLocal
 from app.core.config import settings
 from app.services.storage import StorageService

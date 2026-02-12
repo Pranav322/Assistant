@@ -1,21 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import datetime, timedelta, timezone
 import uuid
+from datetime import datetime, timedelta, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api import deps
-from app.schemas.widget import WidgetTokenRequest, WidgetTokenResponse
 from app.core.security import (
     create_widget_token,
+    decode_widget_token,
     hash_widget_token,
     normalize_origin,
     validate_origin,
-    decode_widget_token,
 )
 from app.models import BrowserToken, Project
-from app.services.rate_limit import RateLimiter
-from app.services.audit import log_audit_event
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
+from app.schemas.widget import WidgetTokenRequest, WidgetTokenResponse
+from app.services.audit import log_audit_event
+from app.services.rate_limit import RateLimiter
 
 router = APIRouter()
 

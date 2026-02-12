@@ -1,18 +1,20 @@
+import uuid
+from datetime import datetime
+from typing import Optional
+
 from sqlalchemy import (
-    String,
-    ForeignKey,
-    Integer,
     JSON,
     Boolean,
-    Numeric,
-    func,
     DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    func,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
+from sqlalchemy.dialects.postgresql import INET, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import datetime
-import uuid
-from typing import Optional
+
 from .base import Base
 
 

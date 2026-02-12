@@ -1,15 +1,17 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+
+import pytest
 from httpx import AsyncClient
-from app.models import User, Project, ApiKey, BrowserToken, WidgetMetric
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.security import (
     create_access_token,
     decode_widget_token,
     generate_api_key,
     hash_api_key,
 )
+from app.models import ApiKey, BrowserToken, Project, User, WidgetMetric
 
 
 @pytest.mark.asyncio

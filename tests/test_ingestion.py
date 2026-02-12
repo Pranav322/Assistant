@@ -1,10 +1,12 @@
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 from unittest.mock import AsyncMock, patch
-from app.services.ingestion import IngestionService
-from app.models import Source, Chunk, Embedding, User, Project
+
+import pytest
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import Chunk, Embedding, Project, Source, User
+from app.services.ingestion import IngestionService
 
 
 @pytest.mark.asyncio

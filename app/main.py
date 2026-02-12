@@ -1,17 +1,17 @@
-from fastapi import FastAPI
-from fastapi import status, Request
-from fastapi.responses import JSONResponse
 import time
 import uuid
+
 import structlog
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
-from app.observability.metrics import observe_request, track_in_flight, metrics_response
-from app.observability.logging import configure_logging
-from app.observability.tracing import configure_tracing
-from app.observability.health import readiness
+from fastapi.responses import JSONResponse
 
 from app.api.v1.api_router import api_router
+from app.core.config import settings
+from app.observability.health import readiness
+from app.observability.logging import configure_logging
+from app.observability.metrics import metrics_response, observe_request, track_in_flight
+from app.observability.tracing import configure_tracing
 
 configure_logging()
 logger = structlog.get_logger()

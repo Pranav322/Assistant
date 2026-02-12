@@ -1,19 +1,21 @@
-from sqlalchemy import (
-    String,
-    ForeignKey,
-    Text,
-    Computed,
-    func,
-    DateTime,
-    CheckConstraint,
-    UniqueConstraint,
-)
-from sqlalchemy.dialects.postgresql import UUID, JSONB, TSVECTOR
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pgvector.sqlalchemy import Vector
-from datetime import datetime
 import uuid
-from typing import Optional, Any
+from datetime import datetime
+from typing import Any, Optional
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import (
+    CheckConstraint,
+    Computed,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from .base import Base
 
 

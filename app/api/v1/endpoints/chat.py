@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import uuid
+
+import redis.asyncio as redis
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api import deps
 from app.core.config import settings
+from app.models import Project, User
+from app.observability.metrics import record_rate_limit_hit
 from app.schemas.chat import ChatRequest, ChatResponse
-import redis.asyncio as redis
 from app.services.chat import ChatService
 from app.services.rate_limit import RateLimiter
 from app.services.user_usage import get_or_create_user_usage
-from app.models import Project, User
-from app.observability.metrics import record_rate_limit_hit
 
 router = APIRouter()
 

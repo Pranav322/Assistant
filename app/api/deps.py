@@ -1,12 +1,13 @@
-from typing import AsyncGenerator
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from fastapi import Depends, HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy import select
+from typing import AsyncGenerator
+
 import redis.asyncio as redis
+from fastapi import Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from app.core.config import settings
 from app.core.security import (
     API_KEY_PREFIX,
@@ -17,9 +18,9 @@ from app.core.security import (
     verify_api_key,
 )
 from app.models import ApiKey, BrowserToken, Project, User
-from app.services.rate_limit import RateLimiter
-from app.services.audit import log_audit_event
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
+from app.services.audit import log_audit_event
+from app.services.rate_limit import RateLimiter
 
 engine = create_async_engine(
     settings.DATABASE_URL,

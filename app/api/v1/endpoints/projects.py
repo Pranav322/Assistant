@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 import uuid
-from app.api import deps
 from datetime import datetime, timezone
-from app.models import Project, ApiKey, User
-from app.schemas.project import ProjectCreate, ProjectResponse
-from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
-from app.core.security import generate_api_key, hash_api_key, normalize_origin
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api import deps
 from app.core.config import settings
+from app.core.security import generate_api_key, hash_api_key, normalize_origin
+from app.models import ApiKey, Project, User
+from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
+from app.schemas.project import ProjectCreate, ProjectResponse
 from app.services.audit import log_audit_event
 
 router = APIRouter()

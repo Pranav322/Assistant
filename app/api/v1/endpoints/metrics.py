@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api import deps
-from app.schemas.widget import WidgetMetricsRequest
 from app.models import WidgetMetric
+from app.schemas.widget import WidgetMetricsRequest
 
 router = APIRouter()
 

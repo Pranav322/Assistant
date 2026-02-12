@@ -1,16 +1,18 @@
 import asyncio
-import dramatiq
 import uuid
-from typing import Optional, Any
+from typing import Any, Optional
 from urllib.parse import urlparse
+
+import dramatiq
+import structlog
+from sqlalchemy import select
+
 from app.api.deps import AsyncSessionLocal
+from app.models import Source
 from app.services.ingestion import IngestionService
+from app.services.ingestion_validation import derive_file_type
 from app.services.storage import StorageService
 from app.services.url_fetcher import fetch_url_content
-from app.services.ingestion_validation import derive_file_type
-from app.models import Source
-from sqlalchemy import select
-import structlog
 
 logger = structlog.get_logger()
 

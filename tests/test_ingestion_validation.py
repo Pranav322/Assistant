@@ -1,7 +1,8 @@
 import pytest
+
+from app.core.config import settings
 from app.services.ingestion_validation import validate_file_content
 from app.services.url_fetcher import validate_url
-from app.core.config import settings
 
 
 def test_validate_file_size_limit(monkeypatch: pytest.MonkeyPatch) -> None:

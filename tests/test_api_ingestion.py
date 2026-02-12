@@ -1,11 +1,13 @@
-import pytest
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import patch, MagicMock, AsyncMock
-from app.models import Project, User, Source, ApiKey
-from app.core.security import create_access_token, generate_api_key, hash_api_key
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import create_access_token, generate_api_key, hash_api_key
+from app.models import ApiKey, Project, Source, User
 
 
 @pytest.mark.asyncio

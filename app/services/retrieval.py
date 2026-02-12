@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Iterable, Sequence, cast
 import asyncio
 import importlib
-import time
 import re
+import time
 import uuid
-import tiktoken
-from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession
+from dataclasses import dataclass
+from typing import Any, Iterable, Sequence, cast
+
 import structlog
-from app.models import Chunk, Embedding, Source, Project, RetrievalMetric
+import tiktoken
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import Chunk, Embedding, Project, RetrievalMetric, Source
 from app.services.embedding import EmbeddingService
 from app.services.embedding_cache import EmbeddingCache
 
