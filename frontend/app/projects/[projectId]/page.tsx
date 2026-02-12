@@ -30,6 +30,15 @@ type ApiKey = {
 };
 
 export default function ProjectDetailPage() {
+  const normalizeOrigin = (value: string) => {
+    const trimmed = value.trim().replace(/\/+$/, "");
+    if (!trimmed) return trimmed;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    if (trimmed.startsWith("localhost") || trimmed.startsWith("127.0.0.1")) {
+      return `http://${trimmed}`;
+    }
+    return `https://${trimmed}`;
+  };
   const params = useParams();
   const projectId = params?.projectId as string;
   const [project, setProject] = useState<Project | null>(null);
@@ -217,7 +226,7 @@ export default function ProjectDetailPage() {
     const apiBaseUrl = API_BASE_URL.replace(/\/$/, "");
     const isLocal = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
     const defaultOrigin = isLocal ? "http://localhost:3000" : "https://customer.com";
-    const originValue = project.allowed_origins?.[0] || defaultOrigin;
+    const originValue = normalizeOrigin(project.allowed_origins?.[0] || defaultOrigin);
 
     setTokenLoading(true);
     try {
@@ -259,9 +268,27 @@ export default function ProjectDetailPage() {
   const apiBaseUrl = API_BASE_URL.replace(/\/$/, "");
   const isLocal = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
   const defaultOrigin = isLocal ? "http://localhost:3000" : "https://customer.com";
-  const originValue = project.allowed_origins?.[0] || defaultOrigin;
-  const widgetBaseUrl = isLocal ? "http://localhost:3000" : "https://your-domain.com";
-  const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originValue}" data-project-id="${project.id}" defer></script>`;
+  const originValue = normalizeOrigin(project.allowed_origins?.[0] || defaultOrigin);
+  const widgetBaseUrl = (() => {
+    const envWidget = process.env.NEXT_PUBLIC_WIDGET_BASE_URL;
+    if (envWidget) {
+      return envWidget.replace(/\/$/, "");
+    }
+    if (typeof window === "undefined") {
+      return isLocal ? "http://localhost:3000" : "https://widget.pranavbuilds.tech";
+    }
+    try {
+      const current = new URL(window.location.origin);
+      const host = current.host;
+      if (host.startsWith("app.")) {
+        return `${current.protocol}//widget.${host.slice(4)}`;
+      }
+      return current.origin;
+    } catch {
+      return isLocal ? "http://localhost:3000" : "https://widget.pranavbuilds.tech";
+    }
+  })();
+  const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originValue}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" defer></script>`;
   const previewOrigin = originValue;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
   const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}`;
@@ -451,6 +478,11 @@ export default function ProjectDetailPage() {
                   <Label>2. Embed Widget</Label>
                   <p className="text-sm text-muted-foreground">Add this to your frontend HTML.</p>
                   <CopyBlock value={embedSnippet} />
+                  <p className="text-xs text-muted-foreground">
+                    Auto-refresh uses <span className="font-mono">data-api-base-url</span>. Optional:
+                    provide <span className="font-mono">data-refresh-url</span> to use your own
+                    token broker endpoint.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>3. Preview URL</Label>

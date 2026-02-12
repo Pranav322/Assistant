@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from app.models import Project, ApiKey
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
-from app.core.security import generate_api_key, hash_api_key
+from app.core.security import generate_api_key, hash_api_key, normalize_origin
 from app.services.audit import log_audit_event
 
 
@@ -58,10 +58,14 @@ async def create_project(
     else:
         owner_id = access.user_id
 
+    allowed_origins = [
+        normalize_origin(origin) for origin in payload.allowed_origins or []
+    ]
+
     project = Project(
         owner_id=owner_id,
         name=payload.name,
-        allowed_origins=payload.allowed_origins or [],
+        allowed_origins=allowed_origins,
         settings=payload.settings or {},
         usage={},
     )
@@ -130,12 +134,16 @@ async def create_api_key(
     api_key_value = generate_api_key()
     key_hash = hash_api_key(api_key_value)
 
+    allowed_origins = [
+        normalize_origin(origin) for origin in payload.allowed_origins or []
+    ]
+
     api_key = ApiKey(
         project_id=project_id,
         name=payload.name,
         key_hash=key_hash,
         scopes=payload.scopes or ["ingest", "query"],
-        allowed_origins=payload.allowed_origins or [],
+        allowed_origins=allowed_origins,
         rate_limit=payload.rate_limit or {},
         usage_limit=payload.usage_limit or {},
     )

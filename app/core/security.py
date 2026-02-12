@@ -7,6 +7,7 @@ import uuid
 from jose import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
+from urllib.parse import urlparse
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -107,6 +108,17 @@ def decode_widget_token(token: str) -> dict[str, Any]:
     )
 
 
+def normalize_origin(origin: str) -> str:
+    cleaned = origin.strip().rstrip("/")
+    if not cleaned:
+        return cleaned
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        return cleaned
+    if cleaned.startswith("localhost") or cleaned.startswith("127.0.0.1"):
+        return f"http://{cleaned}"
+    return f"https://{cleaned}"
+
+
 def validate_origin(request_origin: str | None, allowed_origins: list[str]) -> bool:
     if not request_origin:
         return False
@@ -114,7 +126,14 @@ def validate_origin(request_origin: str | None, allowed_origins: list[str]) -> b
     if settings.ENVIRONMENT == "development" and "*" in allowed_origins:
         return True
 
-    for allowed in allowed_origins:
+    request_origin = normalize_origin(request_origin)
+    parsed = urlparse(request_origin)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return False
+
+    normalized_allowed = [normalize_origin(origin) for origin in allowed_origins]
+
+    for allowed in normalized_allowed:
         if allowed == request_origin:
             return True
         if allowed.startswith("https://*.") and request_origin.startswith("https://"):

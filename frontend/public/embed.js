@@ -5,8 +5,14 @@
     return;
   }
 
+  const refreshUrl = scriptTag.getAttribute("data-refresh-url");
+  const apiBaseAttr = scriptTag.getAttribute("data-api-base-url");
+  const refreshMethod = (scriptTag.getAttribute("data-refresh-method") || "POST").toUpperCase();
+  const refreshCredentials =
+    scriptTag.getAttribute("data-refresh-credentials") || "include";
+
   let token = scriptTag.getAttribute("data-token");
-  if (!token) {
+  if (!token && !refreshUrl) {
     console.error("[Orizn Widget] Missing data-token attribute.");
     return;
   }
@@ -28,6 +34,24 @@
       ? `${scriptUrl.origin}/widget`
       : `${window.location.origin}/widget`);
   const widgetOrigin = new URL(widgetUrl, window.location.href).origin;
+  const apiBaseUrl = (() => {
+    if (apiBaseAttr) {
+      return apiBaseAttr.replace(/\/$/, "");
+    }
+    try {
+      const base = new URL(widgetOrigin);
+      const host = base.host;
+      if (host.startsWith("widget.")) {
+        return `${base.protocol}//api.${host.slice(7)}/api/v1`;
+      }
+      if (host.startsWith("app.")) {
+        return `${base.protocol}//api.${host.slice(4)}/api/v1`;
+      }
+      return `${base.origin}/api/v1`;
+    } catch {
+      return "";
+    }
+  })();
 
   const iframeSrc = new URL(widgetUrl, window.location.href);
   iframeSrc.searchParams.set("token", token);
@@ -123,6 +147,11 @@
 
   iframe.addEventListener("load", function () {
     postToWidget({ type: "chatbot:init", token, projectId, origin });
+    if (token) {
+      scheduleRefresh(token);
+    } else {
+      refreshToken();
+    }
   });
 
   function setToken(nextToken) {
@@ -131,6 +160,83 @@
     }
     token = nextToken;
     postToWidget({ type: "chatbot:set_token", token: nextToken });
+    scheduleRefresh(nextToken);
+  }
+
+  function parseJwt(rawToken) {
+    try {
+      const payload = rawToken.split(".")[1];
+      if (!payload) return null;
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const json = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => `%${("00" + c.charCodeAt(0).toString(16)).slice(-2)}`)
+          .join("")
+      );
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  }
+
+  let refreshTimer = null;
+
+  function scheduleRefresh(rawToken) {
+    if (refreshTimer) {
+      clearTimeout(refreshTimer);
+    }
+    const payload = parseJwt(rawToken);
+    if (!payload || !payload.exp) {
+      return;
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const refreshAt = Math.max(payload.exp - 300, now + 30);
+    const delayMs = Math.max((refreshAt - now) * 1000, 0);
+    refreshTimer = setTimeout(refreshToken, delayMs);
+  }
+
+  let refreshInFlight = false;
+
+  async function refreshToken() {
+    if (refreshInFlight) {
+      return;
+    }
+    refreshInFlight = true;
+    try {
+      let response;
+      if (refreshUrl) {
+        const options = {
+          method: refreshMethod,
+          credentials: refreshCredentials === "omit" ? "omit" : "include",
+          headers: {},
+        };
+        if (refreshMethod !== "GET") {
+          options.headers["Content-Type"] = "application/json";
+          options.body = JSON.stringify({ projectId, origin });
+        }
+        response = await fetch(refreshUrl, options);
+      } else if (apiBaseUrl) {
+        response = await fetch(`${apiBaseUrl}/tokens/refresh`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else {
+        return;
+      }
+      const data = await response.json().catch(() => null);
+      if (response.ok && data && data.token) {
+        setToken(data.token);
+      } else {
+        console.error("[Orizn Widget] Token refresh failed.");
+      }
+    } catch (error) {
+      console.error("[Orizn Widget] Token refresh error.", error);
+    } finally {
+      refreshInFlight = false;
+    }
   }
 
   function handleMessage(event) {
@@ -147,6 +253,7 @@
       }
     }
     if (data.type === "chatbot:token_expired") {
+      refreshToken();
       const refreshEvent = new CustomEvent("chatbot:token_expired", {
         detail: { setToken },
       });
@@ -181,5 +288,6 @@
     },
     destroy,
     onTokenExpired: null,
+    refreshToken,
   };
 })();

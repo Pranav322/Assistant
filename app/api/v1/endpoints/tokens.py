@@ -8,6 +8,7 @@ from app.schemas.widget import WidgetTokenRequest, WidgetTokenResponse
 from app.core.security import (
     create_widget_token,
     hash_widget_token,
+    normalize_origin,
     validate_origin,
     decode_widget_token,
 )
@@ -76,7 +77,7 @@ async def create_widget_token_endpoint(
         record_rate_limit_hit("token_refresh")
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
-    origin = str(payload.origin).rstrip("/")
+    origin = normalize_origin(str(payload.origin))
     allowed_origins = api_key.allowed_origins or project.allowed_origins
     if not validate_origin(origin, allowed_origins):
         await log_audit_event(
@@ -161,7 +162,7 @@ async def create_widget_token_for_user(
         record_rate_limit_hit("token_refresh")
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
-    origin = str(payload.origin).rstrip("/")
+    origin = normalize_origin(str(payload.origin))
     allowed_origins = project.allowed_origins or []
     if not validate_origin(origin, allowed_origins):
         await log_audit_event(
@@ -234,7 +235,7 @@ async def refresh_widget_token(
         record_auth_failure("token_invalid")
         raise HTTPException(status_code=401, detail="Invalid token") from exc
 
-    origin = (request.headers.get("origin") or "").rstrip("/")
+    origin = normalize_origin(request.headers.get("origin") or "")
     if not origin or not validate_origin(origin, claims.get("origins", [])):
         record_auth_failure("origin_mismatch")
         raise HTTPException(status_code=403, detail="Origin not allowed")

@@ -20,6 +20,15 @@ type Project = {
 };
 
 export default function ProjectsPage() {
+  const normalizeOrigin = (value: string) => {
+    const trimmed = value.trim().replace(/\/+$/, "");
+    if (!trimmed) return trimmed;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    if (trimmed.startsWith("localhost") || trimmed.startsWith("127.0.0.1")) {
+      return `http://${trimmed}`;
+    }
+    return `https://${trimmed}`;
+  };
   const [projects, setProjects] = useState<Project[]>([]);
   const [name, setName] = useState("");
   const [origin, setOrigin] = useState("http://localhost:3000");
@@ -56,12 +65,13 @@ export default function ProjectsPage() {
     if (!token) return;
     try {
       setCreatingProject(true);
+      const normalizedOrigin = normalizeOrigin(origin);
       await apiRequest<Project>("/projects", {
         method: "POST",
         token,
         body: JSON.stringify({
           name,
-          allowed_origins: [origin],
+          allowed_origins: [normalizedOrigin],
         }),
       });
       setName("");

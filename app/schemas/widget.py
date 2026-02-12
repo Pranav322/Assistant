@@ -1,9 +1,9 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
 
 class WidgetTokenRequest(BaseModel):
-    origin: HttpUrl
+    origin: str
     project_id: str
 
 
