@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.services.audit import log_audit_event
@@ -18,9 +18,10 @@ router = APIRouter()
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_document(
     project_id: uuid.UUID,
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(deps.get_db),
-    auth: deps.AuthContext = Depends(deps.api_key_required("ingestion")),
+    auth: deps.AuthContext = Depends(deps.project_access_required("ingestion")),
 ):
     """
     Upload a document for processing.
@@ -88,6 +89,7 @@ async def upload_document(
             db,
             action="file_uploaded",
             project_id=project_id,
+            user_id=getattr(request.state, "user_id", None),
             resource_type="source",
             resource_id=str(source.id),
         )
@@ -138,7 +140,7 @@ async def get_source_status(
     source_id: uuid.UUID,
     project_id: uuid.UUID,
     db: AsyncSession = Depends(deps.get_db),
-    auth: deps.AuthContext = Depends(deps.api_key_required("ingestion")),
+    auth: deps.AuthContext = Depends(deps.project_access_required("ingestion")),
 ):
     """
     Get the status of a source processing task.
@@ -169,8 +171,9 @@ async def get_source_status(
 async def ingest_url(
     project_id: uuid.UUID,
     payload: UrlIngestRequest,
+    request: Request,
     db: AsyncSession = Depends(deps.get_db),
-    auth: deps.AuthContext = Depends(deps.api_key_required("ingestion")),
+    auth: deps.AuthContext = Depends(deps.project_access_required("ingestion")),
 ):
     url = str(payload.url)
     try:
@@ -201,6 +204,15 @@ async def ingest_url(
     db.add(source)
     await db.commit()
     await db.refresh(source)
+
+    await log_audit_event(
+        db,
+        action="url_ingested",
+        project_id=project_id,
+        user_id=getattr(request.state, "user_id", None),
+        resource_type="source",
+        resource_id=str(source.id),
+    )
 
     process_ingestion_task.send(
         source_id=str(source.id),

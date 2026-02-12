@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from unittest.mock import patch, MagicMock, AsyncMock
 from app.models import Project, User, Source, ApiKey
-from app.core.security import generate_api_key, hash_api_key
+from app.core.security import create_access_token, generate_api_key, hash_api_key
 from sqlalchemy import select
 
 
@@ -182,4 +182,63 @@ async def test_ingest_url_endpoint(client: AsyncClient, db: AsyncSession):
             source_url = (source.metadata_ or {}).get("source_url")
             assert source_url is not None
             assert source_url.rstrip("/") == "https://example.com"
+            mock_send.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_upload_document_endpoint_user_token(
+    client: AsyncClient, db: AsyncSession
+):
+    user = User(email=f"user_ingest_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(name="User Ingest Project", owner_id=user.id)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    token = create_access_token(str(user.id))
+
+    with patch("app.worker.tasks.process_ingestion_task.send") as mock_send:
+        file_content = b"User content"
+        response = await client.post(
+            f"/api/v1/ingestion/upload?project_id={project.id}",
+            files={"file": ("user.txt", file_content, "text/plain")},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert "source_id" in data
+        assert data["status"] == "pending"
+        mock_send.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_ingest_url_endpoint_user_token(client: AsyncClient, db: AsyncSession):
+    user = User(email=f"user_url_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(name="User URL Project", owner_id=user.id)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    token = create_access_token(str(user.id))
+
+    with patch("app.api.v1.endpoints.ingestion.validate_url", new_callable=AsyncMock):
+        with patch("app.worker.tasks.process_ingestion_task.send") as mock_send:
+            response = await client.post(
+                f"/api/v1/ingestion/url?project_id={project.id}",
+                json={"url": "https://example.com"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+            assert response.status_code == 201
+            data = response.json()
+            assert "source_id" in data
             mock_send.assert_called_once()

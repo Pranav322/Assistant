@@ -21,7 +21,12 @@ from app.services.rate_limit import RateLimiter
 from app.services.audit import log_audit_event
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
 
-engine = create_async_engine(settings.DATABASE_URL, echo=True)
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=True,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 AsyncSessionLocal = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
@@ -362,6 +367,14 @@ def project_access_required(endpoint: str):
         auth_header = request.headers.get("authorization") or ""
         if auth_header.lower().startswith("bearer "):
             token = _extract_bearer_token(auth_header)
+            if token and token.startswith(API_KEY_PREFIX):
+                return await api_key_required(endpoint)(
+                    project_id=project_id,
+                    request=request,
+                    redis_client=redis_client,
+                    db=db,
+                )
+
             try:
                 claims = decode_user_token(token or "")
             except Exception as exc:

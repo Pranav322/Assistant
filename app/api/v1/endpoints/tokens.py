@@ -129,6 +129,94 @@ async def create_widget_token_endpoint(
     )
 
 
+@router.post("/tokens/widget/user", response_model=WidgetTokenResponse)
+async def create_widget_token_for_user(
+    payload: WidgetTokenRequest,
+    request: Request,
+    access: deps.AccessContext = Depends(deps.admin_or_user_required()),
+    db: AsyncSession = Depends(deps.get_db),
+    redis_client=Depends(deps.get_redis),
+):
+    try:
+        project_id = uuid.UUID(payload.project_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid project_id") from exc
+
+    project = await deps._load_project(project_id, db)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not access.is_admin:
+        if not access.user_id or project.owner_id != access.user_id:
+            raise HTTPException(status_code=403, detail="Project mismatch")
+
+    limiter = RateLimiter(redis_client)
+    allowed = await limiter.check(
+        ip=deps._get_client_ip(request),
+        api_key_prefix=None,
+        endpoint="token_refresh",
+        project_id=str(project_id),
+    )
+    if not allowed:
+        record_rate_limit_hit("token_refresh")
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+
+    origin = str(payload.origin).rstrip("/")
+    allowed_origins = project.allowed_origins or []
+    if not validate_origin(origin, allowed_origins):
+        await log_audit_event(
+            db,
+            action="origin_mismatch",
+            project_id=project_id,
+            user_id=access.user_id,
+            resource_type="widget_token",
+            ip_address=deps._get_client_ip(request),
+            user_agent=request.headers.get("user-agent"),
+            detail={"origin": origin},
+        )
+        record_auth_failure("origin_mismatch")
+        raise HTTPException(status_code=403, detail="Origin not allowed")
+
+    token_id = uuid.uuid4()
+    token = create_widget_token(
+        project_id=str(project_id),
+        origins=[origin],
+        token_id=str(token_id),
+    )
+    token_hash = hash_widget_token(token)
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        seconds=deps.settings.WIDGET_TOKEN_EXPIRE_SECONDS
+    )
+
+    db.add(
+        BrowserToken(
+            token_id=token_id,
+            project_id=project_id,
+            api_key_id=None,
+            token_hash=token_hash,
+            origin=origin,
+            expires_at=expires_at,
+        )
+    )
+    await db.commit()
+
+    await log_audit_event(
+        db,
+        action="widget_token_issued",
+        project_id=project_id,
+        user_id=access.user_id,
+        resource_type="widget_token",
+        resource_id=str(token_id),
+        detail={"origin": origin, "auth_type": "user"},
+        commit=True,
+    )
+
+    return WidgetTokenResponse(
+        token=token,
+        expires_in=deps.settings.WIDGET_TOKEN_EXPIRE_SECONDS,
+    )
+
+
 @router.post("/tokens/refresh", response_model=WidgetTokenResponse)
 async def refresh_widget_token(
     request: Request,

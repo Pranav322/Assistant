@@ -4,7 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from httpx import AsyncClient
 from app.models import User, Project, ApiKey, BrowserToken, WidgetMetric
-from app.core.security import generate_api_key, hash_api_key, decode_widget_token
+from app.core.security import (
+    create_access_token,
+    decode_widget_token,
+    generate_api_key,
+    hash_api_key,
+)
 
 
 @pytest.mark.asyncio
@@ -83,3 +88,33 @@ async def test_widget_token_and_metrics_flow(client: AsyncClient, db: AsyncSessi
     assert refresh_response.status_code == 200
     refreshed = refresh_response.json()
     assert refreshed["token"]
+
+
+@pytest.mark.asyncio
+async def test_widget_token_user_flow(client: AsyncClient, db: AsyncSession):
+    user = User(email=f"widget_user_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(
+        name="Widget User Project",
+        owner_id=user.id,
+        allowed_origins=["http://localhost:3000"],
+    )
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    token = create_access_token(str(user.id))
+    response = await client.post(
+        "/api/v1/tokens/widget/user",
+        json={"origin": "http://localhost:3000", "project_id": str(project.id)},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["token"]
+    claims = decode_widget_token(data["token"])
+    assert claims["sub"] == str(project.id)
