@@ -28,6 +28,8 @@ async def check_redis() -> bool:
 
 
 async def check_s3() -> bool:
+    if not settings.S3_HEALTHCHECK_REQUIRED:
+        return True
     if not all(
         [settings.S3_ENDPOINT, settings.S3_ACCESS_KEY_ID, settings.S3_SECRET_ACCESS_KEY]
     ):

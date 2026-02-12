@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     S3_BUCKET: str = "chatbot-files"
     S3_PUBLIC_URL: str | None = None
     S3_SSE: str | None = "AES256"
+    S3_HEALTHCHECK_REQUIRED: bool = True
 
     # Rate Limiting
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 60

@@ -6,82 +6,49 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libpq-dev \
+    ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 RUN pip install uv
 
-# Create virtual environment (optional with uv system install, but good practice)
-ENV VIRTUAL_ENV=/opt/venv
-RUN uv venv $VIRTUAL_ENV
+# Create virtual environment
+ENV VIRTUAL_ENV=/app/.venv
+RUN uv venv --python /usr/local/bin/python $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install dependencies
 WORKDIR /app
 COPY pyproject.toml uv.lock README.md .
 ENV UV_LINK_MODE=copy
-# Install dependencies from lockfile
 RUN uv sync --frozen --no-install-project --no-dev
 
+COPY . .
+RUN uv sync --frozen --no-dev
 
-# Production stage
+
+# Runtime stage
 FROM python:3.11-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
+    ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment
-COPY --from=builder /app/.venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+COPY --from=builder /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Create non-root user
 RUN useradd -m -u 1000 chatbot
 USER chatbot
 WORKDIR /app
 
-# Copy application code and install project
+# Copy application code
 COPY --chown=chatbot:chatbot . .
-# We need to install the project itself into the venv now
-# Since we copied the venv, we can just run sync again to install the project
-# But simpler is to install project deps first (done above) then copy code
-# and install editable or non-editable project.
-# Since we want production optimized, let's install the project into the environment.
-# Note: uv sync installs into .venv by default. We copied .venv to /opt/venv. 
-# We need to ensure PATH is correct.
-
-# Actually, let's stick to the official recommended multi-stage pattern for uv:
-# 1. Install non-project deps
-# 2. Copy code
-# 3. Install project
-# But wait, uv sync is designed to manage the whole environment.
-# Let's adjust the builder stage to do full sync if we want project installed,
-# BUT we want to leverage caching.
-# So:
-# COPY pyproject.toml uv.lock 
-# RUN uv sync --frozen --no-install-project
-# COPY . .
-# RUN uv sync --frozen --no-dev
-# Then copy the environment.
-
-# Let's refine the builder stage:
-COPY pyproject.toml uv.lock README.md .
-RUN uv sync --frozen --no-install-project --no-dev
-
-COPY . .
-RUN uv sync --frozen --no-dev
-
-# Production stage
-FROM python:3.11-slim
-# ... deps ...
-COPY --from=builder /app/.venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-# ... user/workdir ...
-COPY --chown=chatbot:chatbot . .
-# ... env vars ...
 
 # Environment variables
 ENV PYTHONPATH=/app
