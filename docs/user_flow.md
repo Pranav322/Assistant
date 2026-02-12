@@ -57,6 +57,10 @@ Widget tokens are short-lived JWTs used by the browser widget.
 Token lifetime:
 - Controlled by `WIDGET_TOKEN_EXPIRE_SECONDS` (default: 24 hours).
 
+Widget hosting origin:
+- Set `WIDGET_PUBLIC_ORIGIN` (e.g. `https://widget.pranavbuilds.tech`).
+- This ensures tokens are valid for the hosted widget iframe origin.
+
 ## 6) Widget Chat
 
 - The widget sends `Authorization: Bearer <widget_token>` to `/projects/{id}/chat`.

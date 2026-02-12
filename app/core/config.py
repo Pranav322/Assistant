@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     S3_SSE: str | None = "AES256"
     S3_HEALTHCHECK_REQUIRED: bool = True
 
+    # Widget hosting
+    WIDGET_PUBLIC_ORIGIN: str | None = None
+
     # Rate Limiting
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 60
     RATE_LIMIT_TOKENS_PER_MINUTE: int = 100000

@@ -78,6 +78,9 @@ async def create_widget_token_endpoint(
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
     origin = normalize_origin(str(payload.origin))
+    widget_origin = None
+    if deps.settings.WIDGET_PUBLIC_ORIGIN:
+        widget_origin = normalize_origin(deps.settings.WIDGET_PUBLIC_ORIGIN)
     allowed_origins = api_key.allowed_origins or project.allowed_origins
     if not validate_origin(origin, allowed_origins):
         await log_audit_event(
@@ -93,9 +96,13 @@ async def create_widget_token_endpoint(
         raise HTTPException(status_code=403, detail="Origin not allowed")
 
     token_id = uuid.uuid4()
+    token_origins = [origin]
+    if widget_origin and widget_origin not in token_origins:
+        token_origins.append(widget_origin)
+
     token = create_widget_token(
         project_id=str(project_id),
-        origins=[origin],
+        origins=token_origins,
         token_id=str(token_id),
     )
     token_hash = hash_widget_token(token)
@@ -163,6 +170,9 @@ async def create_widget_token_for_user(
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
     origin = normalize_origin(str(payload.origin))
+    widget_origin = None
+    if deps.settings.WIDGET_PUBLIC_ORIGIN:
+        widget_origin = normalize_origin(deps.settings.WIDGET_PUBLIC_ORIGIN)
     allowed_origins = project.allowed_origins or []
     if not validate_origin(origin, allowed_origins):
         await log_audit_event(
@@ -179,9 +189,13 @@ async def create_widget_token_for_user(
         raise HTTPException(status_code=403, detail="Origin not allowed")
 
     token_id = uuid.uuid4()
+    token_origins = [origin]
+    if widget_origin and widget_origin not in token_origins:
+        token_origins.append(widget_origin)
+
     token = create_widget_token(
         project_id=str(project_id),
-        origins=[origin],
+        origins=token_origins,
         token_id=str(token_id),
     )
     token_hash = hash_widget_token(token)
