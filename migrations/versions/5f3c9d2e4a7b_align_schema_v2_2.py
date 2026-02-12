@@ -22,8 +22,7 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto")
     op.execute("CREATE EXTENSION IF NOT EXISTS btree_gin")
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION update_updated_at_column()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -31,11 +30,9 @@ def upgrade() -> None:
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION update_conversation()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -48,11 +45,9 @@ def upgrade() -> None:
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION reset_daily_token_usage()
         RETURNS void AS $$
         BEGIN
@@ -65,11 +60,9 @@ def upgrade() -> None:
             WHERE (usage->>'tokens_today')::int > 0;
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION cleanup_expired_tokens()
         RETURNS void AS $$
         BEGIN
@@ -77,11 +70,9 @@ def upgrade() -> None:
             WHERE expires_at < now() - INTERVAL '1 hour';
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION purge_deleted_projects()
         RETURNS void AS $$
         BEGIN
@@ -90,11 +81,9 @@ def upgrade() -> None:
               AND deleted_at < now() - INTERVAL '30 days';
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION purge_old_audit_logs()
         RETURNS void AS $$
         BEGIN
@@ -102,8 +91,7 @@ def upgrade() -> None:
             WHERE created_at < now() - INTERVAL '1 year';
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
     op.execute("UPDATE users SET email_verified = false WHERE email_verified IS NULL")
     op.execute("ALTER TABLE users ALTER COLUMN id SET DEFAULT gen_random_uuid()")
@@ -248,8 +236,7 @@ def upgrade() -> None:
         ),
     )
 
-    op.execute(
-        """
+    op.execute("""
         CREATE OR REPLACE FUNCTION cleanup_expired_cache()
         RETURNS void AS $$
         BEGIN
@@ -257,8 +244,7 @@ def upgrade() -> None:
             WHERE expires_at < now();
         END;
         $$ LANGUAGE plpgsql;
-        """
-    )
+        """)
 
     op.create_table(
         "rate_limits",

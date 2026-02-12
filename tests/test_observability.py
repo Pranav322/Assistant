@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.observability import health
 
-
 client = TestClient(app)
 
 

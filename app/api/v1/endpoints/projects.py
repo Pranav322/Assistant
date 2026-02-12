@@ -11,7 +11,6 @@ from app.core.security import generate_api_key, hash_api_key, normalize_origin
 from app.core.config import settings
 from app.services.audit import log_audit_event
 
-
 router = APIRouter()
 
 

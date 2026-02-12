@@ -17,7 +17,6 @@ from app.services.rate_limit import RateLimiter
 from app.services.audit import log_audit_event
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
 
-
 router = APIRouter()
 
 

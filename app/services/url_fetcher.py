@@ -8,7 +8,6 @@ from urllib.parse import urlparse, urljoin
 import aiohttp
 from app.core.config import settings
 
-
 BLOCKED_HOSTNAMES = {
     "metadata.google.internal",
     "metadata.google.internal.",

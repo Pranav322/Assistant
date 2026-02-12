@@ -1,10 +1,11 @@
 """Initial schema
 
 Revision ID: bc39d3364e91
-Revises: 
+Revises:
 Create Date: 2026-02-11 17:28:51.831900
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -12,13 +13,14 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'bc39d3364e91'
+revision: str = "bc39d3364e91"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 import pgvector
+
 
 def upgrade() -> None:
     """Upgrade schema."""
@@ -27,153 +29,259 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
     op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
 
-    op.create_table('users',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('email', sa.String(), nullable=False),
-    sa.Column('password_hash', sa.String(), nullable=True),
-    sa.Column('email_verified', sa.Boolean(), nullable=False),
-    sa.Column('last_login_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    op.create_table(
+        "users",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("email", sa.String(), nullable=False),
+        sa.Column("password_hash", sa.String(), nullable=True),
+        sa.Column("email_verified", sa.Boolean(), nullable=False),
+        sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("email"),
     )
-    op.create_table('audit_logs',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=True),
-    sa.Column('user_id', sa.UUID(), nullable=True),
-    sa.Column('action', sa.String(), nullable=False),
-    sa.Column('resource_type', sa.String(), nullable=True),
-    sa.Column('resource_id', sa.String(), nullable=True),
-    sa.Column('detail', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('ip_address', postgresql.INET(), nullable=True),
-    sa.Column('user_agent', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "audit_logs",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=True),
+        sa.Column("user_id", sa.UUID(), nullable=True),
+        sa.Column("action", sa.String(), nullable=False),
+        sa.Column("resource_type", sa.String(), nullable=True),
+        sa.Column("resource_id", sa.String(), nullable=True),
+        sa.Column("detail", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("ip_address", postgresql.INET(), nullable=True),
+        sa.Column("user_agent", sa.String(), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="SET NULL"),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('projects',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('owner_id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('allowed_origins', postgresql.ARRAY(sa.String()), nullable=False),
-    sa.Column('plan', sa.String(), nullable=False),
-    sa.Column('settings', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('usage', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['owner_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "projects",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("owner_id", sa.UUID(), nullable=False),
+        sa.Column("name", sa.String(), nullable=False),
+        sa.Column("allowed_origins", postgresql.ARRAY(sa.String()), nullable=False),
+        sa.Column("plan", sa.String(), nullable=False),
+        sa.Column("settings", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("usage", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("is_active", sa.Boolean(), nullable=False),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["owner_id"], ["users.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('api_keys',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
-    sa.Column('key_hash', sa.String(), nullable=False),
-    sa.Column('scopes', postgresql.ARRAY(sa.String()), nullable=False),
-    sa.Column('allowed_origins', postgresql.ARRAY(sa.String()), nullable=False),
-    sa.Column('rate_limit', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('usage_limit', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "api_keys",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=False),
+        sa.Column("name", sa.String(), nullable=True),
+        sa.Column("key_hash", sa.String(), nullable=False),
+        sa.Column("scopes", postgresql.ARRAY(sa.String()), nullable=False),
+        sa.Column("allowed_origins", postgresql.ARRAY(sa.String()), nullable=False),
+        sa.Column(
+            "rate_limit", postgresql.JSONB(astext_type=sa.Text()), nullable=False
+        ),
+        sa.Column(
+            "usage_limit", postgresql.JSONB(astext_type=sa.Text()), nullable=False
+        ),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('conversations',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=False),
-    sa.Column('session_id', sa.String(), nullable=True),
-    sa.Column('message_count', sa.Integer(), nullable=False),
-    sa.Column('token_usage', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('started_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('last_message_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "conversations",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=False),
+        sa.Column("session_id", sa.String(), nullable=True),
+        sa.Column("message_count", sa.Integer(), nullable=False),
+        sa.Column(
+            "token_usage", postgresql.JSONB(astext_type=sa.Text()), nullable=False
+        ),
+        sa.Column(
+            "started_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "last_message_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('retrieval_metrics',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=True),
-    sa.Column('query_id', sa.UUID(), nullable=True),
-    sa.Column('query_length', sa.Integer(), nullable=True),
-    sa.Column('retrieval_time_ms', sa.Integer(), nullable=True),
-    sa.Column('chunks_considered', sa.Integer(), nullable=True),
-    sa.Column('chunks_returned', sa.Integer(), nullable=True),
-    sa.Column('reranker_used', sa.Boolean(), nullable=False),
-    sa.Column('vector_search_time_ms', sa.Integer(), nullable=True),
-    sa.Column('keyword_search_time_ms', sa.Integer(), nullable=True),
-    sa.Column('fusion_time_ms', sa.Integer(), nullable=True),
-    sa.Column('rerank_time_ms', sa.Integer(), nullable=True),
-    sa.Column('cache_hit_rate', sa.Numeric(precision=5, scale=4), nullable=True),
-    sa.Column('avg_vector_score', sa.Numeric(precision=5, scale=4), nullable=True),
-    sa.Column('avg_keyword_score', sa.Numeric(precision=5, scale=4), nullable=True),
-    sa.Column('avg_reranker_score', sa.Numeric(precision=5, scale=4), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "retrieval_metrics",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=True),
+        sa.Column("query_id", sa.UUID(), nullable=True),
+        sa.Column("query_length", sa.Integer(), nullable=True),
+        sa.Column("retrieval_time_ms", sa.Integer(), nullable=True),
+        sa.Column("chunks_considered", sa.Integer(), nullable=True),
+        sa.Column("chunks_returned", sa.Integer(), nullable=True),
+        sa.Column("reranker_used", sa.Boolean(), nullable=False),
+        sa.Column("vector_search_time_ms", sa.Integer(), nullable=True),
+        sa.Column("keyword_search_time_ms", sa.Integer(), nullable=True),
+        sa.Column("fusion_time_ms", sa.Integer(), nullable=True),
+        sa.Column("rerank_time_ms", sa.Integer(), nullable=True),
+        sa.Column("cache_hit_rate", sa.Numeric(precision=5, scale=4), nullable=True),
+        sa.Column("avg_vector_score", sa.Numeric(precision=5, scale=4), nullable=True),
+        sa.Column("avg_keyword_score", sa.Numeric(precision=5, scale=4), nullable=True),
+        sa.Column(
+            "avg_reranker_score", sa.Numeric(precision=5, scale=4), nullable=True
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["project_id"],
+            ["projects.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('sources',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=False),
-    sa.Column('type', sa.String(), nullable=True),
-    sa.Column('content_hash', sa.String(), nullable=False),
-    sa.Column('metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('storage_location', sa.String(), nullable=True),
-    sa.Column('status', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "sources",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=False),
+        sa.Column("type", sa.String(), nullable=True),
+        sa.Column("content_hash", sa.String(), nullable=False),
+        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("storage_location", sa.String(), nullable=True),
+        sa.Column("status", sa.String(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('browser_tokens',
-    sa.Column('token_id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=False),
-    sa.Column('api_key_id', sa.UUID(), nullable=True),
-    sa.Column('token_hash', sa.String(), nullable=True),
-    sa.Column('origin', sa.String(), nullable=True),
-    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('last_used_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['api_key_id'], ['api_keys.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('token_id')
+    op.create_table(
+        "browser_tokens",
+        sa.Column("token_id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=False),
+        sa.Column("api_key_id", sa.UUID(), nullable=True),
+        sa.Column("token_hash", sa.String(), nullable=True),
+        sa.Column("origin", sa.String(), nullable=True),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("last_used_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["api_key_id"], ["api_keys.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("token_id"),
     )
-    op.create_table('chunks',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=False),
-    sa.Column('source_id', sa.UUID(), nullable=True),
-    sa.Column('text', sa.Text(), nullable=False),
-    sa.Column('metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['source_id'], ['sources.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "chunks",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=False),
+        sa.Column("source_id", sa.UUID(), nullable=True),
+        sa.Column("text", sa.Text(), nullable=False),
+        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["source_id"], ["sources.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('messages',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('conversation_id', sa.UUID(), nullable=False),
-    sa.Column('role', sa.String(), nullable=True),
-    sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('token_count', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['conversation_id'], ['conversations.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table(
+        "messages",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("conversation_id", sa.UUID(), nullable=False),
+        sa.Column("role", sa.String(), nullable=True),
+        sa.Column("content", sa.Text(), nullable=True),
+        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("token_count", sa.Integer(), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["conversation_id"], ["conversations.id"], ondelete="CASCADE"
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table('embeddings',
-    sa.Column('chunk_id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=False),
-    sa.Column('embedding', pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=False),
-    sa.Column('model_name', sa.String(), nullable=False),
-    sa.Column('model_version', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['chunk_id'], ['chunks.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('chunk_id')
+    op.create_table(
+        "embeddings",
+        sa.Column("chunk_id", sa.UUID(), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=False),
+        sa.Column(
+            "embedding", pgvector.sqlalchemy.vector.VECTOR(dim=1536), nullable=False
+        ),
+        sa.Column("model_name", sa.String(), nullable=False),
+        sa.Column("model_version", sa.String(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(["chunk_id"], ["chunks.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("chunk_id"),
     )
     # ### end Alembic commands ###
 
@@ -181,15 +289,15 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('embeddings')
-    op.drop_table('messages')
-    op.drop_table('chunks')
-    op.drop_table('browser_tokens')
-    op.drop_table('sources')
-    op.drop_table('retrieval_metrics')
-    op.drop_table('conversations')
-    op.drop_table('api_keys')
-    op.drop_table('projects')
-    op.drop_table('audit_logs')
-    op.drop_table('users')
+    op.drop_table("embeddings")
+    op.drop_table("messages")
+    op.drop_table("chunks")
+    op.drop_table("browser_tokens")
+    op.drop_table("sources")
+    op.drop_table("retrieval_metrics")
+    op.drop_table("conversations")
+    op.drop_table("api_keys")
+    op.drop_table("projects")
+    op.drop_table("audit_logs")
+    op.drop_table("users")
     # ### end Alembic commands ###

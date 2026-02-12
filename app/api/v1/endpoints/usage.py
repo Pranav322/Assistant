@@ -5,7 +5,6 @@ import uuid
 from app.api import deps
 from app.models import Project
 
-
 router = APIRouter()
 
 

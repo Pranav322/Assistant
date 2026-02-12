@@ -11,7 +11,6 @@ from prometheus_client import (
 from fastapi import Response
 from app.core.config import settings
 
-
 REQUEST_COUNT = Counter(
     "http_requests_total",
     "Total HTTP requests",

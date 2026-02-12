@@ -295,9 +295,9 @@ def generate_citations(
             "page": chunk_meta.get("page_number"),
             "section": chunk_meta.get("section_title"),
             "confidence": confidence,
-            "text_preview": chunk.text[:200] + "..."
-            if len(chunk.text) > 200
-            else chunk.text,
+            "text_preview": (
+                chunk.text[:200] + "..." if len(chunk.text) > 200 else chunk.text
+            ),
         }
         citations.append(citation)
     return citations

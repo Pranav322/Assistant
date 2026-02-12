@@ -123,9 +123,9 @@ async def upload_document(
         filename=filename,
         file_type=source.type,
         storage_path=uploaded_path,
-        file_content=base64.b64encode(content).decode("utf-8")
-        if not uploaded_path
-        else None,
+        file_content=(
+            base64.b64encode(content).decode("utf-8") if not uploaded_path else None
+        ),
     )
 
     return {

@@ -4,7 +4,6 @@ from app.api import deps
 from app.schemas.widget import WidgetMetricsRequest
 from app.models import WidgetMetric
 
-
 router = APIRouter()
 
 

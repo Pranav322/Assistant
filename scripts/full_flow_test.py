@@ -6,7 +6,6 @@ import json
 from typing import Any
 import httpx
 
-
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001/api/v1")
 WIDGET_ORIGIN = os.getenv("WIDGET_ORIGIN", "http://localhost:3000")
 EMAIL = os.getenv("TEST_EMAIL")

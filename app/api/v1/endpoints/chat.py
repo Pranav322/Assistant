@@ -12,7 +12,6 @@ from app.services.user_usage import get_or_create_user_usage
 from app.models import Project, User
 from app.observability.metrics import record_rate_limit_hit
 
-
 router = APIRouter()
 
 
