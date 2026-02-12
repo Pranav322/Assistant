@@ -30,6 +30,10 @@ Then open:
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3001` (admin/admin)
 
+Grafana is pre-provisioned with:
+- Prometheus datasource
+- "RAG API Overview" dashboard
+
 Note: The default config scrapes `chatbot-api:8000`. If your API container name
 differs, update `observability/prometheus.yml`.
 
