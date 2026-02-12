@@ -162,8 +162,13 @@ export default function ProjectDetailPage() {
     setIngestionError("");
     const token = getToken();
     if (!token) return;
-    if (!ingestUrl.trim()) {
+    const trimmed = ingestUrl.trim();
+    if (!trimmed) {
       setIngestionError("Enter a URL to ingest.");
+      return;
+    }
+    if (!/^https?:\/\//i.test(trimmed)) {
+      setIngestionError("URL must start with http:// or https://");
       return;
     }
 
@@ -174,7 +179,7 @@ export default function ProjectDetailPage() {
         {
           method: "POST",
           token,
-          body: JSON.stringify({ url: ingestUrl.trim() }),
+          body: JSON.stringify({ url: trimmed }),
         }
       );
       setIngestionStatus({ sourceId: data.source_id, status: data.status });

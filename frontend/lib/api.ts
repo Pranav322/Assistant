@@ -24,9 +24,41 @@ export async function apiRequest<T>(
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    const message = data?.detail || response.statusText;
+    const message = formatApiError(data?.detail, response.statusText);
     throw new Error(message);
   }
 
   return data as T;
+}
+
+function formatApiError(detail: unknown, fallback: string): string {
+  if (typeof detail === "string") {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (!item || typeof item !== "object") {
+          return String(item);
+        }
+        const record = item as { loc?: Array<string | number>; msg?: string };
+        const loc = record.loc?.slice(1).join(".") || "request";
+        const msg = record.msg || "Invalid value";
+        return `${loc}: ${msg}`;
+      })
+      .filter(Boolean);
+    if (messages.length > 0) {
+      return messages.join("; ");
+    }
+  }
+  if (detail && typeof detail === "object") {
+    const record = detail as { message?: string; detail?: string };
+    if (record.message) {
+      return record.message;
+    }
+    if (record.detail) {
+      return record.detail;
+    }
+  }
+  return fallback || "Request failed";
 }
