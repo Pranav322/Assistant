@@ -158,6 +158,7 @@ From `observability.md`:
 - `api_spec.md` for endpoint behavior and payloads.
 - `widget_protocol.md` for widget messaging and origin validation.
 - `docs/observability.md` for monitoring setup.
+- `frontend_flow.md` for frontend integration flow.
 
 ## When Adding New Tooling
 - Update this file with exact build/lint/test commands.
