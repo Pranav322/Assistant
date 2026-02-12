@@ -68,7 +68,7 @@ def _validate_pdf_content(content: bytes) -> int:
         page_count = len(pdf.pages)
         if page_count > settings.MAX_PDF_PAGES:
             raise ValueError("PDF exceeds maximum page count")
-        if "/JavaScript" in str(pdf.trailer):
+        if b"/JavaScript" in content:
             raise ValueError("PDF contains JavaScript")
 
     return page_count
