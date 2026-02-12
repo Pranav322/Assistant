@@ -91,6 +91,12 @@ Usage is tracked per project:
 Counts increment on each chat request.
 API keys and user IDs are not used for usage aggregation by default.
 
+## 9) Free Tier Limits (User-Level)
+
+- Free users can create up to `MAX_PROJECTS_PER_USER` projects (default: 1).
+- Free users have a lifetime token cap (`USER_TOKEN_CAP`). Once reached, chat requests are blocked until upgrade.
+- User rate limits are enforced per minute (see `USER_RATE_LIMIT_PER_MINUTE`).
+
 ## Summary: Which credential is used where?
 
 - User JWT: dashboard actions (projects, preview, dashboard ingestion).
