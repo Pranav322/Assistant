@@ -12,6 +12,7 @@ class RateLimiter:
         api_key_prefix: str | None,
         endpoint: str,
         project_id: str,
+        user_id: str | None = None,
         api_key_rate_limit: dict | None = None,
     ) -> bool:
         if not await self._check_limit(
@@ -30,6 +31,17 @@ class RateLimiter:
             if not await self._check_limit(
                 key=f"ratelimit:apikey:{api_key_prefix}",
                 limit=requests_per_minute,
+                window_seconds=60,
+            ):
+                return False
+
+        if user_id:
+            user_limit = settings.USER_RATE_LIMIT_PER_MINUTE
+            if endpoint == "chat":
+                user_limit = settings.USER_CHAT_RATE_LIMIT_PER_MINUTE
+            if not await self._check_limit(
+                key=f"ratelimit:user:{endpoint}:{user_id}",
+                limit=user_limit,
                 window_seconds=60,
             ):
                 return False

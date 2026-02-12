@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_INGEST_PER_MINUTE: int = 10
     RATE_LIMIT_CHAT_PER_MINUTE: int = 30
     RATE_LIMIT_TOKEN_REFRESH_PER_MINUTE: int = 1000
+    USER_RATE_LIMIT_PER_MINUTE: int = 120
+    USER_CHAT_RATE_LIMIT_PER_MINUTE: int = 60
+
+    # User limits
+    MAX_PROJECTS_PER_USER: int = 1
+    USER_TOKEN_CAP: int = 200000
 
     # Ingestion limits
     MAX_FILE_SIZE_MB: int = 50

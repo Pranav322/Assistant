@@ -315,6 +315,7 @@ def admin_or_user_required():
     async def _dependency(
         request: Request,
         db: AsyncSession = Depends(get_db),
+        redis_client: redis.Redis = Depends(get_redis),
     ) -> AccessContext:
         admin_key = request.headers.get("x-admin-key")
         if admin_key and settings.ADMIN_API_KEY and admin_key == settings.ADMIN_API_KEY:
@@ -344,6 +345,18 @@ def admin_or_user_required():
         user = await _load_user(user_id, db)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
+        limiter = RateLimiter(redis_client)
+        allowed = await limiter.check(
+            ip=_get_client_ip(request),
+            api_key_prefix=None,
+            endpoint="user",
+            project_id=str(user_id),
+            user_id=str(user_id),
+        )
+        if not allowed:
+            record_rate_limit_hit("user")
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
         request.state.user_id = user.id
         return AccessContext(is_admin=False, user_id=user.id)
@@ -398,6 +411,18 @@ def project_access_required(endpoint: str):
             )
             if not project.scalar_one_or_none():
                 raise HTTPException(status_code=403, detail="Project mismatch")
+
+            limiter = RateLimiter(redis_client)
+            allowed = await limiter.check(
+                ip=_get_client_ip(request),
+                api_key_prefix=None,
+                endpoint=endpoint,
+                project_id=str(project_id),
+                user_id=str(user_id),
+            )
+            if not allowed:
+                record_rate_limit_hit(endpoint)
+                raise HTTPException(status_code=429, detail="Rate limit exceeded")
 
             request.state.user_id = user_id
             return AuthContext(project_id=project_id, api_key_id=None, auth_type="user")

@@ -6,6 +6,7 @@ from sqlalchemy import select
 from httpx import AsyncClient
 from app.models import (
     User,
+    UserUsage,
     Project,
     Source,
     Chunk,
@@ -15,6 +16,7 @@ from app.models import (
     Message,
     RetrievalMetric,
 )
+from app.core.config import settings
 from app.core.security import generate_api_key, hash_api_key
 
 
@@ -126,6 +128,12 @@ async def test_chat_endpoint_creates_conversation(
     assert project_row.usage.get("requests") == 1
     assert project_row.usage.get("tokens_total") == 7
 
+    user_usage = await db.execute(select(UserUsage).where(UserUsage.user_id == user.id))
+    usage_row = user_usage.scalar_one_or_none()
+    assert usage_row is not None
+    assert usage_row.tokens_used == 7
+    assert usage_row.requests_used == 1
+
     metrics = (
         (
             await db.execute(
@@ -136,3 +144,48 @@ async def test_chat_endpoint_creates_conversation(
         .all()
     )
     assert metrics
+
+
+@pytest.mark.asyncio
+async def test_chat_enforces_user_token_cap(client: AsyncClient, db: AsyncSession):
+    original_cap = settings.USER_TOKEN_CAP
+    settings.USER_TOKEN_CAP = 5
+    try:
+        user = User(email=f"cap_{uuid.uuid4()}@example.com")
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+        project = Project(
+            name="Cap Project",
+            owner_id=user.id,
+            settings={
+                "retrieval": {
+                    "enable_query_expansion": False,
+                    "enable_reranking": False,
+                }
+            },
+        )
+        db.add(project)
+        await db.commit()
+        await db.refresh(project)
+
+        usage = UserUsage(user_id=user.id, tokens_used=5, requests_used=1)
+        db.add(usage)
+        await db.commit()
+
+        api_key_value = generate_api_key()
+        api_key = ApiKey(project_id=project.id, key_hash=hash_api_key(api_key_value))
+        db.add(api_key)
+        await db.commit()
+
+        response = await client.post(
+            f"/api/v1/projects/{project.id}/chat",
+            json={"query": "hello"},
+            headers={"X-API-Key": api_key_value},
+        )
+
+        assert response.status_code == 429
+        assert "Upgrade" in response.json()["detail"]
+    finally:
+        settings.USER_TOKEN_CAP = original_cap

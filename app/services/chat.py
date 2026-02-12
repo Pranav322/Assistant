@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models import Conversation, Message, Project
 from app.services.retrieval import RetrievalPipeline
+from app.services.user_usage import increment_user_usage
 
 
 class ChatService:
@@ -190,5 +191,13 @@ class ChatService:
             int(usage_data.get("tokens_today", 0)) + total_tokens
         )
         project.usage = usage_data
+
+        if project.owner_id:
+            await increment_user_usage(
+                self.db,
+                project.owner_id,
+                tokens=total_tokens,
+                requests=1,
+            )
 
         await self.db.commit()

@@ -113,3 +113,42 @@ async def test_project_user_flow(client: AsyncClient):
     )
     assert key_resp.status_code == 200
     assert key_resp.json()["api_key"]
+
+
+@pytest.mark.asyncio
+async def test_project_limit_for_free_user(client: AsyncClient):
+    original_limit = settings.MAX_PROJECTS_PER_USER
+    settings.MAX_PROJECTS_PER_USER = 1
+    try:
+        register = await client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": f"limit_{uuid.uuid4()}@example.com",
+                "password": "password123",
+            },
+        )
+        assert register.status_code == 200
+
+        login = await client.post(
+            "/api/v1/auth/login",
+            json={"email": register.json()["email"], "password": "password123"},
+        )
+        assert login.status_code == 200
+        token = login.json()["access_token"]
+
+        first = await client.post(
+            "/api/v1/projects",
+            json={"name": "First Project"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert first.status_code == 200
+
+        second = await client.post(
+            "/api/v1/projects",
+            json={"name": "Second Project"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert second.status_code == 403
+        assert "Upgrade" in second.json()["detail"]
+    finally:
+        settings.MAX_PROJECTS_PER_USER = original_limit

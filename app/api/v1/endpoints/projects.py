@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 import uuid
 from app.api import deps
 from datetime import datetime, timezone
-from app.models import Project, ApiKey
+from app.models import Project, ApiKey, User
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.core.security import generate_api_key, hash_api_key, normalize_origin
+from app.core.config import settings
 from app.services.audit import log_audit_event
 
 
@@ -61,6 +62,24 @@ async def create_project(
     allowed_origins = [
         normalize_origin(origin) for origin in payload.allowed_origins or []
     ]
+
+    user_result = await db.execute(select(User).where(User.id == owner_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.plan == "free":
+        count_result = await db.execute(
+            select(func.count())
+            .select_from(Project)
+            .where(Project.owner_id == owner_id, Project.deleted_at.is_(None))
+        )
+        project_count = int(count_result.scalar_one() or 0)
+        if project_count >= settings.MAX_PROJECTS_PER_USER:
+            raise HTTPException(
+                status_code=403,
+                detail="Project limit reached. Upgrade required.",
+            )
 
     project = Project(
         owner_id=owner_id,

@@ -1,5 +1,6 @@
 from .base import Base
 from .user import User
+from .user_usage import UserUsage
 from .project import Project, ApiKey, BrowserToken
 from .document import Source, Chunk, Embedding
 from .chat import Conversation, Message

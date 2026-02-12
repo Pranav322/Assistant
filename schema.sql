@@ -1,8 +1,8 @@
 -- =========================================================
 -- UNIVERSAL RAG PLATFORM — LOCKED PRODUCTION SCHEMA
 -- PostgreSQL + pgvector
--- Version: 2.2 (Aligned with security.md v3.0)
--- Updated: 2026-02-11
+-- Version: 2.3 (Aligned with security.md v3.0)
+-- Updated: 2026-02-12
 -- =========================================================
 
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -32,6 +32,7 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT,
     email_verified BOOLEAN DEFAULT false,
+    plan TEXT DEFAULT 'free',
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
@@ -39,6 +40,22 @@ CREATE TABLE users (
 
 CREATE TRIGGER trg_users_updated_at
 BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =========================================================
+-- USER USAGE (LIFETIME COUNTERS)
+-- =========================================================
+
+CREATE TABLE user_usage (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    tokens_used BIGINT DEFAULT 0,
+    requests_used BIGINT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TRIGGER trg_user_usage_updated_at
+BEFORE UPDATE ON user_usage
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =========================================================
