@@ -18,6 +18,21 @@ scrape_configs:
       - targets: ["api:8000"]
 ```
 
+## Quickstart (Prometheus + Grafana)
+
+Use the provided compose file to bring up a minimal observability stack:
+
+```bash
+docker compose -f docker-compose.observability.yml up -d
+```
+
+Then open:
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001` (admin/admin)
+
+Note: The default config scrapes `chatbot-api:8000`. If your API container name
+differs, update `observability/prometheus.yml`.
+
 Required labels are already included in the app:
 - `env`
 - `service`

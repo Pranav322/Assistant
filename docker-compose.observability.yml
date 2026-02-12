@@ -1,0 +1,35 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    container_name: rag-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - chatbot-network
+
+  grafana:
+    image: grafana/grafana:10.4.8
+    container_name: rag-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - chatbot-network
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  chatbot-network:
+    external: true
