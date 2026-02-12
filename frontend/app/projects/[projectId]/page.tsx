@@ -243,7 +243,7 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="container px-6 py-10 space-y-6">
+      <div className="mx-auto w-full max-w-[1400px] px-6 py-10 space-y-6 sm:px-8 lg:px-12">
         <div className="space-y-2">
           <Skeleton className="h-8 w-1/3" />
           <Skeleton className="h-4 w-1/4" />
@@ -269,7 +269,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
       <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
-        <div className="container flex items-center gap-4">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/projects">
               <ArrowLeft className="h-4 w-4" />
@@ -284,7 +284,7 @@ export default function ProjectDetailPage() {
         </div>
       </header>
 
-      <main className="container grid gap-8 px-6 py-10">
+      <main className="mx-auto grid w-full max-w-[1400px] gap-8 px-6 py-10 sm:px-8 lg:px-12">
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">

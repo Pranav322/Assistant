@@ -82,7 +82,7 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-background selection:bg-primary/10">
       <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-md">
-        <div className="container flex h-14 max-w-5xl items-center justify-between px-6">
+        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
               O
@@ -96,7 +96,7 @@ export default function ProjectsPage() {
         </div>
       </header>
 
-      <main className="container max-w-5xl px-6 py-12 animate-fade-in">
+      <main className="mx-auto w-full max-w-[1400px] px-6 py-12 animate-fade-in sm:px-8 lg:px-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
@@ -211,4 +211,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-
