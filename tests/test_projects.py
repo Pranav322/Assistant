@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.security import create_access_token, generate_api_key, hash_api_key
 from app.models import ApiKey, Project, User
 
 
@@ -152,5 +153,78 @@ async def test_project_limit_for_free_user(client: AsyncClient):
         )
         assert second.status_code == 403
         assert "Upgrade" in second.json()["detail"]
+
     finally:
         settings.MAX_PROJECTS_PER_USER = original_limit
+
+@pytest.mark.asyncio
+async def test_list_sources_endpoint(client: AsyncClient, db: AsyncSession):
+    user = User(email=f"list_src_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(name="List Sources Project", owner_id=user.id)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    api_key_value = generate_api_key()
+    api_key = ApiKey(project_id=project.id, key_hash=hash_api_key(api_key_value))
+    db.add(api_key)
+    await db.commit()
+
+    from app.models import Source
+    source1 = Source(project_id=project.id, type="text", content_hash="h1", metadata_={"filename": "f1.txt"}, status="completed")
+    source2 = Source(project_id=project.id, type="url", content_hash="h2", metadata_={"source_url": "http://e.com"}, status="pending")
+    db.add_all([source1, source2])
+    await db.commit()
+
+    response = await client.get(
+        f"/api/v1/projects/{project.id}/sources",
+        headers={"X-API-Key": api_key_value},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert any(s["metadata"]["filename"] == "f1.txt" for s in data)
+    assert any(s["status"] == "pending" for s in data)
+
+
+@pytest.mark.asyncio
+async def test_delete_project_endpoint(client: AsyncClient, db: AsyncSession):
+    user = User(email=f"del_proj_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(name="Delete Me Project", owner_id=user.id)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    token = create_access_token(str(user.id))
+
+    response = await client.delete(
+        f"/api/v1/projects/{project.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 204
+
+    # Verify soft delete
+    # We must explicitly query for deleted items or check bypassing the default filter if implemented broadly
+    # But here we just check if it's "gone" from the standard query
+    result = await db.execute(select(Project).where(Project.id == project.id))
+    # It might still be returned if we don't filter safely in test, but let's check the column
+    # Actually our app code filters `deleted_at.is_(None)`, so `_load_project` would return None.
+    
+    # Let's check the DB row directly
+    stmt = select(Project).where(Project.id == project.id)
+    # This standard select usually doesn't have the global filter unless applied via filtered session or explicit clause
+    # In `test_projects.py` we use a raw session.
+    
+    # Re-fetch
+    result = await db.execute(stmt)
+    p = result.scalar_one_or_none()
+    assert p is not None
+    assert p.deleted_at is not None
