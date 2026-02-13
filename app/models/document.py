@@ -77,7 +77,10 @@ class Chunk(Base):
         nullable=False,
     )
     source_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sources.id", ondelete="CASCADE"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("sources.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
 
     text: Mapped[str] = mapped_column(Text, nullable=False)

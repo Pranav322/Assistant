@@ -71,5 +71,9 @@ jobs:
           ENVIRONMENT: test
           JWT_SECRET: test_secret_key
           LOG_LEVEL: DEBUG
+          AZURE_OPENAI_API_KEY: mock_key
+          AZURE_OPENAI_ENDPOINT: https://mock.openai.azure.com/
+          AZURE_DEPLOYMENT_NAME: mock_deployment
+          AZURE_EMBEDDING_DEPLOYMENT_NAME: mock_embedding_deployment
         run: uv run pytest tests/ --cov=app --cov-report=xml
 

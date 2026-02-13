@@ -449,11 +449,13 @@ class Reranker:
     async def _load_model(self) -> bool:
         if self._model and self._tokenizer:
             return True
-        
+
         loop = asyncio.get_running_loop()
         try:
-             # Run blocking imports and loading in a thread
-            tokenizer, model, device = await loop.run_in_executor(None, self._load_model_sync)
+            # Run blocking imports and loading in a thread
+            tokenizer, model, device = await loop.run_in_executor(
+                None, self._load_model_sync
+            )
             self._tokenizer = tokenizer
             self._model = model
             self._device = device
@@ -467,6 +469,7 @@ class Reranker:
 
     def _load_model_sync(self):
         import importlib
+
         transformers = importlib.import_module("transformers")
         torch = importlib.import_module("torch")
 

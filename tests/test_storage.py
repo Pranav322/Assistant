@@ -1,7 +1,9 @@
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from unittest.mock import AsyncMock, patch
+
 from app.services.storage import StorageService
+
 
 @pytest.mark.asyncio
 async def test_storage_service_methods():
@@ -26,11 +28,13 @@ async def test_storage_service_methods():
             path = await service.upload_file(file_content, "test.txt")
             assert path == "test.txt"
             mock_s3.put_object.assert_called_once()
-            
+
             # Test Get
             mock_s3.get_object.return_value = {"Body": AsyncMock()}
-            mock_s3.get_object.return_value["Body"].__aenter__.return_value.read.return_value = file_content
-            
+            mock_s3.get_object.return_value[
+                "Body"
+            ].__aenter__.return_value.read.return_value = file_content
+
             content = await service.get_file("test.txt")
             assert content == file_content
             mock_s3.get_object.assert_called_once()
@@ -38,4 +42,6 @@ async def test_storage_service_methods():
             # Test Delete
             result = await service.delete_file("test.txt")
             assert result is True
-            mock_s3.delete_object.assert_called_once_with(Bucket="test-bucket", Key="test.txt")
+            mock_s3.delete_object.assert_called_once_with(
+                Bucket="test-bucket", Key="test.txt"
+            )

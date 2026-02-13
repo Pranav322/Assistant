@@ -243,6 +243,7 @@ async def test_ingest_url_endpoint_user_token(client: AsyncClient, db: AsyncSess
             assert response.status_code == 201
             data = response.json()
 
+
 @pytest.mark.asyncio
 async def test_delete_source_endpoint(client: AsyncClient, db: AsyncSession):
     user = User(email=f"del_src_{uuid.uuid4()}@example.com")
@@ -266,23 +267,26 @@ async def test_delete_source_endpoint(client: AsyncClient, db: AsyncSession):
         content_hash="del_hash",
         metadata_={"filename": "to_delete.txt"},
         status="completed",
-        storage_location="some/path/to_delete.txt"
+        storage_location="some/path/to_delete.txt",
     )
     db.add(source)
     await db.commit()
     await db.refresh(source)
 
     # Mock storage service to verifying delete_file is called
-    with patch("app.api.v1.endpoints.ingestion.StorageService.delete_file", new_callable=AsyncMock) as mock_delete_file:
+    with patch(
+        "app.api.v1.endpoints.ingestion.StorageService.delete_file",
+        new_callable=AsyncMock,
+    ) as mock_delete_file:
         mock_delete_file.return_value = True
 
         response = await client.delete(
             f"/api/v1/ingestion/{source.id}?project_id={project.id}",
             headers={"X-API-Key": api_key_value},
         )
-        
+
         assert response.status_code == 204
-        
+
         # Verify source is gone from DB
         result = await db.execute(select(Source).where(Source.id == source.id))
         assert result.scalar_one_or_none() is None

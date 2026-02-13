@@ -10,8 +10,8 @@ from app.core.config import settings
 from app.core.security import generate_api_key, hash_api_key, normalize_origin
 from app.models import ApiKey, Project, User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
-from app.schemas.project import ProjectCreate, ProjectResponse
 from app.schemas.ingestion import SourceResponse
+from app.schemas.project import ProjectCreate, ProjectResponse
 from app.services.audit import log_audit_event
 
 router = APIRouter()
@@ -54,19 +54,18 @@ async def delete_project(
     access: deps.AccessContext = Depends(deps.admin_or_user_required()),
 ):
     # Check access and get project in one go
-    stmt = select(Project).where(
-         Project.id == project_id,
-         Project.deleted_at.is_(None)
-    )
-    
+    stmt = select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+
     if not access.is_admin:
         stmt = stmt.where(Project.owner_id == access.user_id)
-        
+
     result = await db.execute(stmt)
     project = result.scalar_one_or_none()
-    
+
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found or access denied")
+        raise HTTPException(
+            status_code=404, detail="Project not found or access denied"
+        )
 
     project.deleted_at = datetime.now(timezone.utc)
     # Also revoke all API keys? For now, soft delete project prevents usage.
