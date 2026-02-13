@@ -1,0 +1,33 @@
+name: Deploy Backend to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PROJECT_PATH }}
+            echo "Pulling latest changes..."
+            git pull origin main
+            
+            echo "Rebuilding and restarting containers..."
+            # Using docker compose (v2) | fallback to docker-compose (v1) if needed
+            if command -v docker-compose &> /dev/null; then
+                docker-compose down
+                docker-compose up -d --build
+            else
+                docker compose down
+                docker compose up -d --build
+            fi
+            
+            echo "Deployment complete!"
