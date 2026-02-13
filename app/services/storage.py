@@ -79,6 +79,28 @@ class StorageService:
             logger.error("file_download_failed", error=str(e), path=path)
             return None
 
+    async def delete_file(self, path: str) -> bool:
+        """
+        Deletes a file from S3/R2.
+        """
+        if not all([self.endpoint, self.access_key, self.secret_key]):
+            return False
+
+        try:
+            async with self.session.client(
+                "s3",
+                endpoint_url=self.endpoint,
+                aws_access_key_id=self.access_key,
+                aws_secret_access_key=self.secret_key,
+                region_name=self.region,
+            ) as s3:
+                await s3.delete_object(Bucket=self.bucket, Key=path)
+                logger.info("file_deleted", path=path)
+                return True
+        except Exception as e:
+            logger.error("file_deletion_failed", error=str(e), path=path)
+            return False
+
     async def health_check(self) -> bool:
         if not all([self.endpoint, self.access_key, self.secret_key]):
             return False

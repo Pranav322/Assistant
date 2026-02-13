@@ -258,10 +258,10 @@ async def delete_source(
     if not source:
         raise HTTPException(status_code=404, detail="Source not found")
 
-    # 2. Delete file from storage if it exists (Optional/TODO)
-    # storage_service = StorageService()
-    # if source.storage_location:
-    #     await storage_service.delete_file(source.storage_location)
+    # 2. Delete file from storage if it exists
+    if source.storage_location:
+         storage_service = StorageService()
+         await storage_service.delete_file(source.storage_location)
 
     # 3. Delete Source (Cascade should handle Chunks and Embeddings)
     await db.delete(source)
