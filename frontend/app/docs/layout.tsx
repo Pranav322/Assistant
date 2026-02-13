@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function DocsLayout({
   children,
@@ -39,39 +40,52 @@ export default function DocsLayout({
   };
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="w-64 border-r bg-gray-50/50 dark:bg-gray-900/50 fixed h-full overflow-y-auto">
-        <div className="p-4 border-b">
-          <Link href="/" className="font-semibold text-lg">
+    <div className="min-h-screen bg-background">
+      {/* Top nav */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+        <div className="container flex h-14 items-center">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <span className="text-purple-600">◆</span>
             RAG Platform
           </Link>
-          <Link href="/" className="block text-sm text-muted-foreground hover:text-foreground mt-1">
-            ← Back to App
-          </Link>
+          <nav className="ml-8 flex items-center gap-6 text-sm">
+            <Link href="/projects" className="text-muted-foreground hover:text-foreground">Dashboard</Link>
+            <Link href="/docs" className="text-foreground font-medium">Docs</Link>
+          </nav>
         </div>
-        <nav className="p-4 space-y-6">
-          {Object.entries(navItems).map(([category, items]) => (
-            <div key={category}>
-              <h4 className="text-sm font-semibold mb-2">{category}</h4>
-              <ul className="space-y-1">
-                {items.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="block text-sm text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
-      </aside>
-      <main className="flex-1 ml-64 p-8 max-w-4xl">
-        {children}
-      </main>
+      </header>
+
+      <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+        {/* Sidebar */}
+        <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 md:sticky md:block overflow-y-auto border-r py-6 pr-6 lg:py-8">
+          <nav className="flex w-full flex-col gap-6">
+            {Object.entries(navItems).map(([category, items]) => (
+              <div key={category}>
+                <h4 className="text-sm font-semibold mb-3 text-foreground">{category}</h4>
+                <ul className="flex flex-col gap-1">
+                  {items.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="block text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md px-2 py-1.5 transition-colors"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content - centered */}
+        <main className="relative py-6 lg:py-8 w-full">
+          <div className="mx-auto max-w-3xl">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
