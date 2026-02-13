@@ -80,7 +80,9 @@ def _get_client_ip(request: Request) -> str:
 
 
 async def _load_project(project_id: uuid.UUID, db: AsyncSession) -> Project | None:
-    result = await db.execute(select(Project).where(Project.id == project_id))
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
     return result.scalar_one_or_none()
 
 
@@ -92,6 +94,11 @@ async def _load_user(user_id: uuid.UUID, db: AsyncSession) -> User | None:
 async def _find_api_key(
     project_id: uuid.UUID, api_key_value: str, db: AsyncSession
 ) -> ApiKey | None:
+    # First verify the project is not deleted
+    project = await _load_project(project_id, db)
+    if not project:
+        return None
+
     result = await db.execute(
         select(ApiKey).where(
             ApiKey.project_id == project_id,

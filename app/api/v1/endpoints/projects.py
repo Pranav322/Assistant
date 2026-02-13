@@ -11,9 +11,87 @@ from app.core.security import generate_api_key, hash_api_key, normalize_origin
 from app.models import ApiKey, Project, User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.schemas.project import ProjectCreate, ProjectResponse
+from app.schemas.ingestion import SourceResponse
 from app.services.audit import log_audit_event
 
 router = APIRouter()
+
+
+@router.get("/projects/{project_id}/sources", response_model=list[SourceResponse])
+async def list_sources(
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.project_access_required("projects")),
+):
+    from app.models import Source
+
+    result = await db.execute(
+        select(Source)
+        .where(Source.project_id == project_id)
+        .order_by(Source.created_at.desc())
+    )
+    sources = result.scalars().all()
+
+    return [
+        SourceResponse(
+            id=source.id,
+            project_id=source.project_id,
+            type=source.type,
+            content_hash=source.content_hash,
+            metadata=source.metadata_ or {},
+            status=source.status,
+            created_at=source.created_at,
+            updated_at=source.updated_at,
+        )
+        for source in sources
+    ]
+
+
+@router.delete("/projects/{project_id}", status_code=204)
+async def delete_project(
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    access: deps.AccessContext = Depends(deps.admin_or_user_required()),
+):
+    # Check access (owner or admin)
+    if not access.is_admin:
+        # Verify ownership since deps.admin_or_user_required only checks generalized access
+        # We need to ensure the user actually owns this specific project
+        project_check = await db.execute(
+            select(Project).where(
+                Project.id == project_id,
+                Project.owner_id == access.user_id,
+                Project.deleted_at.is_(None),
+            )
+        )
+        if not project_check.scalar_one_or_none():
+            raise HTTPException(
+                status_code=404, detail="Project not found or access denied"
+            )
+    else:
+        # Admin can delete any project
+        pass
+
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    project.deleted_at = datetime.now(timezone.utc)
+    # Also revoke all API keys? For now, soft delete project prevents usage.
+
+    await db.commit()
+
+    await log_audit_event(
+        db,
+        action="project_deleted",
+        project_id=project_id,
+        resource_type="project",
+        resource_id=str(project.id),
+        commit=False,
+    )
 
 
 @router.get("/projects", response_model=list[ProjectResponse])

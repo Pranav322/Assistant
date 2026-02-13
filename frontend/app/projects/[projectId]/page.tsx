@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle } from "lucide-react";
+import { ArrowLeft, Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2 } from "lucide-react";
 import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
@@ -14,6 +14,26 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatDistanceToNow } from "date-fns";
 
 type Project = {
   id: string;
@@ -30,6 +50,24 @@ type ApiKey = {
   revoked_at?: string | null;
 };
 
+type Source = {
+  id: string;
+  project_id: string;
+  type: string;
+  content_hash: string;
+  metadata: {
+    filename?: string;
+    source_url?: string;
+    size_bytes?: number;
+    page_count?: number;
+    content_type?: string;
+    error?: string;
+  };
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export default function ProjectDetailPage() {
   const normalizeOrigin = (value: string) => {
     const trimmed = value.trim().replace(/\/+$/, "");
@@ -41,9 +79,11 @@ export default function ProjectDetailPage() {
     return `https://${trimmed}`;
   };
   const params = useParams();
+  const router = useRouter();
   const projectId = params?.projectId as string;
   const [project, setProject] = useState<Project | null>(null);
   const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [sources, setSources] = useState<Source[]>([]);
   const [usage, setUsage] = useState<{ requests: number; tokens: number } | null>(
     null
   );
@@ -67,22 +107,37 @@ export default function ProjectDetailPage() {
   const [urlIngesting, setUrlIngesting] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [deletingSourceId, setDeletingSourceId] = useState<string | null>(null);
+  const [deletingProject, setDeletingProject] = useState(false);
 
-  async function loadData() {
+  // Poll for status updates
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const loadData = useCallback(async () => {
     const token = getToken();
     if (!token) return;
-    const projectData = await apiRequest<Project>(`/projects/${projectId}`, { token });
-    const keyData = await apiRequest<ApiKey[]>(`/projects/${projectId}/api-keys`, {
-      token,
-    });
-    const usageData = await apiRequest<{ requests: number; tokens: number }>(
-      `/usage?project_id=${projectId}`,
-      { token }
-    );
-    setProject(projectData);
-    setKeys(keyData);
-    setUsage(usageData);
-  }
+    try {
+      const results = await Promise.allSettled([
+        apiRequest<Project>(`/projects/${projectId}`, { token }),
+        apiRequest<ApiKey[]>(`/projects/${projectId}/api-keys`, { token }),
+        apiRequest<{ requests: number; tokens: number }>(`/usage?project_id=${projectId}`, { token }),
+        apiRequest<Source[]>(`/projects/${projectId}/sources`, { token })
+      ]);
+
+      const [projRes, keyRes, usageRes, srcRes] = results;
+
+      if (projRes.status === "rejected") {
+        throw new Error(projRes.reason.message || "Failed to load project");
+      }
+      setProject(projRes.value);
+
+      if (keyRes.status === "fulfilled") setKeys(keyRes.value);
+      if (usageRes.status === "fulfilled") setUsage(usageRes.value);
+      if (srcRes.status === "fulfilled") setSources(srcRes.value);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     const token = getToken();
@@ -90,8 +145,39 @@ export default function ProjectDetailPage() {
       window.location.href = "/auth/login";
       return;
     }
-    loadData().catch((err) => setError(err.message));
-  }, [projectId]);
+    loadData();
+  }, [projectId, loadData]);
+
+  // Polling logic
+  useEffect(() => {
+    const hasPending = sources.some(s => ["pending", "processing"].includes(s.status)) ||
+      (ingestionStatus && ["pending", "processing"].includes(ingestionStatus.status));
+
+    if (hasPending) {
+      if (!pollIntervalRef.current) {
+        pollIntervalRef.current = setInterval(() => {
+          loadData();
+          // Also update ingestionStatus from the sources list if it matches
+          if (ingestionStatus) {
+            // We can refresh the specific status too, or just rely on the list.
+            // Let's rely on list for now to keep it simple, or re-fetch.
+          }
+        }, 5000);
+      }
+    } else {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, [sources, ingestionStatus, loadData]);
+
 
   async function createKey(e: React.FormEvent) {
     e.preventDefault();
@@ -151,6 +237,7 @@ export default function ProjectDetailPage() {
       });
       setSelectedFile(null);
       setFileInputKey((prev) => prev + 1);
+      loadData(); // Refresh list immediately
     } catch (err) {
       setIngestionError((err as Error).message);
     } finally {
@@ -185,6 +272,7 @@ export default function ProjectDetailPage() {
       );
       setIngestionStatus({ sourceId: data.source_id, status: data.status });
       setIngestUrl("");
+      loadData(); // Refresh list immediately
     } catch (err) {
       setIngestionError((err as Error).message);
     } finally {
@@ -215,10 +303,47 @@ export default function ProjectDetailPage() {
           }
           : prev
       );
+      loadData(); // Sync list
     } catch (err) {
       setIngestionError((err as Error).message);
     } finally {
       setStatusLoading(false);
+    }
+  }
+
+  async function deleteSource(sourceId: string) {
+    const token = getToken();
+    if (!token) return;
+    if (!confirm("Are you sure you want to delete this source? This action cannot be undone.")) return;
+
+    setDeletingSourceId(sourceId);
+    try {
+      await apiRequest(`/ingestion/${sourceId}?project_id=${projectId}`, {
+        method: "DELETE",
+        token
+      });
+      await loadData();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setDeletingSourceId(null);
+    }
+  }
+
+  async function deleteProject() {
+    const token = getToken();
+    if (!token) return;
+
+    setDeletingProject(true);
+    try {
+      await apiRequest(`/projects/${projectId}`, {
+        method: "DELETE",
+        token
+      });
+      router.push("/projects");
+    } catch (err) {
+      setError((err as Error).message);
+      setDeletingProject(false);
     }
   }
 
@@ -324,6 +449,7 @@ export default function ProjectDetailPage() {
             <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
             <TabsTrigger value="integration">Integration</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
@@ -437,6 +563,80 @@ export default function ProjectDetailPage() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Data Sources</CardTitle>
+                <CardDescription>Manage your ingested files and URLs.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Name/URL</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sources.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          No data sources found. Upload a file or ingest a URL to get started.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sources.map((source) => (
+                        <TableRow key={source.id}>
+                          <TableCell>
+                            {source.type === "url" ? (
+                              <Globe className="h-4 w-4 text-blue-500" />
+                            ) : (
+                              <FileText className="h-4 w-4 text-orange-500" />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {source.metadata.filename || source.metadata.source_url || source.content_hash.slice(0, 8)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {["pending", "processing"].includes(source.status) && (
+                                <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
+                              )}
+                              <Badge variant={
+                                source.status === "completed" ? "default" :
+                                  source.status === "failed" ? "destructive" : "secondary"
+                              }>
+                                {source.status}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-xs">
+                            {formatDistanceToNow(new Date(source.created_at), { addSuffix: true })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteSource(source.id)}
+                              disabled={deletingSourceId === source.id}
+                            >
+                              {deletingSourceId === source.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              )}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="api-keys" className="space-y-8">
@@ -536,6 +736,37 @@ export default function ProjectDetailPage() {
                     </p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-8">
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                <CardDescription>Destructive actions that cannot be undone.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">Delete Project</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your
+                        project and remove all associated data, including ingestion sources and API keys.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={deleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        {deletingProject ? "Deleting..." : "Delete Project"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             </Card>
           </TabsContent>
