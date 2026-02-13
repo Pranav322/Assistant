@@ -2,7 +2,9 @@
 
 This repository is primarily specification docs for a RAG chatbot platform.
 This file is a living summary derived from the specs below and can be updated.
+## for forntend 
 
+use pnpm for package management 
 ## Primary Specification Files
 These files define the intended behavior of the system. Use them as the baseline
 for implementation decisions and update this guide if the specs change:

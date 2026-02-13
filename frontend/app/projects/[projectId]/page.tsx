@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Project = {
   id: string;
@@ -316,99 +317,130 @@ export default function ProjectDetailPage() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1400px] gap-8 px-6 py-10 sm:px-8 lg:px-12">
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Processed Requests</CardDescription>
-              <CardTitle className="text-3xl">{usage?.requests ?? 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Tokens Consumed</CardDescription>
-              <CardTitle className="text-3xl">{usage?.tokens ?? 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="sm:col-span-2">
-            <CardHeader className="pb-2">
-              <CardDescription>Allowed Origin</CardDescription>
-              <CardTitle className="text-lg font-mono">{project.allowed_origins?.[0] || "Not set"}</CardTitle>
-            </CardHeader>
-          </Card>
-        </section>
+      <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12">
+        <Tabs defaultValue="overview" className="space-y-8">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
+            <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+            <TabsTrigger value="integration">Integration</TabsTrigger>
+          </TabsList>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" /> Ingestion
-                </CardTitle>
-                <CardDescription>Upload documents or crawl URLs.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <Label>File Upload</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      key={fileInputKey}
-                      type="file"
-                      accept=".pdf,.txt,.md,.markdown"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                      className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                    />
-                    <Button onClick={uploadFile} disabled={uploading}>
-                      {uploading ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
-                </div>
+          <TabsContent value="overview" className="space-y-8">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Processed Requests</CardDescription>
+                  <CardTitle className="text-3xl">{usage?.requests ?? 0}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Tokens Consumed</CardDescription>
+                  <CardTitle className="text-3xl">{usage?.tokens ?? 0}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card className="sm:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardDescription>Allowed Origin</CardDescription>
+                  <CardTitle className="text-lg font-mono">{project.allowed_origins?.[0] || "Not set"}</CardTitle>
+                </CardHeader>
+              </Card>
+            </section>
+          </TabsContent>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or</span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Label>URL Ingestion</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      value={ingestUrl}
-                      onChange={(e) => setIngestUrl(e.target.value)}
-                      placeholder="https://example.com/docs"
-                    />
-                    <Button onClick={ingestUrlSubmit} disabled={urlIngesting} variant="outline">
-                      {urlIngesting ? "Submitting..." : "Ingest"}
-                    </Button>
-                  </div>
-                </div>
-
-                {ingestionStatus && (
-                  <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">Status: {ingestionStatus.status}</span>
-                      <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
-                        <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
+          <TabsContent value="knowledge-base" className="space-y-8">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5" /> File Upload
+                  </CardTitle>
+                  <CardDescription>Upload documents (PDF, TXT, MD) to your knowledge base.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <Label>Select File</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        key={fileInputKey}
+                        type="file"
+                        accept=".pdf,.txt,.md,.markdown"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                      />
+                      <Button onClick={uploadFile} disabled={uploading}>
+                        {uploading ? "Uploading..." : "Upload"}
                       </Button>
                     </div>
-                    <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
-                    {ingestionStatus.message && (
-                      <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-                        <AlertCircle className="h-3 w-3" />
-                        <span>{ingestionStatus.message}</span>
+                    {ingestionStatus?.sourceId && ingestionStatus.status && !ingestUrl && (
+                      <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Status: {ingestionStatus.status}</span>
+                          <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
+                            <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
+                        {ingestionStatus.message && (
+                          <div className="mt-2 flex items-center gap-2 text-muted-foreground">
+                            <AlertCircle className="h-3 w-3" />
+                            <span>{ingestionStatus.message}</span>
+                          </div>
+                        )}
                       </div>
                     )}
+                    {ingestionError && !ingestUrl && <p className="text-sm text-destructive">{ingestionError}</p>}
                   </div>
-                )}
-                {ingestionError && <p className="text-sm text-destructive">{ingestionError}</p>}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5" /> URL Ingestion
+                  </CardTitle>
+                  <CardDescription>Crawl and index content from a website URL.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <Label>Target URL</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        value={ingestUrl}
+                        onChange={(e) => setIngestUrl(e.target.value)}
+                        placeholder="https://example.com/docs"
+                      />
+                      <Button onClick={ingestUrlSubmit} disabled={urlIngesting} variant="outline">
+                        {urlIngesting ? "Submitting..." : "Ingest"}
+                      </Button>
+                    </div>
+                    {ingestionStatus?.sourceId && ingestionStatus.status && ingestUrl && (
+                      <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Status: {ingestionStatus.status}</span>
+                          <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
+                            <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
+                        {ingestionStatus.message && (
+                          <div className="mt-2 flex items-center gap-2 text-muted-foreground">
+                            <AlertCircle className="h-3 w-3" />
+                            <span>{ingestionStatus.message}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {ingestionError && ingestUrl && <p className="text-sm text-destructive">{ingestionError}</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="api-keys" className="space-y-8">
+            <Card className="max-w-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5" /> API Keys</CardTitle>
                 <CardDescription>Manage keys access to your project.</CardDescription>
@@ -448,10 +480,10 @@ export default function ProjectDetailPage() {
                 {error ? <p className="text-sm text-destructive">{error}</p> : null}
               </CardContent>
             </Card>
-          </div>
+          </TabsContent>
 
-          <div className="space-y-8">
-            <Card>
+          <TabsContent value="integration" className="space-y-8">
+            <Card className="max-w-3xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
                 <CardDescription>Connect your application.</CardDescription>
@@ -506,8 +538,8 @@ export default function ProjectDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
