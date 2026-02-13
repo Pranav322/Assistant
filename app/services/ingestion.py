@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import io
 import uuid
@@ -89,7 +90,10 @@ class IngestionService:
             text_content = ""
             page_chunks: list[ProcessedChunk] = []
             if file_type == "pdf":
-                pages = self._extract_pdf_pages(file_content)
+                loop = asyncio.get_running_loop()
+                pages = await loop.run_in_executor(
+                    None, self._extract_pdf_pages_sync, file_content
+                )
                 for page_number, page_text in pages:
                     if not page_text.strip():
                         continue
@@ -106,7 +110,10 @@ class IngestionService:
             else:
                 content_type = metadata.get("content_type") or ""
                 if content_type.startswith("text/html") or file_type == "url":
-                    text_content = markdownify(
+                    loop = asyncio.get_running_loop()
+                    text_content = await loop.run_in_executor(
+                        None,
+                        markdownify,
                         file_content.decode("utf-8", errors="ignore"),
                         heading_style="ATX",
                     )
@@ -140,25 +147,34 @@ class IngestionService:
             texts_to_embed = [c.text for c in chunks]
             embeddings_list = await self.embedder.get_embeddings(texts_to_embed)
 
-            # 7. Save Chunks and Embeddings
-            for i, chunk_data in enumerate(chunks):
+            # 7. Save Chunks and Embeddings (Bulk Insert)
+            chunk_records = []
+            for idx, chunk_data in enumerate(chunks):
                 chunk_record = Chunk(
                     project_id=project_id,
                     source_id=source.id,
                     text=chunk_data.text,
                     metadata_=chunk_data.metadata,
                 )
-                self.db.add(chunk_record)
-                await self.db.flush()
+                chunk_records.append(chunk_record)
 
-                if i < len(embeddings_list):
-                    emb_record = Embedding(
-                        chunk_id=chunk_record.id,
-                        project_id=project_id,
-                        embedding=embeddings_list[i],
-                        model_name=self.embedder.deployment_name or "azure-openai",
-                    )
-                    self.db.add(emb_record)
+            if chunk_records:
+                self.db.add_all(chunk_records)
+                await self.db.flush()  # Generate IDs
+
+                embedding_records = []
+                for i, chunk_record in enumerate(chunk_records):
+                    if i < len(embeddings_list):
+                        emb_record = Embedding(
+                            chunk_id=chunk_record.id,
+                            project_id=project_id,
+                            embedding=embeddings_list[i],
+                            model_name=self.embedder.deployment_name or "azure-openai",
+                        )
+                        embedding_records.append(emb_record)
+
+                if embedding_records:
+                    self.db.add_all(embedding_records)
 
             # 8. Update Source Status
             source.status = "completed"
@@ -193,16 +209,7 @@ class IngestionService:
         )
         return result.scalar_one_or_none()
 
-    def _extract_text_from_pdf(self, file_content: bytes) -> str:
-        text = ""
-        with pdfplumber.open(io.BytesIO(file_content)) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-        return text
-
-    def _extract_pdf_pages(self, file_content: bytes) -> list[tuple[int, str]]:
+    def _extract_pdf_pages_sync(self, file_content: bytes) -> list[tuple[int, str]]:
         pages: list[tuple[int, str]] = []
         with pdfplumber.open(io.BytesIO(file_content)) as pdf:
             for index, page in enumerate(pdf.pages, start=1):

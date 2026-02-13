@@ -39,7 +39,7 @@ class Source(Base):
     status: Mapped[str] = mapped_column(String, default="pending")
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -77,7 +77,7 @@ class Chunk(Base):
         nullable=False,
     )
     source_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sources.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("sources.id", ondelete="CASCADE"), nullable=True, index=True
     )
 
     text: Mapped[str] = mapped_column(Text, nullable=False)

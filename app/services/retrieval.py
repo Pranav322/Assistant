@@ -449,21 +449,35 @@ class Reranker:
     async def _load_model(self) -> bool:
         if self._model and self._tokenizer:
             return True
+        
+        loop = asyncio.get_running_loop()
         try:
-            transformers = importlib.import_module("transformers")
-            torch = importlib.import_module("torch")
+             # Run blocking imports and loading in a thread
+            tokenizer, model, device = await loop.run_in_executor(None, self._load_model_sync)
+            self._tokenizer = tokenizer
+            self._model = model
+            self._device = device
+            return True
         except ImportError:
             logger.warning("reranker_unavailable", model=self.model_name)
             return False
+        except Exception as e:
+            logger.error("reranker_load_failed", error=str(e))
+            return False
 
-        self._tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
-        self._model = transformers.AutoModelForSequenceClassification.from_pretrained(
+    def _load_model_sync(self):
+        import importlib
+        transformers = importlib.import_module("transformers")
+        torch = importlib.import_module("torch")
+
+        tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
+        model = transformers.AutoModelForSequenceClassification.from_pretrained(
             self.model_name
         )
-        self._device = "cuda" if torch.cuda.is_available() else "cpu"
-        self._model.to(self._device)
-        self._model.eval()
-        return True
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model.to(device)
+        model.eval()
+        return tokenizer, model, device
 
     def _score_pairs(self, query: str, candidates: list[FusedResult]) -> list[float]:
         if not self._model or not self._tokenizer:
