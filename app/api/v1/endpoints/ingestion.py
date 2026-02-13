@@ -7,9 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.models import Source
-from app.schemas.ingestion import UrlIngestRequest
+from app.schemas.ingestion import UrlIngestRequest, SourceResponse
 from app.services.audit import log_audit_event
 from app.services.ingestion_validation import derive_file_type, validate_file_content
+from app.models import Source, Chunk, Embedding
+from sqlalchemy import delete
 from app.services.storage import StorageService
 from app.services.url_fetcher import validate_url
 from app.worker.tasks import process_ingestion_task
@@ -231,3 +233,36 @@ async def ingest_url(
         "status": source.status,
         "message": "Ingestion started",
     }
+
+
+@router.delete("/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_source(
+    source_id: uuid.UUID,
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.project_access_required("ingestion")),
+):
+    """
+    Delete a source and all its associated data (chunks, embeddings).
+    """
+    from sqlalchemy import select
+
+    # 1. Get Source
+    result = await db.execute(
+        select(Source).where(
+            Source.id == source_id,
+            Source.project_id == project_id,
+        )
+    )
+    source = result.scalar_one_or_none()
+    if not source:
+        raise HTTPException(status_code=404, detail="Source not found")
+
+    # 2. Delete file from storage if it exists (Optional/TODO)
+    # storage_service = StorageService()
+    # if source.storage_location:
+    #     await storage_service.delete_file(source.storage_location)
+
+    # 3. Delete Source (Cascade should handle Chunks and Embeddings)
+    await db.delete(source)
+    await db.commit()

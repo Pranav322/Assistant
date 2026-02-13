@@ -53,31 +53,20 @@ async def delete_project(
     db: AsyncSession = Depends(deps.get_db),
     access: deps.AccessContext = Depends(deps.admin_or_user_required()),
 ):
-    # Check access (owner or admin)
-    if not access.is_admin:
-        # Verify ownership since deps.admin_or_user_required only checks generalized access
-        # We need to ensure the user actually owns this specific project
-        project_check = await db.execute(
-            select(Project).where(
-                Project.id == project_id,
-                Project.owner_id == access.user_id,
-                Project.deleted_at.is_(None),
-            )
-        )
-        if not project_check.scalar_one_or_none():
-            raise HTTPException(
-                status_code=404, detail="Project not found or access denied"
-            )
-    else:
-        # Admin can delete any project
-        pass
-
-    result = await db.execute(
-        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    # Check access and get project in one go
+    stmt = select(Project).where(
+         Project.id == project_id,
+         Project.deleted_at.is_(None)
     )
+    
+    if not access.is_admin:
+        stmt = stmt.where(Project.owner_id == access.user_id)
+        
+    result = await db.execute(stmt)
     project = result.scalar_one_or_none()
+    
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
 
     project.deleted_at = datetime.now(timezone.utc)
     # Also revoke all API keys? For now, soft delete project prevents usage.
