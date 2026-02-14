@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.core.config import settings
-from app.core.security import generate_api_key, hash_api_key, normalize_origin
+from app.core.security import generate_api_key, hash_api_key, normalize_origin, get_api_key_fast_hash
 from app.models import ApiKey, Project, User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.schemas.ingestion import SourceResponse
@@ -228,6 +228,7 @@ async def create_api_key(
         project_id=project_id,
         name=payload.name,
         key_hash=key_hash,
+        fast_hash=get_api_key_fast_hash(api_key_value),
         scopes=payload.scopes or ["ingest", "query"],
         allowed_origins=allowed_origins,
         rate_limit=payload.rate_limit or {},

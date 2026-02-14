@@ -16,6 +16,7 @@ from app.core.security import (
     hash_widget_token,
     validate_origin,
     verify_api_key,
+    get_api_key_fast_hash,
 )
 from app.models import ApiKey, BrowserToken, Project, User
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
@@ -99,17 +100,53 @@ async def _find_api_key(
     if not project:
         return None
 
+    
+    # Calculate fast hash for O(1) lookup
+    fast_hash = get_api_key_fast_hash(api_key_value)
+    
+    # Try to find by fast_hash first
+    result = await db.execute(
+        select(ApiKey).where(
+            ApiKey.project_id == project_id,
+            ApiKey.fast_hash == fast_hash,
+            ApiKey.revoked_at.is_(None),
+        )
+    )
+    
+    # Handle collisions: iterate all matches (even if rare)
+    for api_key in result.scalars().all():
+        if api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc):
+            continue
+        # Double check with slow hash
+        if verify_api_key(api_key_value, api_key.key_hash):
+            return api_key
+
+    # FALLBACK: For legacy keys that don't have fast_hash yet
+    # We only check keys where fast_hash is NULL to avoid doing the full scan if we know the key is newer
     result = await db.execute(
         select(ApiKey).where(
             ApiKey.project_id == project_id,
             ApiKey.revoked_at.is_(None),
+            ApiKey.fast_hash.is_(None),
         )
     )
     for key in result.scalars().all():
         if key.expires_at and key.expires_at < datetime.now(timezone.utc):
             continue
         if verify_api_key(api_key_value, key.key_hash):
+            # Lazy backfill: Update the fast_hash for this legacy key
+            # This migrates the key to the fast path for future requests
+            try:
+                key.fast_hash = fast_hash
+                db.add(key)
+                await db.commit()
+                await db.refresh(key)
+            except Exception:
+                # If update fails, log it (system logging not set up here yet) or ignore to ensure auth succeeds
+                # We don't want to block auth because migration failed
+                pass
             return key
+            
     return None
 
 

@@ -66,6 +66,8 @@ class ApiKey(Base):
 
     name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     key_hash: Mapped[str] = mapped_column(String, nullable=False)
+    # Stores SHA256(api_key) for O(1) lookup
+    fast_hash: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True, unique=True)
 
     scopes: Mapped[List[str]] = mapped_column(
         ARRAY(String), default=lambda: ["ingest", "query"]

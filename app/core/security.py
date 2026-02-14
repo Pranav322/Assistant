@@ -73,6 +73,15 @@ def verify_api_key(provided_key: str, stored_hash: str) -> bool:
     return bcrypt.checkpw(provided_key.encode(), stored_hash.encode())
 
 
+def get_api_key_fast_hash(api_key: str) -> str:
+    """
+    Returns a fast hash (SHA256) of the API key for O(1) lookup.
+    This is NOT secure for password storage, but safe for looking up
+    high-entropy random keys before verifying them with bcrypt.
+    """
+    return hashlib.sha256(api_key.encode()).hexdigest()
+
+
 def hash_widget_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
