@@ -717,7 +717,61 @@ export default function ProjectDetailPage() {
                     </p>
                   )}
                   {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
+                  {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
                 </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-sm font-medium">Configuration</h3>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Display Mode</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={embedMode === "popup" ? "default" : "outline"}
+                          onClick={() => setEmbedMode("popup")}
+                          className="flex-1"
+                        >
+                          Popup
+                        </Button>
+                        <Button
+                          variant={embedMode === "embedded" ? "default" : "outline"}
+                          onClick={() => setEmbedMode("embedded")}
+                          className="flex-1"
+                        >
+                          Embedded
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {embedMode === "popup"
+                          ? "Floating chat bubble in the corner of your screen."
+                          : "Fills the container it is placed in. Good for sidebars or dedicated pages."}
+                      </p>
+                    </div>
+
+                    {embedMode === "popup" && (
+                      <div className="space-y-2">
+                        <Label>Dimensions</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Width (e.g. 360px)"
+                            value={embedWidth}
+                            onChange={(e) => setEmbedWidth(e.target.value)}
+                          />
+                          <Input
+                            placeholder="Height (e.g. 600px)"
+                            value={embedHeight}
+                            onChange={(e) => setEmbedHeight(e.target.value)}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Override default size. Use px, %, or vh/vw.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>2. Embed Widget</Label>
                   <p className="text-sm text-muted-foreground">Add this to your frontend HTML.</p>
