@@ -6,7 +6,9 @@ const content = `# Chat Endpoints
 
 Send a chat message and get a response.
 
-**Headers:** \`Authorization: Bearer <widget_token>\`
+**Headers:** 
+- \`Authorization: Bearer <widget_token>\` (for browser/widget)
+- \`x-api-key: chat_...\` (for programmatic/server access)
 
 **Request:**
 \`\`\`json

@@ -49,11 +49,19 @@ Logout and invalidate token.
 
 **Headers:** \`Authorization: Bearer <jwt>\`
 
-## POST /auth/refresh
+## Programmatic Access (API Keys)
 
-Refresh an access token.
+For server-side integrations or automation scripts, you can use **API Keys**. Unlike the short-lived JWT tokens used in the dashboard, API Keys are permanent (until revoked) and identified by an \`x-api-key\` header.
 
-**Headers:** \`Authorization: Bearer <jwt>\`
+**Headers:** \`x-api-key: chat_...\`
+
+### Example Usage
+\`\`\`bash
+curl -X POST https://api.yoursite.com/projects/{id}/ingestion/url \
+  -H "x-api-key: chat_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://docs.example.com"}'
+\`\`\`
 `;
 
 export default function AuthEndpointsPage() {

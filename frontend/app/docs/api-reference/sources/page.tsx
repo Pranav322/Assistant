@@ -8,7 +8,7 @@ Sources are documents (files or URLs) that are ingested and indexed.
 
 Upload a file to be processed.
 
-**Headers:** \`X-API-Key: <project_api_key>\`
+**Headers:** \`x-api-key: chat_...\` (Standard for programmatic ingestion)
 
 **Form Data:**
 | Field | Type | Description |
