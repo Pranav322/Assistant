@@ -4,12 +4,17 @@ How the RAG system finds relevant content for chat queries.
 
 ## Pipeline Overview
 
-```
-User Query → Query Processing → Hybrid Search → Ranking → Context → Response
-                ↓                                    ↓
-         Query Expansion                    Reciprocal Rank Fusion
-                ↓                                    ↓
-         Embed Generation                   Cross-Encoder Rerank
+```mermaid
+flowchart LR
+    Q[User Query] --> QP[Query Processing]
+    QP --> HS{Hybrid Search}
+    HS -->|Vector| VS[Vector Search]
+    HS -->|Keyword| KS[Keyword Search]
+    VS --> RRF[Reciprocal Rank Fusion]
+    KS --> RRF
+    RRF --> R[Reranking]
+    R --> C[Context Assembly]
+    C --> LLM[LLM Response]
 ```
 
 ## 1. Query Processing
@@ -48,9 +53,10 @@ Generate query variations for better recall:
 
 ### Caching Strategy
 
-```
-Redis (hot) → PostgreSQL (cold) → API
-   1 hour         30 days
+```mermaid
+flowchart LR
+    Redis[Redis (Hot)] -->|1 hour| DB[PostgreSQL (Cold)]
+    DB -->|30 days| API
 ```
 
 Cache embeddings to reduce API calls and latency.
