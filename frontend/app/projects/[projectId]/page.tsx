@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +110,11 @@ export default function ProjectDetailPage() {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [deletingSourceId, setDeletingSourceId] = useState<string | null>(null);
   const [deletingProject, setDeletingProject] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [sourceToDelete, setSourceToDelete] = useState<Source | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   // Embed Configuration State
   const [embedMode, setEmbedMode] = useState<"popup" | "embedded">("popup");
@@ -154,6 +160,47 @@ export default function ProjectDetailPage() {
     loadData();
   }, [projectId, loadData]);
 
+  const generateWidgetToken = useCallback(async () => {
+    setTokenError("");
+    setWidgetToken(null);
+    setTokenExpiresIn(null);
+    const token = getToken();
+    if (!token || !project) return;
+
+    const apiBaseUrl = API_BASE_URL.replace(/\/$/, "");
+    const isLocal = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
+    const defaultOrigin = isLocal ? "http://localhost:3000" : "https://customer.com";
+    const originValue = normalizeOrigin(project.allowed_origins?.[0] || defaultOrigin);
+
+    setTokenLoading(true);
+    try {
+      const data = await apiRequest<{ token: string; expires_in: number }>(
+        "/tokens/widget/user",
+        {
+          method: "POST",
+          token,
+          body: JSON.stringify({
+            origin: originValue,
+            project_id: projectId,
+          }),
+        }
+      );
+      setWidgetToken(data.token);
+      setTokenExpiresIn(data.expires_in);
+    } catch (err) {
+      const message = (err as Error).message;
+      setTokenError(message.replace(/^Error:\s*/i, ""));
+    } finally {
+      setTokenLoading(false);
+    }
+  }, [project, projectId]);
+
+  useEffect(() => {
+    if (project && !widgetToken && !tokenLoading && !tokenError) {
+      generateWidgetToken();
+    }
+  }, [project, tokenLoading, tokenError, generateWidgetToken]);
+
   // Polling logic
   useEffect(() => {
     const hasPending = sources.some(s => ["pending", "processing"].includes(s.status)) ||
@@ -168,7 +215,7 @@ export default function ProjectDetailPage() {
             // We can refresh the specific status too, or just rely on the list.
             // Let's rely on list for now to keep it simple, or re-fetch.
           }
-        }, 5000);
+        }, 2000);
       }
     } else {
       if (pollIntervalRef.current) {
@@ -221,6 +268,22 @@ export default function ProjectDetailPage() {
     }
 
     setUploading(true);
+    setUploadProgress(0);
+
+    const progressIntervalRef = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressIntervalRef);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 200);
+
+    const cleanup = () => {
+      clearInterval(progressIntervalRef);
+    };
+
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
@@ -232,8 +295,13 @@ export default function ProjectDetailPage() {
           body: formData,
         }
       );
+
+      cleanup();
+      setUploadProgress(100);
+
       const data = await response.json().catch(() => null);
       if (!response.ok) {
+        cleanup();
         throw new Error(data?.detail || "Upload failed");
       }
       setIngestionStatus({
@@ -243,9 +311,13 @@ export default function ProjectDetailPage() {
       });
       setSelectedFile(null);
       setFileInputKey((prev) => prev + 1);
-      loadData(); // Refresh list immediately
+      setTimeout(() => setUploadProgress(0), 1000);
+      setCurrentPage(1);
+      loadData();
     } catch (err) {
+      cleanup();
       setIngestionError((err as Error).message);
+      setUploadProgress(0);
     } finally {
       setUploading(false);
     }
@@ -317,18 +389,30 @@ export default function ProjectDetailPage() {
     }
   }
 
-  async function deleteSource(sourceId: string) {
+  function openDeleteModal(source: Source) {
+    setSourceToDelete(source);
+    setDeleteConfirmation("");
+    setIsDeleteModalOpen(true);
+  }
+
+  async function confirmDeleteSource() {
+    if (!sourceToDelete) return;
     const token = getToken();
     if (!token) return;
-    if (!confirm("Are you sure you want to delete this source? This action cannot be undone.")) return;
 
-    setDeletingSourceId(sourceId);
+    setDeletingSourceId(sourceToDelete.id);
     try {
-      await apiRequest(`/ingestion/${sourceId}?project_id=${projectId}`, {
+      await apiRequest(`/ingestion/${sourceToDelete.id}?project_id=${projectId}`, {
         method: "DELETE",
         token
       });
+      setIsDeleteModalOpen(false);
+      setSourceToDelete(null);
+      const shouldGoToPrevPage = currentPage > 1 && (sources.length - 1) <= (currentPage - 1) * 10;
       await loadData();
+      if (shouldGoToPrevPage) {
+        setCurrentPage(currentPage - 1);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -350,41 +434,6 @@ export default function ProjectDetailPage() {
     } catch (err) {
       setError((err as Error).message);
       setDeletingProject(false);
-    }
-  }
-
-  async function generateWidgetToken() {
-    setTokenError("");
-    setWidgetToken(null);
-    setTokenExpiresIn(null);
-    const token = getToken();
-    if (!token || !project) return;
-
-    const apiBaseUrl = API_BASE_URL.replace(/\/$/, "");
-    const isLocal = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
-    const defaultOrigin = isLocal ? "http://localhost:3000" : "https://customer.com";
-    const originValue = normalizeOrigin(project.allowed_origins?.[0] || defaultOrigin);
-
-    setTokenLoading(true);
-    try {
-      const data = await apiRequest<{ token: string; expires_in: number }>(
-        "/tokens/widget/user",
-        {
-          method: "POST",
-          token,
-          body: JSON.stringify({
-            origin: originValue,
-            project_id: projectId,
-          }),
-        }
-      );
-      setWidgetToken(data.token);
-      setTokenExpiresIn(data.expires_in);
-    } catch (err) {
-      const message = (err as Error).message;
-      setTokenError(message.replace(/^Error:\s*/i, ""));
-    } finally {
-      setTokenLoading(false);
     }
   }
 
@@ -427,6 +476,14 @@ export default function ProjectDetailPage() {
     }
   })();
 
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(sources.length / ITEMS_PER_PAGE);
+  const paginatedSources = sources.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const originToUse = customOrigin ? normalizeOrigin(customOrigin) : originValue;
   const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originToUse}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" data-mode="${embedMode}"${embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth) ? ` data-width="${embedWidth}"` : ""}${embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight) ? ` data-height="${embedHeight}"` : ""} defer></script>`;
 
@@ -452,7 +509,7 @@ export default function ProjectDetailPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12">
+      <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12 relative">
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -509,6 +566,14 @@ export default function ProjectDetailPage() {
                         {uploading ? "Uploading..." : "Upload"}
                       </Button>
                     </div>
+                    {uploading && (
+                      <div className="w-full bg-secondary rounded-full h-1.5 mt-2 overflow-hidden">
+                        <div
+                          className="bg-primary h-1.5 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    )}
                     {ingestionStatus?.sourceId && ingestionStatus.status && !ingestUrl && (
                       <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
                         <div className="flex items-center justify-between">
@@ -630,7 +695,7 @@ export default function ProjectDetailPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => deleteSource(source.id)}
+                              onClick={() => openDeleteModal(source)}
                               disabled={deletingSourceId === source.id}
                             >
                               {deletingSourceId === source.id ? (
@@ -645,6 +710,29 @@ export default function ProjectDetailPage() {
                     )}
                   </TableBody>
                 </Table>
+                {sources.length > ITEMS_PER_PAGE && (
+                  <div className="flex items-center justify-end px-4 py-4 border-t gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground min-w-[4rem] text-center">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -865,6 +953,54 @@ export default function ProjectDetailPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Delete Source"
+        >
+          <div className="space-y-4">
+            <div className="rounded-md bg-destructive/10 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
+                  <div className="mt-2 text-sm text-destructive/90">
+                    <p>
+                      This action guarantees data loss. If you are sure, type <strong>{sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash}</strong> below.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="confirm-delete">Type the name/URL to confirm</Label>
+              <Input
+                id="confirm-delete"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder={sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmDeleteSource}
+                disabled={deleteConfirmation !== (sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash)}
+              >
+                {deletingSourceId === sourceToDelete?.id ? "Deleting..." : "Delete Source"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </main >
     </div >
   );

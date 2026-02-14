@@ -97,6 +97,22 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <div className="flex gap-1 h-1 mt-1">
+                <div className={`flex-1 rounded-full ${password.length > 0 ? (password.length < 8 ? "bg-red-500" : "bg-green-500") : "bg-muted"}`} />
+                <div className={`flex-1 rounded-full ${
+                  password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)
+                    ? "bg-green-500"
+                    : password.length >= 8
+                      ? "bg-yellow-500"
+                      : "bg-muted"
+                }`} />
+                <div className={`flex-1 rounded-full ${password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password) ? "bg-green-500" : "bg-muted"}`} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {password.length === 0 ? "Enter a strong password" :
+                  password.length < 8 ? "Weak (min 8 chars)" :
+                    password.length < 10 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) ? "Medium" : "Strong"}
+              </p>
             </div>
             {error && (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">

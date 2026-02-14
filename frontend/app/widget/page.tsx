@@ -185,14 +185,30 @@ function WidgetContent() {
   const containerClasses = cn(
     "flex w-full flex-col bg-background text-foreground overflow-hidden font-sans",
     mode === "popup"
-      ? "h-screen sm:max-w-[400px] border shadow-2xl rounded-2xl "
-      : "h-full w-full"
+      ? "h-[100dvh] sm:h-[600px] sm:max-w-[400px] border shadow-2xl rounded-2xl "
+      : "h-[100dvh] w-full"
   );
 
   const headerClasses = cn(
     "flex items-center justify-between border-b px-4 py-3 backdrop-blur-md bg-background/80 sticky top-0 z-10",
     mode === "embedded" ? "border-none bg-transparent" : ""
   );
+
+  // Auto-resize textarea
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
+  }, [input]);
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
 
   return (
     <div className={containerClasses}>
@@ -307,17 +323,20 @@ function WidgetContent() {
         <form
           onSubmit={sendMessage}
           className={cn(
-            "relative flex items-center bg-background rounded-full border shadow-lg ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all p-1.5",
+            "relative flex items-end bg-background rounded-2xl border shadow-lg ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all p-1.5",
             mode === "embedded" ? "shadow-2xl border-muted/40 bg-background/90 backdrop-blur-xl" : ""
           )}
         >
-          <Input
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Type your message..."
-            className="flex-1 border-none shadow-none focus-visible:ring-0 px-4 bg-transparent py-2.5 h-auto text-sm"
+            rows={1}
+            className="flex-1 border-none shadow-none focus:outline-none focus:ring-0 px-4 bg-transparent py-3 text-sm resize-none max-h-[120px] min-h-[44px]"
           />
-          <div className="flex items-center gap-1.5 px-1.5">
+          <div className="flex items-center gap-1.5 pb-2 px-1.5">
             {messages.some((msg) => msg.status === "pending") ? (
               <Button
                 type="button"

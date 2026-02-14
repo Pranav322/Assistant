@@ -198,12 +198,13 @@ export default function ProjectsPage() {
                 id="origin"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
+                onBlur={() => setOrigin(normalizeOrigin(origin))}
                 placeholder="https://example.com"
                 disabled={creatingProject}
                 className="col-span-3"
               />
               <p className="text-[0.8rem] text-muted-foreground">
-                The domain where you&apos;ll embed the chat widget.
+                The domain where you&apos;ll embed the chat widget (e.g., https://your-website.com).
               </p>
             </div>
             {error && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">{error}</p>}
