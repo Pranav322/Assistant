@@ -1,17 +1,17 @@
 # Managing Projects
 
-Projects are the core of your chatbot experience. Each project represents a separate chatbot with its own knowledge base.
+Projects are the containers for your knowledge bases. Each project represents a separate chatbot instance that you can integrate into a different part of your application or a different website.
 
 ## Creating a Project
 
 1.  Log in to the **Dashboard**.
 2.  Click **"New Project"**.
-3.  Give your project a name (e.g., "Customer Support Bot").
-4.  Your project is now created!
+3.  Give your project a name (e.g., "Documentation Assistant").
+4.  Your project is now created and ready to be trained.
 
 ## Ingesting Data (Knowledge Base)
 
-To make your chatbot smart, you need to "ingest" data. This is how you teach it about your business or content.
+To make your embedded chatbot smart, you need to "ingest" data. This is how you teach it about your product or content.
 
 ### Uploading Files
 1.  Navigate to your **Project Dashboard**.

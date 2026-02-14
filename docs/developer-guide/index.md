@@ -1,6 +1,6 @@
 # Developer Guide
 
-Welcome to the Developer Documentation for the RAG Chatbot Platform. This section is intended for developers who want to self-host, contribute, or understand the internal workings of the system.
+Welcome to the Developer Documentation for Contextly. This section is intended for developers who want to integrate the chatbot into their applications, self-host the backend, or understand the internal workings of the system.
 
 ## Table of Contents
 

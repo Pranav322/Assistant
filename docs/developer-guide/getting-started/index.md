@@ -1,10 +1,10 @@
 # Getting Started
 
-Welcome to the RAG Chatbot Platform documentation. This section will help you get up and running quickly.
+Welcome to the Contextly documentation. This section will help you integrate an intelligent RAG chatbot into your application.
 
-## What is RAG Chatbot Platform?
+## What is Contextly?
 
-RAG Chatbot Platform is a production-ready AI chatbot solution that combines:
+Contextly is a **headless RAG engine and embeddable widget** designed to add intelligent chat to **any existing product**. It combines:
 
 - **Hybrid Search** - Vector + keyword search for optimal relevance
 - **Semantic Chunking** - Intelligent document parsing and splitting

@@ -1,6 +1,6 @@
 # Architecture
 
-High-level architecture of the RAG Chatbot Platform.
+High-level architecture of Contextly.
 
 ## System Overview
 
@@ -10,9 +10,9 @@ graph TD
     Internet[Internet]
     LB[Load Balancer / Nginx]
     
-    subgraph Client[Client Layer]
+    subgraph Client[Client Integration Layer]
         Dashboard[Dashboard (Next.js)]
-        Widget[Widget (Iframe)]
+        Widget[Widget (Iframe in Your App)]
         APIClient[API Clients]
     end
     

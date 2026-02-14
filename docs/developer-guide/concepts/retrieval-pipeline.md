@@ -1,6 +1,6 @@
 # Retrieval Pipeline
 
-How the RAG system finds relevant content for chat queries.
+How Contextly finds relevant content for chat queries.
 
 ## Pipeline Overview
 

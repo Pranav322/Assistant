@@ -63,7 +63,7 @@ export default function Home() {
             <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
               <div className="text-left animate-slide-in-from-bottom">
                 <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
-                  Production Ready RAG Platform
+                  The Chatbot for Your Platform
                 </Badge>
                 <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:leading-[1.1]">
                   Ship intelligent assistants{" "}
@@ -71,6 +71,7 @@ export default function Home() {
                 </h1>
                 <p className="mt-6 max-w-xl text-lg text-muted-foreground sm:text-xl leading-relaxed">
                   A complete toolkit for building retrieval-augmented generation apps.
+                  You can use this chatbot directly in your existing app without any issue.
                   Handles ingestion, retrieval, auth, and observability so you can
                   focus on the knowledge.
                 </p>
@@ -122,14 +123,14 @@ export default function Home() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                          Launch in 3 steps
+                          Integrate in 3 steps
                         </p>
                         <h3 className="mt-2 text-xl font-semibold tracking-tight">
-                          From data to assistant
+                          From data to embedded chat
                         </h3>
                       </div>
                       <Badge variant="secondary" className="rounded-full">
-                        10 min setup
+                        10 min integration
                       </Badge>
                     </div>
 
@@ -161,9 +162,9 @@ export default function Home() {
                           <Zap className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold">Share the widget</p>
+                          <p className="text-sm font-semibold">Embed the widget</p>
                           <p className="text-sm text-muted-foreground">
-                            Copy the embed snippet and go live in minutes.
+                            Copy the embed snippet and go live in your app in minutes.
                           </p>
                         </div>
                       </div>
@@ -206,14 +207,14 @@ export default function Home() {
             <div className="grid gap-12 lg:grid-cols-[0.35fr_0.65fr]">
               <div className="space-y-4">
                 <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  Platform
+                  Integration
                 </p>
                 <h2 className="text-3xl font-semibold tracking-tight">
-                  Everything you need for production RAG
+                  Seamlessly integrate AI chat into your product
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Reliable ingestion, search, and widget delivery with guardrails
-                  that keep data safe and performance predictable.
+                  Drop our pre-built widget into your frontend or use the API for full control.
+                  We handle the complexity of RAG so you can focus on your users.
                 </p>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
@@ -239,9 +240,9 @@ export default function Home() {
                   <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
                     <Zap className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold tracking-tight">Instant Integration</h3>
+                  <h3 className="text-lg font-semibold tracking-tight">Embeddable Widget</h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Generate a pre-built chat widget with one click or use our API to build custom interfaces.
+                    Generate a pre-built chat widget with one click to embed directly into your existing application or website.
                   </p>
                 </div>
                 <div className="rounded-xl border bg-background p-6 shadow-sm">

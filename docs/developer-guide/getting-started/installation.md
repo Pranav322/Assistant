@@ -1,6 +1,6 @@
 # Installation
 
-This guide covers setting up your development environment for the RAG Chatbot Platform.
+This guide covers setting up your development environment for Contextly.
 
 ## Prerequisites
 

@@ -1,6 +1,6 @@
 # API Reference
 
-The RAG Chatbot Platform REST API.
+The Contextly REST API for integrating intelligent chat into your applications.
 
 ## Overview
 

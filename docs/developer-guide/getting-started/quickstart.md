@@ -1,6 +1,6 @@
-# Quickstart
+# Integrate Contextly in 5 minutes
 
-Get up and running with the RAG Chatbot Platform in 5 minutes.
+Get up and running with Contextly and integrate the chatbot into your app in 5 minutes.
 
 ## Step 1: Create an Account
 
@@ -73,9 +73,9 @@ Response:
 }
 ```
 
-## Step 6: Embed the Widget
+## Step 6: Embed in Your App
 
-Add the widget to your website:
+Add the widget to your existing website or application:
 
 ```html
 <script src="https://widget.yourdomain.com/embed.js" defer></script>

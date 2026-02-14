@@ -38,10 +38,10 @@ export async function apiRequest<T>(
   return data as T;
 }
 
-export const fetcher = <T>(url: string): Promise<T> => {
+export const fetcher = <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("rag_user_token") : null;
-  return apiRequest<T>(url, { token: token ?? undefined });
+  return apiRequest<T>(url, { ...options, token: token ?? undefined });
 };
 
 function formatApiError(detail: unknown, fallback: string): string {

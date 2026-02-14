@@ -1,10 +1,10 @@
-# Embedding the Widget
+# Integrating the Widget
 
-Once your chatbot is trained, you can add it to your website so your visitors can interact with it.
+Once your chatbot is trained, you can integrate it into your application or website so your users can interact with it.
 
 ## Configuration
 
-Before embedding, ensure you have allowed your website's domain:
+Before integrating, ensure you have allowed your application's domain:
 1.  Go to **Project Settings**.
 2.  Find **"Allowed Origins"**.
 3.  Add your website's URL (e.g., `https://www.mycompany.com`).

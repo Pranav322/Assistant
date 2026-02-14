@@ -1,10 +1,10 @@
-# Widget Embedding
+# Widget Integration
 
-Complete guide to embedding the chat widget on your website.
+Complete guide to integrating the chat widget into your application.
 
 ## Overview
 
-The widget is an iframe-based chat interface that can be embedded on any website. It communicates securely with your backend using JWT tokens.
+The widget is a drop-in chat interface that can be embedded into any web application or site. It communicates securely with your backend using JWT tokens.
 
 ## Quick Embed
 

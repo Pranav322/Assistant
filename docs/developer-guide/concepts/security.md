@@ -1,6 +1,6 @@
 # Security
 
-Security architecture and best practices.
+Security architecture for embedding the chatbot into your application.
 
 ## Authentication
 
@@ -8,9 +8,9 @@ Security architecture and best practices.
 
 | Token | Use | Lifespan | Storage |
 |-------|-----|----------|---------|
-| User JWT | Dashboard | Session | Browser |
-| API Key | Server ops | Long-lived | Server |
-| Widget Token | Chat | 24 hours | Browser (iframe) |
+| User JWT | Dashboard Access | Session | Browser (Cookie) |
+| API Key | Backend Integration | Long-lived | Server-Side |
+| Widget Token | Embedded Chat | 24 hours | Browser (Iframe) |
 
 ### JWT Security
 
