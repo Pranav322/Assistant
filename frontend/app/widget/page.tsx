@@ -225,7 +225,7 @@ function WidgetContent() {
       <div
         className={cn(
           "flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth",
-          mode === "embedded" ? "max-w-4xl mx-auto w-full" : ""
+          mode === "embedded" ? "max-w-4xl mx-auto w-full pb-32" : ""
         )}
         ref={scrollRef}
       >
@@ -298,10 +298,18 @@ function WidgetContent() {
         )}
       </div>
 
-      <div className={cn("p-4 sticky bottom-0 z-10", mode === "embedded" ? "max-w-4xl mx-auto w-full" : "")}>
+      <div className={cn(
+        "p-4 z-10 transition-all duration-300 ease-in-out",
+        mode === "embedded"
+          ? "sticky bottom-0 bg-background/80 backdrop-blur-md w-full max-w-3xl px-4 mx-auto pb-4"
+          : "sticky bottom-0 bg-background/80 backdrop-blur-md"
+      )}>
         <form
           onSubmit={sendMessage}
-          className="relative flex items-center bg-background rounded-full border shadow-lg ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all p-1.5"
+          className={cn(
+            "relative flex items-center bg-background rounded-full border shadow-lg ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all p-1.5",
+            mode === "embedded" ? "shadow-2xl border-muted/40 bg-background/90 backdrop-blur-xl" : ""
+          )}
         >
           <Input
             value={input}

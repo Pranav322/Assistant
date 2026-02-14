@@ -112,8 +112,9 @@ export default function ProjectDetailPage() {
 
   // Embed Configuration State
   const [embedMode, setEmbedMode] = useState<"popup" | "embedded">("popup");
-  const [embedWidth, setEmbedWidth] = useState("360px");
-  const [embedHeight, setEmbedHeight] = useState("600px");
+  const [embedWidth, setEmbedWidth] = useState("");
+  const [embedHeight, setEmbedHeight] = useState("");
+  const [customOrigin, setCustomOrigin] = useState("");
 
   // Poll for status updates
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -380,7 +381,8 @@ export default function ProjectDetailPage() {
       setWidgetToken(data.token);
       setTokenExpiresIn(data.expires_in);
     } catch (err) {
-      setTokenError((err as Error).message);
+      const message = (err as Error).message;
+      setTokenError(message.replace(/^Error:\s*/i, ""));
     } finally {
       setTokenLoading(false);
     }
@@ -425,9 +427,10 @@ export default function ProjectDetailPage() {
     }
   })();
 
-  const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originValue}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" data-mode="${embedMode}"${embedMode === "popup" && embedWidth ? ` data-width="${embedWidth}"` : ""}${embedMode === "popup" && embedHeight ? ` data-height="${embedHeight}"` : ""} defer></script>`;
+  const originToUse = customOrigin ? normalizeOrigin(customOrigin) : originValue;
+  const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originToUse}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" data-mode="${embedMode}"${embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth) ? ` data-width="${embedWidth}"` : ""}${embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight) ? ` data-height="${embedHeight}"` : ""} defer></script>`;
 
-  const previewOrigin = originValue;
+  const previewOrigin = originToUse;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
   const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
 
@@ -693,110 +696,140 @@ export default function ProjectDetailPage() {
             <Card className="max-w-3xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
-                <CardDescription>Connect your application.</CardDescription>
+                <CardDescription>Configure how you embed the chatbot in your own site.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>1. Generate Widget Token</Label>
+              <CardContent className="space-y-8">
+                {/* 1. Token Generation */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold">1. Generate Widget Token</Label>
+                    {widgetToken && <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Active Token</Badge>}
+                  </div>
                   <p className="text-sm text-muted-foreground">
-                    Use your dashboard session to mint a short-lived token for preview.
+                    Generate a short-lived token to preview and authorize the widget.
                   </p>
                   <div className="flex flex-wrap items-center gap-3">
-                    <Button onClick={generateWidgetToken} disabled={tokenLoading}>
-                      {tokenLoading ? "Generating..." : "Generate token"}
+                    <Button onClick={generateWidgetToken} disabled={tokenLoading} size="sm">
+                      {tokenLoading ? "Generating..." : widgetToken ? "Regenerate token" : "Generate token"}
                     </Button>
                     {tokenExpiresIn ? (
-                      <Badge variant="secondary">Expires in {tokenExpiresIn}s</Badge>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <RefreshCw className="h-3 w-3 animate-spin" /> Expires in {tokenExpiresIn}s
+                      </span>
                     ) : null}
                   </div>
-                  {widgetToken ? (
-                    <CopyBlock value={widgetToken} />
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Generate a token to preview the widget.
-                    </p>
-                  )}
-                  {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
-                  {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
+                  {widgetToken && <CopyBlock value={widgetToken} />}
+                  {tokenError && <p className="text-sm text-destructive">{tokenError}</p>}
                 </div>
 
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-sm font-medium">Configuration</h3>
+                <div className="h-px bg-border w-full" />
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Display Mode</Label>
-                      <div className="flex gap-2">
+                {/* 2. Configuration */}
+                <div className="space-y-6">
+                  <Label className="text-base font-semibold">2. Configuration</Label>
+                  <p className="text-sm text-muted-foreground">Fine-tune the appearance and security.</p>
+
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-3">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Mode</Label>
+                      <div className="flex gap-2 p-1 bg-muted rounded-lg">
                         <Button
-                          variant={embedMode === "popup" ? "default" : "outline"}
+                          variant={embedMode === "popup" ? "default" : "ghost"}
                           onClick={() => setEmbedMode("popup")}
-                          className="flex-1"
+                          className="flex-1 rounded-md"
+                          size="sm"
                         >
                           Popup
                         </Button>
                         <Button
-                          variant={embedMode === "embedded" ? "default" : "outline"}
+                          variant={embedMode === "embedded" ? "default" : "ghost"}
                           onClick={() => setEmbedMode("embedded")}
-                          className="flex-1"
+                          className="flex-1 rounded-md"
+                          size="sm"
                         >
                           Embedded
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground italic">
                         {embedMode === "popup"
-                          ? "Floating chat bubble in the corner of your screen."
-                          : "Fills the container it is placed in. Good for sidebars or dedicated pages."}
+                          ? "Floating bubble. Best for general assistance."
+                          : "Fixed in place. Best for sidebars or full pages."}
                       </p>
                     </div>
 
-                    {embedMode === "popup" && (
-                      <div className="space-y-2">
-                        <Label>Dimensions</Label>
-                        <div className="flex gap-2">
+                    <div className="space-y-3">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dimensions</Label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">W</span>
                           <Input
-                            placeholder="Width (e.g. 360px)"
+                            placeholder={embedMode === "popup" ? "360px" : "100%"}
                             value={embedWidth}
                             onChange={(e) => setEmbedWidth(e.target.value)}
-                          />
-                          <Input
-                            placeholder="Height (e.g. 600px)"
-                            value={embedHeight}
-                            onChange={(e) => setEmbedHeight(e.target.value)}
+                            className="pl-7 h-9 text-sm"
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Override default size. Use px, %, or vh/vw.
-                        </p>
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">H</span>
+                          <Input
+                            placeholder={embedMode === "popup" ? "600px" : "100%"}
+                            value={embedHeight}
+                            onChange={(e) => setEmbedHeight(e.target.value)}
+                            className="pl-7 h-9 text-sm"
+                          />
+                        </div>
                       </div>
-                    )}
+                      <p className="text-[11px] text-muted-foreground italic">
+                        Pixels (px), percent (%), or view units (vh).
+                      </p>
+                    </div>
+
+                    <div className="sm:col-span-2 space-y-3">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Allowed Origin</Label>
+                      <Input
+                        placeholder={`e.g., ${originValue}`}
+                        value={customOrigin}
+                        onChange={(e) => setCustomOrigin(e.target.value)}
+                        className="font-mono text-sm h-9"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Restricts embedding to this domain for security.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>2. Embed Widget</Label>
-                  <p className="text-sm text-muted-foreground">Add this to your frontend HTML.</p>
-                  <CopyBlock value={embedSnippet} />
-                  <p className="text-xs text-muted-foreground">
-                    Auto-refresh uses <span className="font-mono">data-api-base-url</span>. Optional:
-                    provide <span className="font-mono">data-refresh-url</span> to use your own
-                    token broker endpoint.
+                <div className="h-px bg-border w-full" />
+
+                {/* 3. Snippet */}
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">3. Embed Snippet</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Copy and paste this code snippet into your HTML.
                   </p>
+                  <CopyBlock value={embedSnippet} />
                 </div>
-                <div className="space-y-2">
-                  <Label>3. Preview URL</Label>
-                  <CopyBlock value={previewSnippet} />
-                  {widgetToken ? (
-                    <Button asChild variant="link" className="px-0">
-                      <a href={previewSnippet} target="_blank" rel="noreferrer">
-                        Open preview <LinkIcon className="ml-2 h-3 w-3" />
-                      </a>
-                    </Button>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Generate a token to open the preview.
-                    </p>
-                  )}
-                </div>
+
+                {/* 4. Preview */}
+                {widgetToken && (
+                  <div className="mt-8 space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-primary font-bold">
+                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        4. Interactive Preview
+                      </div>
+                      <Badge variant="outline" className="bg-background text-[10px] uppercase font-bold tracking-tighter">Authorized</Badge>
+                    </div>
+                    <div className="space-y-3">
+                      <CopyBlock value={previewSnippet} />
+                      <Button asChild className="w-full h-11 shadow-md hover:shadow-lg transition-all font-semibold" size="default">
+                        <a href={previewSnippet} target="_blank" rel="noreferrer">
+                          Launch Preview Simulator <LinkIcon className="ml-2 h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -832,7 +865,7 @@ export default function ProjectDetailPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }

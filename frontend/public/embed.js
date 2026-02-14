@@ -73,8 +73,8 @@
 
   if (mode === "embedded") {
     root.style.position = "relative";
-    root.style.width = "100%";
-    root.style.height = "100%";
+    root.style.width = manualWidth || "100%";
+    root.style.height = manualHeight || "100%";
     root.style.display = "block";
   } else {
     root.style.position = "fixed";
