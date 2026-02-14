@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api";
-import { setToken } from "@/lib/auth";
+import { setToken, isAuthenticated } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,16 @@ type AuthResponse = { access_token: string };
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push("/projects");
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [router]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -47,6 +57,10 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingAuth) {
+    return null; // or a loading spinner
   }
 
   return (

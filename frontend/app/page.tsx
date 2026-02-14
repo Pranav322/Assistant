@@ -1,9 +1,19 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Layers, Search, Zap } from "lucide-react";
+import { isAuthenticated } from "@/lib/auth";
 
 export default function Home() {
+  const [isAuth, setIsAuth] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setIsAuth(isAuthenticated());
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -17,17 +27,30 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link
-              href="/auth/login"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              Sign in
-            </Link>
-            <Button asChild size="sm">
-              <Link href="/auth/register">
-                Get Started
-              </Link>
-            </Button>
+            {isAuth === null ? (
+              // Loading state or placeholder to prevent layout shift/flash
+              <div className="w-20 h-9 bg-muted/20 animate-pulse rounded-md" />
+            ) : isAuth ? (
+              <Button asChild size="sm">
+                <Link href="/projects">
+                  Go to Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                  Sign in
+                </Link>
+                <Button asChild size="sm">
+                  <Link href="/auth/register">
+                    Get Started
+                  </Link>
+                </Button>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -52,12 +75,25 @@ export default function Home() {
                   focus on the knowledge.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-4">
-                  <Button size="lg" className="h-12 px-8 text-base" asChild>
-                    <Link href="/auth/register">Create Workspace</Link>
-                  </Button>
-                  <Button size="lg" variant="outline" className="h-12 px-8 text-base" asChild>
-                    <Link href="/auth/login">View Demo</Link>
-                  </Button>
+                  {isAuth === null ? (
+                    <div className="flex gap-4">
+                      <div className="h-12 w-40 bg-muted/20 animate-pulse rounded-md" />
+                      <div className="h-12 w-32 bg-muted/20 animate-pulse rounded-md" />
+                    </div>
+                  ) : isAuth ? (
+                    <Button size="lg" className="h-12 px-8 text-base" asChild>
+                      <Link href="/projects">Go to Dashboard</Link>
+                    </Button>
+                  ) : (
+                    <>
+                      <Button size="lg" className="h-12 px-8 text-base" asChild>
+                        <Link href="/auth/register">Create Workspace</Link>
+                      </Button>
+                      <Button size="lg" variant="outline" className="h-12 px-8 text-base" asChild>
+                        <Link href="/auth/login">View Demo</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-10 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">

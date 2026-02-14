@@ -24,6 +24,13 @@ export async function apiRequest<T>(
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
+    if (response.status === 401 && path !== "/auth/login" && typeof window !== "undefined") {
+      // Clear token and redirect on unauthorized
+      const { clearToken } = await import("./auth");
+      clearToken();
+      window.location.href = "/auth/login";
+      return {} as T; // Return empty object to satisfy type, though redirect will happen
+    }
     const message = formatApiError(data?.detail, response.statusText);
     throw new Error(message);
   }
