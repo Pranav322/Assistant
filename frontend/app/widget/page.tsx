@@ -30,23 +30,17 @@ function LoadingDots() {
 }
 
 function WidgetContent() {
-  const searchParams = useSearchParams();
-  const [token, setToken] = useState<string | null>(null);
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const [allowedOrigin, setAllowedOrigin] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isOpen, setIsOpen] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const controllersRef = useRef(new Map<string, AbortController>());
+  const [mode, setMode] = useState<"popup" | "embedded">("popup");
 
   useEffect(() => {
     const initialToken = searchParams.get("token");
     const initialProject = searchParams.get("projectId");
     const initialOrigin = searchParams.get("origin");
+    const initialMode = searchParams.get("mode") as "popup" | "embedded";
     setToken(initialToken);
     setProjectId(initialProject);
     setAllowedOrigin(initialOrigin);
+    if (initialMode) setMode(initialMode);
 
     if (initialOrigin) {
       window.parent?.postMessage({ type: "chatbot:ready" }, initialOrigin);
@@ -176,97 +170,166 @@ function WidgetContent() {
     }
   }
 
-  if (!isOpen) return null;
+  if (!isOpen && mode === "popup") return null;
+
+  // Aesthetic Styles
+  const containerClasses = cn(
+    "flex w-full flex-col bg-background text-foreground overflow-hidden font-sans",
+    mode === "popup"
+      ? "h-screen sm:max-w-[400px] border shadow-2xl rounded-2xl "
+      : "h-full w-full"
+  );
+
+  const headerClasses = cn(
+    "flex items-center justify-between border-b px-4 py-3 backdrop-blur-md bg-background/80 sticky top-0 z-10",
+    mode === "embedded" ? "border-none bg-transparent" : ""
+  );
 
   return (
-    <div className="flex h-screen w-full flex-col bg-background p-4 sm:max-w-[400px] border shadow-xl rounded-xl">
-      <div className="flex items-center justify-between border-b pb-4">
-        <div>
-          <h1 className="text-lg font-semibold">Assistant</h1>
-          <p className="text-xs text-muted-foreground">Powered by Orizn</p>
+    <div className={containerClasses}>
+      <div className={headerClasses}>
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.636-1.636L13.5 18.75l.97-.243a2.25 2.25 0 001.636-1.636l.394-1.183.394 1.183a2.25 2.25 0 001.636 1.636l.97.243-.97.243a2.25 2.25 0 00-1.636 1.636z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-sm font-bold leading-tight">Assistant</h1>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">AI Powered</p>
+          </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-          <X className="h-4 w-4" />
-        </Button>
+        {mode === "popup" && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted" onClick={() => setIsOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4 space-y-4" ref={scrollRef}>
+      <div
+        className={cn(
+          "flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth",
+          mode === "embedded" ? "max-w-4xl mx-auto w-full" : ""
+        )}
+        ref={scrollRef}
+      >
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground p-4">
-            <p>Ask a question to get started.</p>
+          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground p-6 opacity-0 animate-in fade-in duration-500 fill-mode-forwards">
+            <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <Send className="h-6 w-6 text-foreground/50" />
+            </div>
+            <p className="font-medium text-foreground">How can I help you today?</p>
+            <p className="text-sm mt-1">Ask me anything about your project.</p>
           </div>
         ) : (
           messages.map((msg, index) => (
             <div
               key={index}
               className={cn(
-                "flex w-max max-w-[80%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                msg.role === "user"
-                  ? "ml-auto bg-primary text-primary-foreground"
-                  : "bg-muted"
+                "flex flex-col gap-1 max-w-[85%] animate-in slide-in-from-bottom-2 fade-in duration-300",
+                msg.role === "user" ? "ml-auto items-end" : "items-start"
               )}
             >
-              {msg.status === "pending" ? (
-                <LoadingDots />
-              ) : msg.role === "assistant" ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    p: ({ children }) => (
-                      <p className="whitespace-pre-wrap leading-relaxed">{children}</p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc pl-5 space-y-1">{children}</ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="list-decimal pl-5 space-y-1">{children}</ol>
-                    ),
-                    li: ({ children }) => (
-                      <li className="leading-relaxed">{children}</li>
-                    ),
-                    strong: ({ children }) => (
-                      <strong className="font-semibold">{children}</strong>
-                    ),
-                    code: ({ children }) => (
-                      <code className="rounded bg-background/60 px-1 py-0.5 text-[0.85em]">
-                        {children}
-                      </code>
-                    ),
-                    pre: ({ children }) => (
-                      <pre className="overflow-x-auto rounded bg-background/60 p-3 text-xs">
-                        {children}
-                      </pre>
-                    ),
-                  }}
-                >
-                  {msg.content}
-                </ReactMarkdown>
-              ) : (
-                <span className="whitespace-pre-wrap">{msg.content}</span>
-              )}
+              <div
+                className={cn(
+                  "px-4 py-2.5 rounded-2xl text-sm shadow-sm",
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground rounded-br-none"
+                    : "bg-muted/80 backdrop-blur-sm dark:bg-muted/50 rounded-bl-none border"
+                )}
+              >
+                {msg.status === "pending" ? (
+                  <LoadingDots />
+                ) : msg.role === "assistant" ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => (
+                        <p className="whitespace-pre-wrap leading-relaxed">{children}</p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc pl-5 space-y-1">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal pl-5 space-y-1">{children}</ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="leading-relaxed">{children}</li>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-semibold">{children}</strong>
+                      ),
+                      code: ({ children }) => (
+                        <code className="rounded bg-background/60 px-1 py-0.5 text-[0.85em] font-mono border">
+                          {children}
+                        </code>
+                      ),
+                      pre: ({ children }) => (
+                        <pre className="overflow-x-auto rounded-lg bg-background/50 p-3 text-xs border mt-2">
+                          {children}
+                        </pre>
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                ) : (
+                  <span className="whitespace-pre-wrap">{msg.content}</span>
+                )}
+              </div>
             </div>
           ))
         )}
       </div>
 
-      <form onSubmit={sendMessage} className="flex items-center gap-2 pt-4 border-t">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask something..."
-          className="flex-1"
-        />
-        {messages.some((msg) => msg.status === "pending") ? (
-          <Button type="button" size="icon" variant="outline" onClick={stopAll}>
-            <Square className="h-4 w-4" />
-            <span className="sr-only">Stop</span>
-          </Button>
-        ) : null}
-        <Button type="submit" size="icon" disabled={!input.trim()}>
-          <Send className="h-4 w-4" />
-          <span className="sr-only">Send</span>
-        </Button>
-      </form>
+      <div className={cn("p-4 sticky bottom-0 z-10", mode === "embedded" ? "max-w-4xl mx-auto w-full" : "")}>
+        <form
+          onSubmit={sendMessage}
+          className="relative flex items-center bg-background rounded-full border shadow-lg ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all p-1.5"
+        >
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1 border-none shadow-none focus-visible:ring-0 px-4 bg-transparent py-2.5 h-auto text-sm"
+          />
+          <div className="flex items-center gap-1.5 px-1.5">
+            {messages.some((msg) => msg.status === "pending") ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                onClick={stopAll}
+              >
+                <Square className="h-4 w-4 fill-current" />
+                <span className="sr-only">Stop</span>
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!input.trim()}
+              className="h-8 w-8 rounded-full shrink-0 transition-all active:scale-95"
+            >
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send</span>
+            </Button>
+          </div>
+        </form>
+        <div className="text-center mt-2">
+          <a href="https://orizn.com" target="_blank" className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+            Powered by Orizn AI
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

@@ -17,6 +17,10 @@
     return;
   }
 
+  const mode = scriptTag.getAttribute("data-mode") || "popup";
+  const manualWidth = scriptTag.getAttribute("data-width");
+  const manualHeight = scriptTag.getAttribute("data-height");
+
   const projectId =
     scriptTag.getAttribute("data-project-id") ||
     scriptTag.getAttribute("data-project");
@@ -24,7 +28,8 @@
   const widgetUrlAttr = scriptTag.getAttribute("data-widget-url");
   const position = scriptTag.getAttribute("data-position") || "right";
   const offset = scriptTag.getAttribute("data-offset") || "24px";
-  const defaultOpen = scriptTag.getAttribute("data-open") !== "false";
+  // For embedded mode, we always default to open. For popup, we respect the attribute.
+  const defaultOpen = mode === "embedded" ? true : scriptTag.getAttribute("data-open") !== "false";
   const buttonLabel = scriptTag.getAttribute("data-button-label") || "Chat";
 
   const scriptUrl = scriptTag.src ? new URL(scriptTag.src) : null;
@@ -59,29 +64,52 @@
   if (projectId) {
     iframeSrc.searchParams.set("projectId", projectId);
   }
+  if (mode === "embedded") {
+    iframeSrc.searchParams.set("mode", "embedded");
+  }
 
   const root = document.createElement("div");
   root.id = "orizn-widget-root";
-  root.style.position = "fixed";
-  root.style.bottom = offset;
-  if (position === "left") {
-    root.style.left = offset;
+
+  if (mode === "embedded") {
+    root.style.position = "relative";
+    root.style.width = "100%";
+    root.style.height = "100%";
+    root.style.display = "block";
   } else {
-    root.style.right = offset;
+    root.style.position = "fixed";
+    root.style.bottom = offset;
+    if (position === "left") {
+      root.style.left = offset;
+    } else {
+      root.style.right = offset;
+    }
+    root.style.zIndex = "999999";
+    root.style.display = "flex";
+    root.style.flexDirection = "column";
+    root.style.alignItems = position === "left" ? "flex-start" : "flex-end";
+    root.style.gap = "12px";
   }
-  root.style.zIndex = "999999";
-  root.style.display = "flex";
-  root.style.flexDirection = "column";
-  root.style.alignItems = position === "left" ? "flex-start" : "flex-end";
-  root.style.gap = "12px";
+
   root.style.fontFamily =
     "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif";
 
   const panel = document.createElement("div");
-  panel.style.width = "360px";
-  panel.style.maxWidth = "calc(100vw - 48px)";
-  panel.style.height = "520px";
-  panel.style.maxHeight = "80vh";
+
+  if (mode === "embedded") {
+    panel.style.width = "100%";
+    panel.style.height = "100%";
+    panel.style.maxWidth = "none";
+    panel.style.maxHeight = "none";
+    panel.style.borderRadius = "0";
+    panel.style.boxShadow = "none";
+  } else {
+    panel.style.width = manualWidth || "360px";
+    panel.style.maxWidth = "calc(100vw - 48px)";
+    panel.style.height = manualHeight || "600px";
+    panel.style.maxHeight = "80vh";
+  }
+
   panel.style.display = defaultOpen ? "block" : "none";
 
   const iframe = document.createElement("iframe");
@@ -91,9 +119,16 @@
   iframe.style.border = "0";
   iframe.style.width = "100%";
   iframe.style.height = "100%";
-  iframe.style.borderRadius = "20px";
-  iframe.style.boxShadow = "0 24px 60px rgba(15, 23, 42, 0.2)";
-  iframe.style.background = "transparent";
+
+  if (mode === "embedded") {
+    iframe.style.borderRadius = "0";
+    iframe.style.boxShadow = "none";
+    iframe.style.background = "transparent";
+  } else {
+    iframe.style.borderRadius = "20px";
+    iframe.style.boxShadow = "0 24px 60px rgba(15, 23, 42, 0.2)";
+    iframe.style.background = "transparent";
+  }
 
   panel.appendChild(iframe);
 
@@ -110,13 +145,23 @@
   button.style.fontWeight = "600";
   button.style.cursor = "pointer";
   button.style.boxShadow = "0 18px 36px rgba(15, 23, 42, 0.2)";
-  button.style.display = defaultOpen ? "none" : "flex";
+
+  // In embedded mode, button is never shown
+  if (mode === "embedded") {
+    button.style.display = "none";
+  } else {
+    button.style.display = defaultOpen ? "none" : "flex";
+  }
+
   button.style.alignItems = "center";
   button.style.justifyContent = "center";
 
   let open = defaultOpen;
 
   function setOpen(nextOpen) {
+    // Embedded mode is always open
+    if (mode === "embedded") return;
+
     open = nextOpen;
     panel.style.display = open ? "block" : "none";
     button.style.display = open ? "none" : "flex";
@@ -127,7 +172,9 @@
   });
 
   root.appendChild(panel);
-  root.appendChild(button);
+  if (mode !== "embedded") {
+    root.appendChild(button);
+  }
 
   const mountId = scriptTag.getAttribute("data-mount-id");
   const mountNode = mountId ? document.getElementById(mountId) : document.body;
