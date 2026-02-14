@@ -18,12 +18,13 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-2">
+          <div className="flex i
+          tems-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
-              O
+              C
             </div>
             <span className="text-sm font-semibold tracking-tight">
-              Orizn RAG
+              Contextly
             </span>
           </div>
           <nav className="flex items-center gap-4">
@@ -255,7 +256,7 @@ export default function Home() {
               <div>
                 <h3 className="text-3xl font-bold tracking-tight">Ready to build?</h3>
                 <p className="mt-4 max-w-[520px] text-muted-foreground">
-                  Join developers building the next generation of AI assistants with Orizn.
+                  Join developers building the next generation of AI assistants with Contextly.
                 </p>
               </div>
               <div className="mt-8 md:mt-0">
@@ -274,10 +275,10 @@ export default function Home() {
             <div className="flex h-5 w-5 items-center justify-center rounded bg-primary text-[10px] text-primary-foreground font-bold">
               O
             </div>
-            <span className="font-semibold text-foreground">Orizn RAG</span>
+            <span className="font-semibold text-foreground">Contextly</span>
           </div>
           <div className="flex gap-6">
-            <p>&copy; {new Date().getFullYear()} Orizn Inc.</p>
+            <p>&copy; {new Date().getFullYear()} Contextly Inc.</p>
           </div>
         </div>
       </footer>

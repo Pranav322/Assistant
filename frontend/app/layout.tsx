@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orizn RAG Platform",
+  title: "Contextly Platform",
   description: "Build, embed, and monitor production RAG chatbots.",
 };
 

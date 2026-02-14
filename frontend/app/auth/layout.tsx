@@ -34,7 +34,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  Orizn RAG
+                  Contextly
                 </p>
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   Build production-grade AI assistants.

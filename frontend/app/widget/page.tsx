@@ -361,8 +361,8 @@ function WidgetContent() {
           </div>
         </form>
         <div className="text-center mt-2">
-          <a href="https://orizn.com" target="_blank" className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-            Powered by Orizn AI
+          <a href="https://contextly.ai" target="_blank" className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+            Powered by Contextly AI
           </a>
         </div>
       </div>

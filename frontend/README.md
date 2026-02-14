@@ -1,4 +1,4 @@
-This is the frontend for the Orizn RAG platform (dashboard + widget).
+This is the frontend for the Contextly platform (dashboard + widget).
 
 ## Development
 

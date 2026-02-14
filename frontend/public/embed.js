@@ -13,7 +13,7 @@
 
   let token = scriptTag.getAttribute("data-token");
   if (!token && !refreshUrl) {
-    console.error("[Orizn Widget] Missing data-token attribute.");
+    console.error("[Contextly Widget] Missing data-token attribute.");
     return;
   }
 
@@ -69,7 +69,7 @@
   }
 
   const root = document.createElement("div");
-  root.id = "orizn-widget-root";
+  root.id = "contextly-widget-root";
 
   if (mode === "embedded") {
     root.style.position = "relative";
@@ -114,7 +114,7 @@
 
   const iframe = document.createElement("iframe");
   iframe.src = iframeSrc.toString();
-  iframe.title = "Orizn Chatbot";
+  iframe.title = "Contextly Chatbot";
   iframe.allow = "clipboard-read; clipboard-write";
   iframe.style.border = "0";
   iframe.style.width = "100%";
@@ -277,10 +277,10 @@
       if (response.ok && data && data.token) {
         setToken(data.token);
       } else {
-        console.error("[Orizn Widget] Token refresh failed.");
+        console.error("[Contextly Widget] Token refresh failed.");
       }
     } catch (error) {
-      console.error("[Orizn Widget] Token refresh error.", error);
+      console.error("[Contextly Widget] Token refresh error.", error);
     } finally {
       refreshInFlight = false;
     }
