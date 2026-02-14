@@ -504,12 +504,30 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
+<<<<<<< Updated upstream
+=======
+      <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/projects">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div className="flex flex-1 items-center justify-between">
+            <h1 className="text-xl font-bold tracking-tight">{project.name}</h1>
+            <Badge variant="secondary" className="px-3 py-1 font-semibold text-xs border-primary/10">
+              Project Dashboard
+            </Badge>
+          </div>
+        </div>
+      </header>
+
+>>>>>>> Stashed changes
       <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12 relative">
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
-            <TabsTrigger value="api-keys">API Keys</TabsTrigger>
             <TabsTrigger value="integration">Integration</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -733,48 +751,7 @@ export default function ProjectDetailPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="api-keys" className="space-y-8">
-            <Card className="max-w-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5" /> API Keys</CardTitle>
-                <CardDescription>Manage keys access to your project.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={createKey} className="flex gap-3">
-                  <Input
-                    value={newKeyName}
-                    onChange={(e) => setNewKeyName(e.target.value)}
-                    placeholder="Key name"
-                    className="flex-1"
-                    disabled={creatingKey}
-                  />
-                  <Button type="submit" disabled={creatingKey}>
-                    {creatingKey ? "Creating..." : "Create Key"}
-                  </Button>
-                </form>
-                {freshKey?.api_key && (
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20">
-                    <p className="text-xs font-semibold uppercase text-green-700 dark:text-green-400">New Key Created</p>
-                    <CopyBlock value={freshKey.api_key} />
-                    <p className="mt-2 text-xs text-muted-foreground">Copy this now. You won&apos;t see it again.</p>
-                  </div>
-                )}
 
-                <div className="space-y-3">
-                  {keys.map((key) => (
-                    <div key={key.id} className="flex items-center justify-between rounded-lg border p-3">
-                      <div>
-                        <p className="font-medium text-sm">{key.name || "API Key"}</p>
-                        <p className="text-xs font-mono text-muted-foreground">{key.prefix}...</p>
-                      </div>
-                      <Badge variant="outline">Active</Badge>
-                    </div>
-                  ))}
-                </div>
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="integration" className="space-y-8">
             <Card className="max-w-3xl">
@@ -918,35 +895,120 @@ export default function ProjectDetailPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-8">
-            <Card className="border-destructive/50">
-              <CardHeader>
-                <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                <CardDescription>Destructive actions that cannot be undone.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Delete Project</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your
-                        project and remove all associated data, including ingestion sources and API keys.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={deleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        {deletingProject ? "Deleting..." : "Delete Project"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardContent>
-            </Card>
+          <TabsContent value="settings" className="space-y-12">
+            <div className="grid gap-8">
+              {/* Advanced Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Key className="h-5 w-5" /> Developer Settings (Advanced)
+                  </CardTitle>
+                  <CardDescription>
+                    API Keys allow you to manage your project via code (e.g., syncing files automatically from your server).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  <div className="space-y-6">
+                    {(keys.length > 0 || freshKey) ? (
+                      <div className="rounded-lg border bg-muted/50 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <h4 className="text-sm font-semibold flex items-center gap-2">
+                          <Code className="h-4 w-4" /> How to use your API Key
+                        </h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Use the \`x-api-key\` header in your requests. This key provides full access to your project - keep it safe!
+                        </p>
+                        <CopyBlock
+                          value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
+  -H "x-api-key: YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"url": "https://example.com"}'`}
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed p-8 text-center space-y-3">
+                        <div className="mx-auto w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center">
+                          <Key className="h-5 w-5 text-primary/40" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">No API Keys Generated</p>
+                          <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">
+                            Generate an API key to enable programmatic access for automated ingestion or server-side integrations.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <form onSubmit={createKey} className="flex gap-3">
+                      <Input
+                        value={newKeyName}
+                        onChange={(e) => setNewKeyName(e.target.value)}
+                        placeholder="e.g. Server Automation Key"
+                        className="flex-1 h-10 shadow-sm"
+                        disabled={creatingKey}
+                      />
+                      <Button type="submit" disabled={creatingKey} className="shadow-sm">
+                        {creatingKey ? "Creating..." : (keys.length > 0 || freshKey) ? "Generate Another Key" : "Generate First API Key"}
+                      </Button>
+                    </form>
+
+                    {freshKey?.api_key && (
+                      <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20 animate-in fade-in zoom-in-95 duration-300">
+                        <p className="text-xs font-bold uppercase text-green-700 dark:text-green-400 mb-2">New Key Created</p>
+                        <CopyBlock value={freshKey.api_key} />
+                        <p className="mt-2 text-xs text-muted-foreground italic">Important: Copy this key now. It will not be shown again for security reasons.</p>
+                      </div>
+                    )}
+
+                    {keys.length > 0 && (
+                      <div className="space-y-3 pt-4">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Keys</Label>
+                        {keys.map((key) => (
+                          <div key={key.id} className="flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm hover:shadow-md transition-shadow">
+                            <div>
+                              <p className="font-medium text-sm">{key.name || "API Key"}</p>
+                              <p className="text-xs font-mono text-muted-foreground opacity-70">{key.prefix}...</p>
+                            </div>
+                            <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700 border-none">Active</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Danger Zone */}
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardHeader>
+                  <CardTitle className="text-destructive flex items-center gap-2">
+                    <Trash2 className="h-5 w-5" /> Danger Zone
+                  </CardTitle>
+                  <CardDescription>Destructive actions that cannot be undone.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="shadow-sm">Delete Project</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete your
+                          project and remove all associated data, including ingestion sources and API keys.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={deleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          {deletingProject ? "Deleting..." : "Delete Project"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
         <Modal
