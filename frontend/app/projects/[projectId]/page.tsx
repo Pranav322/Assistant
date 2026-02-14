@@ -424,363 +424,361 @@ export default function ProjectDetailPage() {
       return isLocal ? "http://localhost:3000" : "https://widget.pranavbuilds.tech";
     }
   })();
-}
-  }) ();
 
-const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originValue}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" data-mode="${embedMode}"${embedMode === "popup" && embedWidth ? ` data-width="${embedWidth}"` : ""}${embedMode === "popup" && embedHeight ? ` data-height="${embedHeight}"` : ""} defer></script>`;
+  const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originValue}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" data-mode="${embedMode}"${embedMode === "popup" && embedWidth ? ` data-width="${embedWidth}"` : ""}${embedMode === "popup" && embedHeight ? ` data-height="${embedHeight}"` : ""} defer></script>`;
 
-const previewOrigin = originValue;
-const previewToken = widgetToken || "<WIDGET_TOKEN>";
-const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
+  const previewOrigin = originValue;
+  const previewToken = widgetToken || "<WIDGET_TOKEN>";
+  const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
 
-return (
-  <div className="min-h-screen bg-muted/30 pb-20">
-    <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
-      <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/projects">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex flex-1 items-center justify-between">
-          <h1 className="text-lg font-semibold">{project.name}</h1>
-          <Badge variant="outline" className="font-mono">
-            {project.id}
-          </Badge>
-        </div>
-      </div>
-    </header>
-
-    <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12">
-      <Tabs defaultValue="overview" className="space-y-8">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
-          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
-          <TabsTrigger value="integration">Integration</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-8">
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Processed Requests</CardDescription>
-                <CardTitle className="text-3xl">{usage?.requests ?? 0}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Tokens Consumed</CardDescription>
-                <CardTitle className="text-3xl">{usage?.tokens ?? 0}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card className="sm:col-span-2">
-              <CardHeader className="pb-2">
-                <CardDescription>Allowed Origin</CardDescription>
-                <CardTitle className="text-lg font-mono">{project.allowed_origins?.[0] || "Not set"}</CardTitle>
-              </CardHeader>
-            </Card>
-          </section>
-        </TabsContent>
-
-        <TabsContent value="knowledge-base" className="space-y-8">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" /> File Upload
-                </CardTitle>
-                <CardDescription>Upload documents (PDF, TXT, MD) to your knowledge base.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <Label>Select File</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      key={fileInputKey}
-                      type="file"
-                      accept=".pdf,.txt,.md,.markdown"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                      className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                    />
-                    <Button onClick={uploadFile} disabled={uploading}>
-                      {uploading ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
-                  {ingestionStatus?.sourceId && ingestionStatus.status && !ingestUrl && (
-                    <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">Status: {ingestionStatus.status}</span>
-                        <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
-                          <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
-                        </Button>
-                      </div>
-                      <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
-                      {ingestionStatus.message && (
-                        <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-                          <AlertCircle className="h-3 w-3" />
-                          <span>{ingestionStatus.message}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {ingestionError && !ingestUrl && <p className="text-sm text-destructive">{ingestionError}</p>}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <LinkIcon className="h-5 w-5" /> URL Ingestion
-                </CardTitle>
-                <CardDescription>Crawl and index content from a website URL.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <Label>Target URL</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      value={ingestUrl}
-                      onChange={(e) => setIngestUrl(e.target.value)}
-                      placeholder="https://example.com/docs"
-                    />
-                    <Button onClick={ingestUrlSubmit} disabled={urlIngesting} variant="outline">
-                      {urlIngesting ? "Submitting..." : "Ingest"}
-                    </Button>
-                  </div>
-                  {ingestionStatus?.sourceId && ingestionStatus.status && ingestUrl && (
-                    <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">Status: {ingestionStatus.status}</span>
-                        <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
-                          <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
-                        </Button>
-                      </div>
-                      <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
-                      {ingestionStatus.message && (
-                        <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-                          <AlertCircle className="h-3 w-3" />
-                          <span>{ingestionStatus.message}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {ingestionError && ingestUrl && <p className="text-sm text-destructive">{ingestionError}</p>}
-                </div>
-              </CardContent>
-            </Card>
+  return (
+    <div className="min-h-screen bg-muted/30 pb-20">
+      <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/projects">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div className="flex flex-1 items-center justify-between">
+            <h1 className="text-lg font-semibold">{project.name}</h1>
+            <Badge variant="outline" className="font-mono">
+              {project.id}
+            </Badge>
           </div>
+        </div>
+      </header>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Sources</CardTitle>
-              <CardDescription>Manage your ingested files and URLs.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Name/URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sources.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No data sources found. Upload a file or ingest a URL to get started.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    sources.map((source) => (
-                      <TableRow key={source.id}>
-                        <TableCell>
-                          {source.type === "url" ? (
-                            <Globe className="h-4 w-4 text-blue-500" />
-                          ) : (
-                            <FileText className="h-4 w-4 text-orange-500" />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {source.metadata.filename || source.metadata.source_url || source.content_hash.slice(0, 8)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {["pending", "processing"].includes(source.status) && (
-                              <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
-                            )}
-                            <Badge variant={
-                              source.status === "completed" ? "default" :
-                                source.status === "failed" ? "destructive" : "secondary"
-                            }>
-                              {source.status}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-xs">
-                          {formatDistanceToNow(new Date(source.created_at), { addSuffix: true })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteSource(source.id)}
-                            disabled={deletingSourceId === source.id}
-                          >
-                            {deletingSourceId === source.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            )}
+      <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12">
+        <Tabs defaultValue="overview" className="space-y-8">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
+            <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+            <TabsTrigger value="integration">Integration</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-8">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Processed Requests</CardDescription>
+                  <CardTitle className="text-3xl">{usage?.requests ?? 0}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Tokens Consumed</CardDescription>
+                  <CardTitle className="text-3xl">{usage?.tokens ?? 0}</CardTitle>
+                </CardHeader>
+              </Card>
+              <Card className="sm:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardDescription>Allowed Origin</CardDescription>
+                  <CardTitle className="text-lg font-mono">{project.allowed_origins?.[0] || "Not set"}</CardTitle>
+                </CardHeader>
+              </Card>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="knowledge-base" className="space-y-8">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5" /> File Upload
+                  </CardTitle>
+                  <CardDescription>Upload documents (PDF, TXT, MD) to your knowledge base.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <Label>Select File</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        key={fileInputKey}
+                        type="file"
+                        accept=".pdf,.txt,.md,.markdown"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                      />
+                      <Button onClick={uploadFile} disabled={uploading}>
+                        {uploading ? "Uploading..." : "Upload"}
+                      </Button>
+                    </div>
+                    {ingestionStatus?.sourceId && ingestionStatus.status && !ingestUrl && (
+                      <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Status: {ingestionStatus.status}</span>
+                          <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
+                            <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
                           </Button>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
+                        {ingestionStatus.message && (
+                          <div className="mt-2 flex items-center gap-2 text-muted-foreground">
+                            <AlertCircle className="h-3 w-3" />
+                            <span>{ingestionStatus.message}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {ingestionError && !ingestUrl && <p className="text-sm text-destructive">{ingestionError}</p>}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5" /> URL Ingestion
+                  </CardTitle>
+                  <CardDescription>Crawl and index content from a website URL.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <Label>Target URL</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        value={ingestUrl}
+                        onChange={(e) => setIngestUrl(e.target.value)}
+                        placeholder="https://example.com/docs"
+                      />
+                      <Button onClick={ingestUrlSubmit} disabled={urlIngesting} variant="outline">
+                        {urlIngesting ? "Submitting..." : "Ingest"}
+                      </Button>
+                    </div>
+                    {ingestionStatus?.sourceId && ingestionStatus.status && ingestUrl && (
+                      <div className="rounded-lg border bg-muted/50 p-4 text-sm mt-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Status: {ingestionStatus.status}</span>
+                          <Button variant="ghost" size="icon" onClick={refreshIngestionStatus} disabled={statusLoading}>
+                            <RefreshCw className={`h-4 w-4 ${statusLoading ? "animate-spin" : ""}`} />
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-muted-foreground text-xs font-mono">{ingestionStatus.sourceId}</p>
+                        {ingestionStatus.message && (
+                          <div className="mt-2 flex items-center gap-2 text-muted-foreground">
+                            <AlertCircle className="h-3 w-3" />
+                            <span>{ingestionStatus.message}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {ingestionError && ingestUrl && <p className="text-sm text-destructive">{ingestionError}</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Data Sources</CardTitle>
+                <CardDescription>Manage your ingested files and URLs.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Name/URL</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sources.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          No data sources found. Upload a file or ingest a URL to get started.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    ) : (
+                      sources.map((source) => (
+                        <TableRow key={source.id}>
+                          <TableCell>
+                            {source.type === "url" ? (
+                              <Globe className="h-4 w-4 text-blue-500" />
+                            ) : (
+                              <FileText className="h-4 w-4 text-orange-500" />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {source.metadata.filename || source.metadata.source_url || source.content_hash.slice(0, 8)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {["pending", "processing"].includes(source.status) && (
+                                <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
+                              )}
+                              <Badge variant={
+                                source.status === "completed" ? "default" :
+                                  source.status === "failed" ? "destructive" : "secondary"
+                              }>
+                                {source.status}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-xs">
+                            {formatDistanceToNow(new Date(source.created_at), { addSuffix: true })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteSource(source.id)}
+                              disabled={deletingSourceId === source.id}
+                            >
+                              {deletingSourceId === source.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              )}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="api-keys" className="space-y-8">
-          <Card className="max-w-2xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5" /> API Keys</CardTitle>
-              <CardDescription>Manage keys access to your project.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <form onSubmit={createKey} className="flex gap-3">
-                <Input
-                  value={newKeyName}
-                  onChange={(e) => setNewKeyName(e.target.value)}
-                  placeholder="Key name"
-                  className="flex-1"
-                  disabled={creatingKey}
-                />
-                <Button type="submit" disabled={creatingKey}>
-                  {creatingKey ? "Creating..." : "Create Key"}
-                </Button>
-              </form>
-              {freshKey?.api_key && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20">
-                  <p className="text-xs font-semibold uppercase text-green-700 dark:text-green-400">New Key Created</p>
-                  <CopyBlock value={freshKey.api_key} />
-                  <p className="mt-2 text-xs text-muted-foreground">Copy this now. You won&apos;t see it again.</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {keys.map((key) => (
-                  <div key={key.id} className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <p className="font-medium text-sm">{key.name || "API Key"}</p>
-                      <p className="text-xs font-mono text-muted-foreground">{key.prefix}...</p>
-                    </div>
-                    <Badge variant="outline">Active</Badge>
+          <TabsContent value="api-keys" className="space-y-8">
+            <Card className="max-w-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Key className="h-5 w-5" /> API Keys</CardTitle>
+                <CardDescription>Manage keys access to your project.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <form onSubmit={createKey} className="flex gap-3">
+                  <Input
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    placeholder="Key name"
+                    className="flex-1"
+                    disabled={creatingKey}
+                  />
+                  <Button type="submit" disabled={creatingKey}>
+                    {creatingKey ? "Creating..." : "Create Key"}
+                  </Button>
+                </form>
+                {freshKey?.api_key && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20">
+                    <p className="text-xs font-semibold uppercase text-green-700 dark:text-green-400">New Key Created</p>
+                    <CopyBlock value={freshKey.api_key} />
+                    <p className="mt-2 text-xs text-muted-foreground">Copy this now. You won&apos;t see it again.</p>
                   </div>
-                ))}
-              </div>
-              {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                )}
 
-        <TabsContent value="integration" className="space-y-8">
-          <Card className="max-w-3xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
-              <CardDescription>Connect your application.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>1. Generate Widget Token</Label>
-                <p className="text-sm text-muted-foreground">
-                  Use your dashboard session to mint a short-lived token for preview.
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button onClick={generateWidgetToken} disabled={tokenLoading}>
-                    {tokenLoading ? "Generating..." : "Generate token"}
-                  </Button>
-                  {tokenExpiresIn ? (
-                    <Badge variant="secondary">Expires in {tokenExpiresIn}s</Badge>
-                  ) : null}
+                <div className="space-y-3">
+                  {keys.map((key) => (
+                    <div key={key.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <p className="font-medium text-sm">{key.name || "API Key"}</p>
+                        <p className="text-xs font-mono text-muted-foreground">{key.prefix}...</p>
+                      </div>
+                      <Badge variant="outline">Active</Badge>
+                    </div>
+                  ))}
                 </div>
-                {widgetToken ? (
-                  <CopyBlock value={widgetToken} />
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Generate a token to preview the widget.
-                  </p>
-                )}
-                {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
-              </div>
-              <div className="space-y-2">
-                <Label>2. Embed Widget</Label>
-                <p className="text-sm text-muted-foreground">Add this to your frontend HTML.</p>
-                <CopyBlock value={embedSnippet} />
-                <p className="text-xs text-muted-foreground">
-                  Auto-refresh uses <span className="font-mono">data-api-base-url</span>. Optional:
-                  provide <span className="font-mono">data-refresh-url</span> to use your own
-                  token broker endpoint.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>3. Preview URL</Label>
-                <CopyBlock value={previewSnippet} />
-                {widgetToken ? (
-                  <Button asChild variant="link" className="px-0">
-                    <a href={previewSnippet} target="_blank" rel="noreferrer">
-                      Open preview <LinkIcon className="ml-2 h-3 w-3" />
-                    </a>
-                  </Button>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Generate a token to open the preview.
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                {error ? <p className="text-sm text-destructive">{error}</p> : null}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        <TabsContent value="settings" className="space-y-8">
-          <Card className="border-destructive/50">
-            <CardHeader>
-              <CardTitle className="text-destructive">Danger Zone</CardTitle>
-              <CardDescription>Destructive actions that cannot be undone.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">Delete Project</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your
-                      project and remove all associated data, including ingestion sources and API keys.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={deleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      {deletingProject ? "Deleting..." : "Delete Project"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </main>
-  </div>
-);
+          <TabsContent value="integration" className="space-y-8">
+            <Card className="max-w-3xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
+                <CardDescription>Connect your application.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>1. Generate Widget Token</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Use your dashboard session to mint a short-lived token for preview.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button onClick={generateWidgetToken} disabled={tokenLoading}>
+                      {tokenLoading ? "Generating..." : "Generate token"}
+                    </Button>
+                    {tokenExpiresIn ? (
+                      <Badge variant="secondary">Expires in {tokenExpiresIn}s</Badge>
+                    ) : null}
+                  </div>
+                  {widgetToken ? (
+                    <CopyBlock value={widgetToken} />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Generate a token to preview the widget.
+                    </p>
+                  )}
+                  {tokenError ? <p className="text-sm text-destructive">{tokenError}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label>2. Embed Widget</Label>
+                  <p className="text-sm text-muted-foreground">Add this to your frontend HTML.</p>
+                  <CopyBlock value={embedSnippet} />
+                  <p className="text-xs text-muted-foreground">
+                    Auto-refresh uses <span className="font-mono">data-api-base-url</span>. Optional:
+                    provide <span className="font-mono">data-refresh-url</span> to use your own
+                    token broker endpoint.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>3. Preview URL</Label>
+                  <CopyBlock value={previewSnippet} />
+                  {widgetToken ? (
+                    <Button asChild variant="link" className="px-0">
+                      <a href={previewSnippet} target="_blank" rel="noreferrer">
+                        Open preview <LinkIcon className="ml-2 h-3 w-3" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Generate a token to open the preview.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-8">
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                <CardDescription>Destructive actions that cannot be undone.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">Delete Project</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your
+                        project and remove all associated data, including ingestion sources and API keys.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={deleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        {deletingProject ? "Deleting..." : "Delete Project"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
 }

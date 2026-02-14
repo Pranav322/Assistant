@@ -30,7 +30,16 @@ function LoadingDots() {
 }
 
 function WidgetContent() {
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"popup" | "embedded">("popup");
+  const [token, setToken] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [allowedOrigin, setAllowedOrigin] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isOpen, setIsOpen] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const controllersRef = useRef(new Map<string, AbortController>());
 
   useEffect(() => {
     const initialToken = searchParams.get("token");
