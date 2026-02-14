@@ -18,8 +18,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
-          <div className="flex i
-          tems-center gap-2">
+          <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
               C
             </div>
