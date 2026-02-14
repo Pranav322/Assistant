@@ -1,5 +1,7 @@
-import { CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const highlights = [
   {
@@ -17,11 +19,44 @@ const highlights = [
     description: "Monitoring, rate limits, and audit trails built in.",
     icon: CheckCircle2,
   },
+  {
+    title: "Instant widget",
+    description: "Copy-paste embed code and start chatting in minutes.",
+    icon: Zap,
+  },
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+                C
+              </div>
+              <span className="text-sm font-semibold tracking-tight">
+                Contextly
+              </span>
+            </Link>
+          </div>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/docs"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Docs
+            </Link>
+            <Button asChild size="sm">
+              <Link href="/auth/login">
+                Sign in
+              </Link>
+            </Button>
+          </nav>
+        </div>
+      </header>
+
       <div className="relative min-h-screen overflow-hidden">
         <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-muted/40 blur-3xl" />

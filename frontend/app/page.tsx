@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Layers, Search, Zap } from "lucide-react";
+import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3 } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 
 export default function Home() {
@@ -242,6 +242,15 @@ export default function Home() {
                   <h3 className="text-lg font-semibold tracking-tight">Instant Integration</h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                     Generate a pre-built chat widget with one click or use our API to build custom interfaces.
+                  </p>
+                </div>
+                <div className="rounded-xl border bg-background p-6 shadow-sm">
+                  <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
+                    <Shield className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-semibold tracking-tight">Secure by Default</h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                    Enterprise-grade auth with API keys, rate limiting, and tenant isolation built in.
                   </p>
                 </div>
               </div>

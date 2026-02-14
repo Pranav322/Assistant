@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 import Link from "next/link";
 import { Plus, Terminal, Settings2 } from "lucide-react";
-import { apiRequest } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { fetcher, apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,42 +31,25 @@ export default function ProjectsPage() {
     }
     return `https://${trimmed}`;
   };
-  const [projects, setProjects] = useState<Project[]>([]);
+
+  const { data: projects, error, isLoading, mutate } = useSWR<Project[]>("/projects", fetcher);
+
   const [name, setName] = useState("");
   const [origin, setOrigin] = useState("http://localhost:3000");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [createError, setCreateError] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  async function loadProjects() {
-    const token = getToken();
-    if (!token) return;
-    const data = await apiRequest<Project[]>("/projects", {
-      token,
-    });
-    setProjects(data);
-  }
 
   useEffect(() => {
     setTitle("Projects");
     setBackHref(null);
     setProjectName(null);
-    const token = getToken();
-    if (!token) {
-      window.location.href = "/auth/login";
-      return;
-    }
-    setLoading(true);
-    loadProjects()
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
   }, [setTitle, setBackHref, setProjectName]);
 
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    const token = getToken();
+    setCreateError("");
+    const token = localStorage.getItem("rag_user_token");
     if (!token) return;
     try {
       setCreatingProject(true);
@@ -81,9 +64,9 @@ export default function ProjectsPage() {
       });
       setName("");
       setIsModalOpen(false);
-      await loadProjects();
+      mutate();
     } catch (err) {
-      setError((err as Error).message);
+      setCreateError((err as Error).message);
     } finally {
       setCreatingProject(false);
     }
@@ -105,15 +88,19 @@ export default function ProjectsPage() {
           </Button>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Skeleton className="h-[140px] rounded-xl" />
             <Skeleton className="h-[140px] rounded-xl" />
             <Skeleton className="h-[140px] rounded-xl" />
           </div>
+        ) : error ? (
+          <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
+            Failed to load projects: {error.message}
+          </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
+            {projects?.map((project) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}?title=${encodeURIComponent(project.name)}`}
@@ -144,7 +131,7 @@ export default function ProjectsPage() {
                 </div>
               </Link>
             ))}
-            {projects.length === 0 && (
+            {projects?.length === 0 && (
               <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 text-center animate-fade-in">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/30 mb-4">
                   <Plus className="h-8 w-8 text-muted-foreground" />
@@ -192,7 +179,7 @@ export default function ProjectsPage() {
                 The domain where you&apos;ll embed the chat widget (e.g., https://your-website.com).
               </p>
             </div>
-            {error && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">{error}</p>}
+            {createError && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">{createError}</p>}
             <div className="flex justify-end gap-3 mt-2">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={creatingProject}>
                 Cancel
@@ -207,4 +194,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-

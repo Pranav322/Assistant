@@ -38,6 +38,12 @@ export async function apiRequest<T>(
   return data as T;
 }
 
+export const fetcher = <T>(url: string): Promise<T> => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("rag_user_token") : null;
+  return apiRequest<T>(url, { token: token ?? undefined });
+};
+
 function formatApiError(detail: unknown, fallback: string): string {
   if (typeof detail === "string") {
     return detail;

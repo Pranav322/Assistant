@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import useSWR, { mutate } from "swr";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiRequest, API_BASE_URL } from "@/lib/api";
+import { apiRequest, API_BASE_URL, fetcher } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
 import { Button } from "@/components/ui/button";
@@ -85,12 +86,24 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = params?.projectId as string;
-  const [project, setProject] = useState<Project | null>(null);
-  const [keys, setKeys] = useState<ApiKey[]>([]);
-  const [sources, setSources] = useState<Source[]>([]);
-  const [usage, setUsage] = useState<{ requests: number; tokens: number } | null>(
-    null
+
+  const { data: project, isLoading: projectLoading } = useSWR<Project>(
+    projectId ? `/projects/${projectId}` : null,
+    fetcher
   );
+  const { data: keys } = useSWR<ApiKey[]>(
+    projectId ? `/projects/${projectId}/api-keys` : null,
+    fetcher
+  );
+  const { data: sources } = useSWR<Source[]>(
+    projectId ? `/projects/${projectId}/sources` : null,
+    fetcher
+  );
+  const { data: usage } = useSWR<{ requests: number; tokens: number }>(
+    projectId ? `/usage?project_id=${projectId}` : null,
+    fetcher
+  );
+
   const [newKeyName, setNewKeyName] = useState("");
   const [freshKey, setFreshKey] = useState<ApiKey | null>(null);
   const [error, setError] = useState("");
@@ -125,7 +138,7 @@ export default function ProjectDetailPage() {
   const [embedHeight, setEmbedHeight] = useState("");
   const [customOrigin, setCustomOrigin] = useState("");
 
-  // Poll for status updates
+  // Poll for status updates - now using SWR refreshInterval for pending sources
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync navbar instantly from URL params (no API wait)
@@ -156,41 +169,6 @@ export default function ProjectDetailPage() {
       setProjectName(null);
     };
   }, [project, setTitle, setBackHref, setProjectName]);
-
-  const loadData = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      const results = await Promise.allSettled([
-        apiRequest<Project>(`/projects/${projectId}`, { token }),
-        apiRequest<ApiKey[]>(`/projects/${projectId}/api-keys`, { token }),
-        apiRequest<{ requests: number; tokens: number }>(`/usage?project_id=${projectId}`, { token }),
-        apiRequest<Source[]>(`/projects/${projectId}/sources`, { token })
-      ]);
-
-      const [projRes, keyRes, usageRes, srcRes] = results;
-
-      if (projRes.status === "rejected") {
-        throw new Error(projRes.reason.message || "Failed to load project");
-      }
-      setProject(projRes.value);
-
-      if (keyRes.status === "fulfilled") setKeys(keyRes.value);
-      if (usageRes.status === "fulfilled") setUsage(usageRes.value);
-      if (srcRes.status === "fulfilled") setSources(srcRes.value);
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      window.location.href = "/auth/login";
-      return;
-    }
-    loadData();
-  }, [projectId, loadData]);
 
   const generateWidgetToken = useCallback(async () => {
     setTokenError("");
@@ -233,20 +211,15 @@ export default function ProjectDetailPage() {
     }
   }, [project, tokenLoading, tokenError, generateWidgetToken]);
 
-  // Polling logic
+  // Polling logic - SWR handles background revalidation
   useEffect(() => {
-    const hasPending = sources.some(s => ["pending", "processing"].includes(s.status)) ||
+    const hasPending = sources?.some(s => ["pending", "processing"].includes(s.status)) ||
       (ingestionStatus && ["pending", "processing"].includes(ingestionStatus.status));
 
     if (hasPending) {
       if (!pollIntervalRef.current) {
         pollIntervalRef.current = setInterval(() => {
-          loadData();
-          // Also update ingestionStatus from the sources list if it matches
-          if (ingestionStatus) {
-            // We can refresh the specific status too, or just rely on the list.
-            // Let's rely on list for now to keep it simple, or re-fetch.
-          }
+          mutate(`/projects/${projectId}/sources`);
         }, 2000);
       }
     } else {
@@ -261,7 +234,7 @@ export default function ProjectDetailPage() {
         clearInterval(pollIntervalRef.current);
       }
     };
-  }, [sources, ingestionStatus, loadData]);
+  }, [sources, ingestionStatus, projectId]);
 
 
   async function createKey(e: React.FormEvent) {
@@ -281,7 +254,7 @@ export default function ProjectDetailPage() {
       );
       setFreshKey(created);
       setNewKeyName("");
-      await loadData();
+      mutate(`/projects/${projectId}/api-keys`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -345,7 +318,7 @@ export default function ProjectDetailPage() {
       setFileInputKey((prev) => prev + 1);
       setTimeout(() => setUploadProgress(0), 1000);
       setCurrentPage(1);
-      loadData();
+      mutate(`/projects/${projectId}/sources`);
     } catch (err) {
       cleanup();
       setIngestionError((err as Error).message);
@@ -382,7 +355,7 @@ export default function ProjectDetailPage() {
       );
       setIngestionStatus({ sourceId: data.source_id, status: data.status });
       setIngestUrl("");
-      loadData(); // Refresh list immediately
+      mutate(`/projects/${projectId}/sources`);
     } catch (err) {
       setIngestionError((err as Error).message);
     } finally {
@@ -413,7 +386,7 @@ export default function ProjectDetailPage() {
           }
           : prev
       );
-      loadData(); // Sync list
+      mutate(`/projects/${projectId}/sources`);
     } catch (err) {
       setIngestionError((err as Error).message);
     } finally {
@@ -440,8 +413,8 @@ export default function ProjectDetailPage() {
       });
       setIsDeleteModalOpen(false);
       setSourceToDelete(null);
-      const shouldGoToPrevPage = currentPage > 1 && (sources.length - 1) <= (currentPage - 1) * 10;
-      await loadData();
+      const shouldGoToPrevPage = currentPage > 1 && ((sources?.length ?? 0) - 1) <= (currentPage - 1) * 10;
+      await mutate(`/projects/${projectId}/sources`);
       if (shouldGoToPrevPage) {
         setCurrentPage(currentPage - 1);
       }
@@ -509,8 +482,8 @@ export default function ProjectDetailPage() {
   })();
 
   const ITEMS_PER_PAGE = 10;
-  const totalPages = Math.ceil(sources.length / ITEMS_PER_PAGE);
-  const paginatedSources = sources.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil((sources?.length ?? 0) / ITEMS_PER_PAGE);
+  const paginatedSources = (sources ?? []).slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -672,14 +645,14 @@ export default function ProjectDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sources.length === 0 ? (
+                    {(sources?.length ?? 0) === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                           No data sources found. Upload a file or ingest a URL to get started.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      sources.map((source) => (
+                      (sources ?? []).map((source) => (
                         <TableRow key={source.id}>
                           <TableCell>
                             {source.type === "url" ? (
@@ -726,7 +699,7 @@ export default function ProjectDetailPage() {
                     )}
                   </TableBody>
                 </Table>
-                {sources.length > ITEMS_PER_PAGE && (
+                {(sources?.length ?? 0) > ITEMS_PER_PAGE && (
                   <div className="flex items-center justify-end px-4 py-4 border-t gap-2">
                     <Button
                       variant="outline"
@@ -911,7 +884,7 @@ export default function ProjectDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-8">
                   <div className="space-y-6">
-                    {(keys.length > 0 || freshKey) ? (
+                    {((keys?.length ?? 0) > 0 || freshKey) ? (
                       <div className="rounded-lg border bg-muted/50 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
                         <h4 className="text-sm font-semibold flex items-center gap-2">
                           <Code className="h-4 w-4" /> How to use your API Key
@@ -949,7 +922,7 @@ export default function ProjectDetailPage() {
                         disabled={creatingKey}
                       />
                       <Button type="submit" disabled={creatingKey} className="shadow-sm">
-                        {creatingKey ? "Creating..." : (keys.length > 0 || freshKey) ? "Generate Another Key" : "Generate First API Key"}
+                        {creatingKey ? "Creating..." : ((keys?.length ?? 0) > 0 || freshKey) ? "Generate Another Key" : "Generate First API Key"}
                       </Button>
                     </form>
 
@@ -961,10 +934,10 @@ export default function ProjectDetailPage() {
                       </div>
                     )}
 
-                    {keys.length > 0 && (
+                    {(keys?.length ?? 0) > 0 && (
                       <div className="space-y-3 pt-4">
                         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Keys</Label>
-                        {keys.map((key) => (
+                        {(keys ?? []).map((key) => (
                           <div key={key.id} className="flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm hover:shadow-md transition-shadow">
                             <div>
                               <p className="font-medium text-sm">{key.name || "API Key"}</p>
