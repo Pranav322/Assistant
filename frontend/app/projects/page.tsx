@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, LogOut, Terminal, Settings2 } from "lucide-react";
+import { Plus, Terminal, Settings2 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
-import { getToken, clearToken } from "@/lib/auth";
+import { getToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Modal } from "@/components/ui/modal";
+import { useNavbar } from "@/components/NavbarContext";
 
 type Project = {
   id: string;
@@ -20,6 +21,7 @@ type Project = {
 };
 
 export default function ProjectsPage() {
+  const { setTitle, setBackHref } = useNavbar();
   const normalizeOrigin = (value: string) => {
     const trimmed = value.trim().replace(/\/+$/, "");
     if (!trimmed) return trimmed;
@@ -47,6 +49,8 @@ export default function ProjectsPage() {
   }
 
   useEffect(() => {
+    setTitle("Projects");
+    setBackHref(null);
     const token = getToken();
     if (!token) {
       window.location.href = "/auth/login";
@@ -56,7 +60,7 @@ export default function ProjectsPage() {
     loadProjects()
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [setTitle, setBackHref]);
 
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
@@ -84,28 +88,8 @@ export default function ProjectsPage() {
     }
   }
 
-  function logout() {
-    clearToken();
-    window.location.href = "/";
-  }
-
   return (
     <div className="min-h-screen bg-background selection:bg-primary/10">
-      <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
-              O
-            </div>
-            <span className="text-sm font-semibold tracking-tight">Dashboard</span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground hover:text-foreground">
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </Button>
-        </div>
-      </header>
-
       <main className="mx-auto w-full max-w-[1400px] px-6 py-12 animate-fade-in sm:px-8 lg:px-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -222,3 +206,4 @@ export default function ProjectsPage() {
     </div>
   );
 }
+

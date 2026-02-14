@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDistanceToNow } from "date-fns";
+import { useNavbar } from "@/components/NavbarContext";
 
 type Project = {
   id: string;
@@ -70,6 +71,7 @@ type Source = {
 };
 
 export default function ProjectDetailPage() {
+  const { setTitle, setBackHref } = useNavbar();
   const normalizeOrigin = (value: string) => {
     const trimmed = value.trim().replace(/\/+$/, "");
     if (!trimmed) return trimmed;
@@ -124,6 +126,15 @@ export default function ProjectDetailPage() {
 
   // Poll for status updates
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (project) {
+      setTitle(project.name);
+    } else {
+      setTitle("Loading Project...");
+    }
+    setBackHref("/projects");
+  }, [project, setTitle, setBackHref]);
 
   const loadData = useCallback(async () => {
     const token = getToken();
@@ -493,22 +504,6 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
-      <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
-        <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/projects">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-lg font-semibold">{project.name}</h1>
-            <Badge variant="outline" className="font-mono">
-              {project.id}
-            </Badge>
-          </div>
-        </div>
-      </header>
-
       <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12 relative">
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList>
@@ -518,6 +513,7 @@ export default function ProjectDetailPage() {
             <TabsTrigger value="integration">Integration</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="overview" className="space-y-8">
             <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
