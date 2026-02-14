@@ -54,9 +54,9 @@ export default function ProjectsPage() {
     try {
       setCreatingProject(true);
       const normalizedOrigin = normalizeOrigin(origin);
-      await apiRequest<Project>("/projects", {
+      await fetcher("/projects", {
         method: "POST",
-        token,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           allowed_origins: [normalizedOrigin],
