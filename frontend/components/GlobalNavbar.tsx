@@ -7,21 +7,43 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export function GlobalNavbar() {
-    const { title, backHref } = useNavbar();
+    const { title, backHref, projectName } = useNavbar();
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
-            <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
-                {backHref && (
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href={backHref}>
-                            <ArrowLeft className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                )}
-                <div className="flex flex-1 items-center justify-between">
-                    <h1 className="text-lg font-semibold">{title}</h1>
+            <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
+                <div className="flex items-center gap-4">
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+                            C
+                        </div>
+                        <span className="text-sm font-semibold tracking-tight">
+                            Contextly
+                        </span>
+                    </Link>
+
+                    {/* Divider and Page Title */}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="text-muted-foreground/30">/</span>
+                        {projectName && (
+                            <>
+                                <span className="font-medium text-foreground">{projectName}</span>
+                                <span className="text-muted-foreground/30">/</span>
+                            </>
+                        )}
+                        {backHref ? (
+                            <>
+                                <Link href={backHref} className="flex items-center hover:text-foreground transition-colors">
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                </Link>
+                                <span className="font-medium text-foreground">{title}</span>
+                            </>
+                        ) : (
+                            <span className="font-medium text-foreground">{title}</span>
+                        )}
+                    </div>
                 </div>
+
                 <div className="flex items-center gap-4">
                     <UserNav />
                 </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api";
-import { setToken, isAuthenticated } from "@/lib/auth";
+import { setToken, setUserEmail, isAuthenticated } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +51,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password }),
       });
       setToken(login.access_token);
+      setUserEmail(email);
       router.push("/projects");
     } catch (err) {
       setError((err as Error).message || "Registration failed");

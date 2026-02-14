@@ -21,7 +21,7 @@ type Project = {
 };
 
 export default function ProjectsPage() {
-  const { setTitle, setBackHref } = useNavbar();
+  const { setTitle, setBackHref, setProjectName } = useNavbar();
   const normalizeOrigin = (value: string) => {
     const trimmed = value.trim().replace(/\/+$/, "");
     if (!trimmed) return trimmed;
@@ -51,6 +51,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     setTitle("Projects");
     setBackHref(null);
+    setProjectName(null);
     const token = getToken();
     if (!token) {
       window.location.href = "/auth/login";
@@ -60,7 +61,7 @@ export default function ProjectsPage() {
     loadProjects()
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [setTitle, setBackHref]);
+  }, [setTitle, setBackHref, setProjectName]);
 
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
@@ -115,7 +116,7 @@ export default function ProjectsPage() {
             {projects.map((project) => (
               <Link
                 key={project.id}
-                href={`/projects/${project.id}`}
+                href={`/projects/${project.id}?title=${encodeURIComponent(project.name)}`}
                 className="group relative flex flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/20"
               >
                 <div className="space-y-3">

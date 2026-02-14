@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiRequest, API_BASE_URL } from "@/lib/api";
@@ -71,7 +71,7 @@ type Source = {
 };
 
 export default function ProjectDetailPage() {
-  const { setTitle, setBackHref } = useNavbar();
+  const { setTitle, setBackHref, setProjectName } = useNavbar();
   const normalizeOrigin = (value: string) => {
     const trimmed = value.trim().replace(/\/+$/, "");
     if (!trimmed) return trimmed;
@@ -83,6 +83,7 @@ export default function ProjectDetailPage() {
   };
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = params?.projectId as string;
   const [project, setProject] = useState<Project | null>(null);
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -127,14 +128,34 @@ export default function ProjectDetailPage() {
   // Poll for status updates
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Sync navbar instantly from URL params (no API wait)
+  useEffect(() => {
+    const titleFromUrl = searchParams.get('title');
+    if (titleFromUrl) {
+      setTitle(titleFromUrl);
+      setProjectName("Projects");
+      setBackHref("/projects");
+    }
+    return () => {
+      setTitle("Dashboard");
+      setBackHref(null);
+      setProjectName(null);
+    };
+  }, []); // empty deps = runs once on mount
+
+  // Sync Navbar
   useEffect(() => {
     if (project) {
       setTitle(project.name);
-    } else {
-      setTitle("Loading Project...");
+      setProjectName("Projects");
+      setBackHref("/projects");
     }
-    setBackHref("/projects");
-  }, [project, setTitle, setBackHref]);
+    return () => {
+      setTitle("Dashboard");
+      setBackHref(null);
+      setProjectName(null);
+    };
+  }, [project, setTitle, setBackHref, setProjectName]);
 
   const loadData = useCallback(async () => {
     const token = getToken();
@@ -504,25 +525,6 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
-<<<<<<< Updated upstream
-=======
-      <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
-        <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-0 sm:px-2 lg:px-0">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/projects">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-bold tracking-tight">{project.name}</h1>
-            <Badge variant="secondary" className="px-3 py-1 font-semibold text-xs border-primary/10">
-              Project Dashboard
-            </Badge>
-          </div>
-        </div>
-      </header>
-
->>>>>>> Stashed changes
       <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12 relative">
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList>
