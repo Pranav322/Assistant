@@ -26,6 +26,9 @@
 .z-50 {
   z-index: 50;
 }
+.container {
+  width: 100%;
+}
 .ml-auto {
   margin-left: auto;
 }
