@@ -7,6 +7,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -49,6 +50,8 @@ class CacheEntry(Base):
             "project_id", "cache_key", "cache_type", name="uq_cache_project_key_type"
         ),
         CheckConstraint("cache_type IN ('embedding','response')", name="ck_cache_type"),
+        Index("idx_cache_lookup", "project_id", "cache_key", "cache_type"),
+        Index("idx_cache_expiry", "expires_at"),
     )
 
 

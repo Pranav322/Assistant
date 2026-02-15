@@ -2,7 +2,17 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
@@ -36,6 +46,15 @@ class Project(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_projects_owner", "owner_id"),
+        Index(
+            "idx_projects_active",
+            "is_active",
+            postgresql_where=text("is_active = true"),
+        ),
     )
 
     # Relationships
@@ -93,6 +112,15 @@ class ApiKey(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    __table_args__ = (
+        Index("idx_api_keys_project", "project_id"),
+        Index(
+            "idx_api_keys_active",
+            "project_id",
+            postgresql_where=text("revoked_at IS NULL"),
+        ),
+    )
+
     # Relationships
     project = relationship("Project", back_populates="api_keys")
     browser_tokens = relationship("BrowserToken", back_populates="api_key")
@@ -129,6 +157,17 @@ class BrowserToken(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_browser_tokens_expiry", "expires_at"),
+        Index("idx_browser_tokens_project", "project_id"),
+        Index("idx_browser_tokens_hash", "token_hash"),
+        Index(
+            "idx_browser_tokens_revoked",
+            "revoked_at",
+            postgresql_where=text("revoked_at IS NOT NULL"),
+        ),
     )
 
     # Relationships

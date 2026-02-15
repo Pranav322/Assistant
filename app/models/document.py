@@ -8,6 +8,7 @@ from sqlalchemy import (
     Computed,
     DateTime,
     ForeignKey,
+    Index,
     String,
     Text,
     UniqueConstraint,
@@ -56,6 +57,8 @@ class Source(Base):
             "status IN ('pending','processing','completed','failed')",
             name="ck_sources_status",
         ),
+        Index("idx_sources_project", "project_id"),
+        Index("idx_sources_status", "project_id", "status"),
     )
 
     # Relationships
@@ -80,7 +83,6 @@ class Chunk(Base):
         UUID(as_uuid=True),
         ForeignKey("sources.id", ondelete="CASCADE"),
         nullable=True,
-        index=True,
     )
 
     text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -96,6 +98,17 @@ class Chunk(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_chunks_project", "project_id"),
+        Index("idx_chunks_source", "source_id"),
+        Index(
+            "idx_chunks_project_tsv",
+            "project_id",
+            "search_tsvector",
+            postgresql_using="gin",
+        ),
     )
 
     # Relationships
@@ -126,6 +139,16 @@ class Embedding(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_embeddings_project", "project_id"),
+        Index(
+            "idx_embeddings_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
 
     # Relationships

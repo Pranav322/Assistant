@@ -7,6 +7,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -61,6 +62,11 @@ class RetrievalMetric(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    __table_args__ = (
+        Index("idx_retrieval_metrics_project_time", "project_id", "created_at"),
+        Index("idx_retrieval_metrics_performance", "retrieval_time_ms"),
+    )
+
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
@@ -85,6 +91,12 @@ class AuditLog(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        Index("idx_audit_project", "project_id"),
+        Index("idx_audit_action", "project_id", "action"),
+        Index("idx_audit_created", "created_at"),
     )
 
 

@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -41,6 +42,11 @@ class Conversation(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    __table_args__ = (
+        Index("idx_conv_project", "project_id"),
+        Index("idx_conv_session", "project_id", "session_id"),
+    )
+
     # Relationships
     # project = relationship("Project", back_populates="conversations") # Uncomment if needed in Project
     messages = relationship(
@@ -74,6 +80,7 @@ class Message(Base):
         CheckConstraint(
             "role IN ('user','assistant','system')", name="ck_messages_role"
         ),
+        Index("idx_messages_conv", "conversation_id"),
     )
 
     # Relationships
