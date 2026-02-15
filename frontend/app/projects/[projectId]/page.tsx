@@ -866,143 +866,152 @@ export default function ProjectDetailPage() {
 
 
           <TabsContent value="integration" className="space-y-8">
-            <Card className="max-w-3xl">
+            <Card className="w-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
                 <CardDescription>Configure how you embed the chatbot in your own site.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-8">
-                {/* 1. Token Generation */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold">1. Generate Widget Token</Label>
-                    {widgetToken && <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Active Token</Badge>}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Generate a short-lived token to preview and authorize the widget.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button onClick={generateWidgetToken} disabled={tokenLoading} size="sm">
-                      {tokenLoading ? "Generating..." : widgetToken ? "Regenerate token" : "Generate token"}
-                    </Button>
-                    {tokenExpiresIn ? (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <RefreshCw className="h-3 w-3 animate-spin" /> Expires in {tokenExpiresIn}s
-                      </span>
-                    ) : null}
-                  </div>
-                  {widgetToken && <CopyBlock value={widgetToken} />}
-                  {tokenError && <p className="text-sm text-destructive">{tokenError}</p>}
-                </div>
-
-                <div className="h-px bg-border w-full" />
-
-                {/* 2. Configuration */}
-                <div className="space-y-6">
-                  <Label className="text-base font-semibold">2. Configuration</Label>
-                  <p className="text-sm text-muted-foreground">Fine-tune the appearance and security.</p>
-
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <div className="space-y-3">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Mode</Label>
-                      <div className="flex gap-2 p-1 bg-muted rounded-lg">
-                        <Button
-                          variant={embedMode === "popup" ? "default" : "ghost"}
-                          onClick={() => setEmbedMode("popup")}
-                          className="flex-1 rounded-md"
-                          size="sm"
-                        >
-                          Popup
+              <CardContent>
+                <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+                  <div className="space-y-8">
+                    {/* 1. Token Generation */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-semibold">1. Generate Widget Token</Label>
+                        {widgetToken && <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Active Token</Badge>}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Generate a short-lived token to preview and authorize the widget.
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button onClick={generateWidgetToken} disabled={tokenLoading} size="sm">
+                          {tokenLoading ? "Generating..." : widgetToken ? "Regenerate token" : "Generate token"}
                         </Button>
-                        <Button
-                          variant={embedMode === "embedded" ? "default" : "ghost"}
-                          onClick={() => setEmbedMode("embedded")}
-                          className="flex-1 rounded-md"
-                          size="sm"
-                        >
-                          Embedded
-                        </Button>
+                        {tokenExpiresIn ? (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <RefreshCw className="h-3 w-3 animate-spin" /> Expires in {tokenExpiresIn}s
+                          </span>
+                        ) : null}
                       </div>
-                      <p className="text-[11px] text-muted-foreground italic">
-                        {embedMode === "popup"
-                          ? "Floating bubble. Best for general assistance."
-                          : "Fixed in place. Best for sidebars or full pages."}
-                      </p>
+                      {widgetToken && <CopyBlock value={widgetToken} />}
+                      {tokenError && <p className="text-sm text-destructive">{tokenError}</p>}
                     </div>
 
-                    <div className="space-y-3">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dimensions</Label>
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">W</span>
-                          <Input
-                            placeholder={embedMode === "popup" ? "360px" : "100%"}
-                            value={embedWidth}
-                            onChange={(e) => setEmbedWidth(e.target.value)}
-                            className="pl-7 h-9 text-sm"
-                          />
+                    <div className="h-px bg-border w-full lg:hidden" />
+
+                    {/* 2. Configuration */}
+                    <div className="space-y-6">
+                      <Label className="text-base font-semibold">2. Configuration</Label>
+                      <p className="text-sm text-muted-foreground">Fine-tune the appearance and security.</p>
+
+                      <div className="grid gap-6">
+                        <div className="space-y-3">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Mode</Label>
+                          <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                            <Button
+                              variant={embedMode === "popup" ? "default" : "ghost"}
+                              onClick={() => setEmbedMode("popup")}
+                              className="flex-1 rounded-md"
+                              size="sm"
+                            >
+                              Popup
+                            </Button>
+                            <Button
+                              variant={embedMode === "embedded" ? "default" : "ghost"}
+                              onClick={() => setEmbedMode("embedded")}
+                              className="flex-1 rounded-md"
+                              size="sm"
+                            >
+                              Embedded
+                            </Button>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground italic">
+                            {embedMode === "popup"
+                              ? "Floating bubble. Best for general assistance."
+                              : "Fixed in place. Best for sidebars or full pages."}
+                          </p>
                         </div>
-                        <div className="relative flex-1">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">H</span>
-                          <Input
-                            placeholder={embedMode === "popup" ? "600px" : "100%"}
-                            value={embedHeight}
-                            onChange={(e) => setEmbedHeight(e.target.value)}
-                            className="pl-7 h-9 text-sm"
-                          />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dimensions</Label>
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">W</span>
+                                <Input
+                                  placeholder={embedMode === "popup" ? "360px" : "100%"}
+                                  value={embedWidth}
+                                  onChange={(e) => setEmbedWidth(e.target.value)}
+                                  className="pl-7 h-9 text-sm"
+                                />
+                              </div>
+                              <div className="relative flex-1">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">H</span>
+                                <Input
+                                  placeholder={embedMode === "popup" ? "600px" : "100%"}
+                                  value={embedHeight}
+                                  onChange={(e) => setEmbedHeight(e.target.value)}
+                                  className="pl-7 h-9 text-sm"
+                                />
+                              </div>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground italic">
+                              px, %, or vh.
+                            </p>
+                          </div>
+                          <div className="space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Allowed Origin</Label>
+                            <Input
+                              placeholder={`e.g., ${originValue}`}
+                              value={customOrigin}
+                              onChange={(e) => setCustomOrigin(e.target.value)}
+                              className="font-mono text-sm h-9"
+                            />
+                            <p className="text-[11px] text-muted-foreground italic">
+                              Domain security.
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-[11px] text-muted-foreground italic">
-                        Pixels (px), percent (%), or view units (vh).
-                      </p>
-                    </div>
-
-                    <div className="sm:col-span-2 space-y-3">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Allowed Origin</Label>
-                      <Input
-                        placeholder={`e.g., ${originValue}`}
-                        value={customOrigin}
-                        onChange={(e) => setCustomOrigin(e.target.value)}
-                        className="font-mono text-sm h-9"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Restricts embedding to this domain for security.
-                      </p>
                     </div>
                   </div>
-                </div>
 
-                <div className="h-px bg-border w-full" />
-
-                {/* 3. Snippet */}
-                <div className="space-y-4">
-                  <Label className="text-base font-semibold">3. Embed Snippet</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Copy and paste this code snippet into your HTML.
-                  </p>
-                  <CopyBlock value={embedSnippet} />
-                </div>
-
-                {/* 4. Preview */}
-                {widgetToken && (
-                  <div className="mt-8 space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-primary font-bold">
-                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                        4. Interactive Preview
+                  <div className="space-y-8">
+                    {/* 3. Snippet */}
+                    <div className="space-y-4">
+                      <Label className="text-base font-semibold">3. Embed Snippet</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Copy and paste this code snippet into your HTML.
+                      </p>
+                      <div className="relative">
+                        <CopyBlock value={embedSnippet} />
                       </div>
-                      <Badge variant="outline" className="bg-background text-[10px] uppercase font-bold tracking-tighter">Authorized</Badge>
                     </div>
-                    <div className="space-y-3">
-                      <CopyBlock value={previewSnippet} />
-                      <Button asChild className="w-full h-11 shadow-md hover:shadow-lg transition-all font-semibold" size="default">
-                        <a href={previewSnippet} target="_blank" rel="noreferrer">
-                          Launch Preview Simulator <LinkIcon className="ml-2 h-4 w-4" />
-                        </a>
-                      </Button>
-                    </div>
+
+                    {/* 4. Preview */}
+                    {widgetToken && (
+                      <div className="space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-primary font-bold">
+                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                            4. Interactive Preview
+                          </div>
+                          <Badge variant="outline" className="bg-background text-[10px] uppercase font-bold tracking-tighter">Authorized</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-xs text-muted-foreground">
+                            Test your widget configuration in a simulated environment.
+                          </p>
+                          <Button asChild className="w-full h-11 shadow-md hover:shadow-lg transition-all font-semibold" size="default">
+                            <a href={previewSnippet} target="_blank" rel="noreferrer">
+                              Launch Preview Simulator <LinkIcon className="ml-2 h-4 w-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
