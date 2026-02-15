@@ -13,10 +13,10 @@ from app.core.security import (
     API_KEY_PREFIX,
     decode_user_token,
     decode_widget_token,
+    get_api_key_fast_hash,
     hash_widget_token,
     validate_origin,
     verify_api_key,
-    get_api_key_fast_hash,
 )
 from app.models import ApiKey, BrowserToken, Project, User
 from app.observability.metrics import record_auth_failure, record_rate_limit_hit
@@ -100,10 +100,9 @@ async def _find_api_key(
     if not project:
         return None
 
-    
     # Calculate fast hash for O(1) lookup
     fast_hash = get_api_key_fast_hash(api_key_value)
-    
+
     # Try to find by fast_hash first
     result = await db.execute(
         select(ApiKey).where(
@@ -112,7 +111,7 @@ async def _find_api_key(
             ApiKey.revoked_at.is_(None),
         )
     )
-    
+
     # Handle collisions: iterate all matches (even if rare)
     for api_key in result.scalars().all():
         if api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc):
@@ -146,7 +145,7 @@ async def _find_api_key(
                 # We don't want to block auth because migration failed
                 pass
             return key
-            
+
     return None
 
 

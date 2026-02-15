@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import useSWR, { mutate } from "swr";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play } from "lucide-react";
 import { apiRequest, API_BASE_URL, fetcher } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
@@ -99,7 +99,7 @@ export default function ProjectDetailPage() {
     projectId ? `/projects/${projectId}/sources` : null,
     fetcher
   );
-  const { data: usage } = useSWR<{ requests: number; tokens: number }>(
+  const { data: usage } = useSWR<{ requests: number; tokens: number; limit?: number }>(
     projectId ? `/usage?project_id=${projectId}` : null,
     fetcher
   );
@@ -140,6 +140,8 @@ export default function ProjectDetailPage() {
 
   // Poll for status updates - now using SWR refreshInterval for pending sources
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Sync navbar instantly from URL params (no API wait)
   useEffect(() => {
@@ -496,10 +498,12 @@ export default function ProjectDetailPage() {
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
   const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
 
+  const isNewProject = (sources?.length ?? 0) === 0;
+
   return (
     <div className="min-h-screen bg-muted/30 pb-20">
       <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12 relative">
-        <Tabs defaultValue="overview" className="space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
@@ -508,27 +512,160 @@ export default function ProjectDetailPage() {
           </TabsList>
 
 
-          <TabsContent value="overview" className="space-y-8">
-            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Processed Requests</CardDescription>
-                  <CardTitle className="text-3xl">{usage?.requests ?? 0}</CardTitle>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Tokens Consumed</CardDescription>
-                  <CardTitle className="text-3xl">{usage?.tokens ?? 0}</CardTitle>
-                </CardHeader>
-              </Card>
-              <Card className="sm:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardDescription>Allowed Origin</CardDescription>
-                  <CardTitle className="text-lg font-mono">{project.allowed_origins?.[0] || "Not set"}</CardTitle>
-                </CardHeader>
-              </Card>
-            </section>
+          <TabsContent value="overview" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {isNewProject ? (
+              <div className="space-y-8">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight">Welcome to {project.name}!</h1>
+                  <p className="text-muted-foreground text-lg">Let&apos;s get your chatbot ready in 3 simple steps.</p>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-3">
+                  {/* Step 1: Add Data */}
+                  <Card 
+                    className="relative overflow-hidden border-2 border-primary/20 bg-primary/5 hover:border-primary/50 transition-colors cursor-pointer group"
+                    onClick={() => setActiveTab("knowledge-base")}
+                  >
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Upload className="w-24 h-24" />
+                    </div>
+                    <CardHeader>
+                      <Badge className="w-fit mb-2">Step 1</Badge>
+                      <CardTitle>Train your Bot</CardTitle>
+                      <CardDescription>Upload documents or link a website so your bot can answer questions.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-full flex flex-col justify-end">
+                      <Button className="w-full gap-2 shadow-sm pointer-events-none">
+                        Go to Knowledge Base <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Step 2: Configure Widget */}
+                  <Card 
+                    className="relative overflow-hidden hover:border-primary/50 transition-colors cursor-pointer group"
+                    onClick={() => setActiveTab("integration")}
+                  >
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Code className="w-24 h-24" />
+                    </div>
+                    <CardHeader>
+                      <Badge variant="outline" className="w-fit mb-2">Step 2</Badge>
+                      <CardTitle>Customize Widget</CardTitle>
+                      <CardDescription>Adjust the look and feel, and set security rules for your website.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-full flex flex-col justify-end">
+                      <Button variant="outline" className="w-full gap-2 pointer-events-none">
+                        Configure Integration <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                   {/* Step 3: Embed */}
+                   <Card 
+                    className="relative overflow-hidden hover:border-primary/50 transition-colors cursor-pointer group"
+                    onClick={() => setActiveTab("integration")}
+                   >
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <MessageSquare className="w-24 h-24" />
+                    </div>
+                    <CardHeader>
+                      <Badge variant="outline" className="w-fit mb-2">Step 3</Badge>
+                      <CardTitle>Test & Embed</CardTitle>
+                      <CardDescription>Preview your bot and get the code snippet to add it to your site.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-full flex flex-col justify-end">
+                      <Button variant="outline" className="w-full gap-2 pointer-events-none">
+                        Get Embed Code <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                 <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold tracking-tight">Project Dashboard</h2>
+                      <p className="text-muted-foreground">Monitor your chatbot&apos;s performance and usage.</p>
+                    </div>
+                    <Button onClick={() => setActiveTab("integration")} className="gap-2">
+                      <Play className="w-4 h-4" /> Test Chatbot
+                    </Button>
+                 </div>
+
+                <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Processed Requests</CardDescription>
+                      <CardTitle className="text-3xl">{usage?.requests ?? 0}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Tokens Consumed</CardDescription>
+                      <CardTitle className="text-3xl flex items-baseline gap-2">
+                        {usage?.tokens ?? 0}
+                        {usage?.limit && <span className="text-sm text-muted-foreground font-normal">/ {usage.limit.toLocaleString()}</span>}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                  <Card className="sm:col-span-2">
+                    <CardHeader className="pb-2">
+                      <CardDescription>Allowed Origin</CardDescription>
+                      <CardTitle className="text-lg font-mono truncate">{project.allowed_origins?.[0] || "Not set"}</CardTitle>
+                    </CardHeader>
+                  </Card>
+                </section>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                   <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-500"/> System Status</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                           <div className="flex justify-between items-center border-b pb-2">
+                              <span className="text-sm">Knowledge Base</span>
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
+                           </div>
+                           <div className="flex justify-between items-center border-b pb-2">
+                              <span className="text-sm">Widget API</span>
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Operational</Badge>
+                           </div>
+                           <div className="flex justify-between items-center">
+                              <span className="text-sm">Embed Script</span>
+                              <div className="flex items-center gap-2">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                                <span className="text-xs text-muted-foreground">Ready</span>
+                              </div>
+                           </div>
+                        </div>
+                      </CardContent>
+                   </Card>
+
+                   <Card>
+                      <CardHeader>
+                         <CardTitle>Quick Actions</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                         <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("knowledge-base")}>
+                            <Upload className="mr-2 h-4 w-4" /> Add New Documents
+                         </Button>
+                         <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("integration")}>
+                            <Code className="mr-2 h-4 w-4" /> Update Widget Settings
+                         </Button>
+                         <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("settings")}>
+                            <Key className="mr-2 h-4 w-4" /> Manage API Keys
+                         </Button>
+                      </CardContent>
+                   </Card>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="knowledge-base" className="space-y-8">
@@ -884,48 +1021,24 @@ export default function ProjectDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-8">
                   <div className="space-y-6">
-                    {((keys?.length ?? 0) > 0 || freshKey) ? (
-                      <div className="rounded-lg border bg-muted/50 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                        <h4 className="text-sm font-semibold flex items-center gap-2">
-                          <Code className="h-4 w-4" /> How to use your API Key
-                        </h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          Use the \`x-api-key\` header in your requests. This key provides full access to your project - keep it safe!
-                        </p>
-                        <CopyBlock
-                          value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
-  -H "x-api-key: YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"url": "https://example.com"}'`}
+                    {/* 1. Generate Key Section */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold">Generate New API Key</Label>
+                      <form onSubmit={createKey} className="flex gap-3">
+                        <Input
+                          value={newKeyName}
+                          onChange={(e) => setNewKeyName(e.target.value)}
+                          placeholder="e.g. Server Automation Key"
+                          className="flex-1 h-10 shadow-sm"
+                          disabled={creatingKey}
                         />
-                      </div>
-                    ) : (
-                      <div className="rounded-lg border border-dashed p-8 text-center space-y-3">
-                        <div className="mx-auto w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center">
-                          <Key className="h-5 w-5 text-primary/40" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">No API Keys Generated</p>
-                          <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">
-                            Generate an API key to enable programmatic access for automated ingestion or server-side integrations.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                        <Button type="submit" disabled={creatingKey} className="shadow-sm">
+                          {creatingKey ? "Creating..." : "Generate Key"}
+                        </Button>
+                      </form>
+                    </div>
 
-                    <form onSubmit={createKey} className="flex gap-3">
-                      <Input
-                        value={newKeyName}
-                        onChange={(e) => setNewKeyName(e.target.value)}
-                        placeholder="e.g. Server Automation Key"
-                        className="flex-1 h-10 shadow-sm"
-                        disabled={creatingKey}
-                      />
-                      <Button type="submit" disabled={creatingKey} className="shadow-sm">
-                        {creatingKey ? "Creating..." : ((keys?.length ?? 0) > 0 || freshKey) ? "Generate Another Key" : "Generate First API Key"}
-                      </Button>
-                    </form>
-
+                    {/* 2. New Key Display */}
                     {freshKey?.api_key && (
                       <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20 animate-in fade-in zoom-in-95 duration-300">
                         <p className="text-xs font-bold uppercase text-green-700 dark:text-green-400 mb-2">New Key Created</p>
@@ -934,6 +1047,23 @@ export default function ProjectDetailPage() {
                       </div>
                     )}
 
+                    {/* 3. Code Sample */}
+                    <div className="rounded-lg border bg-muted/50 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        <Code className="h-4 w-4" /> How to use your API Key
+                      </h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Use the \`x-api-key\` header in your requests. This key provides full access to your project - keep it safe!
+                      </p>
+                      <CopyBlock
+                        value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
+  -H "x-api-key: ${freshKey?.api_key || "YOUR_API_KEY"}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"url": "https://example.com"}'`}
+                      />
+                    </div>
+
+                    {/* 4. Active Keys List */}
                     {(keys?.length ?? 0) > 0 && (
                       <div className="space-y-3 pt-4">
                         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Keys</Label>

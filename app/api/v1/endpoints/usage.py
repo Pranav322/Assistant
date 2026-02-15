@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
+from app.core.config import settings
 from app.models import Project
 
 router = APIRouter()
@@ -25,4 +26,5 @@ async def get_usage(
     return {
         "requests": int(usage.get("requests", 0)),
         "tokens": int(usage.get("tokens_total", 0)),
+        "limit": settings.USER_TOKEN_CAP,
     }

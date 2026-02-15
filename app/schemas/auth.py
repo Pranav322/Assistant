@@ -13,6 +13,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class FirebaseLoginRequest(BaseModel):
+    id_token: str
+
+
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

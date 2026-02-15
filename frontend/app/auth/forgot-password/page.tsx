@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import {
     Card,
     CardContent,
@@ -19,15 +21,29 @@ export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    function onSubmit(e: React.FormEvent) {
+    async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
+        setError("");
+        
+        try {
+            await sendPasswordResetEmail(auth, email);
             setSubmitted(true);
+        } catch (err: any) {
+            console.error(err);
+            if (err.code === 'auth/user-not-found') {
+                 // Even if user not found, for security we often say sent. 
+                 // But for UX here let's be explicit or generic.
+                 setError("If an account exists, an email has been sent.");
+                 setSubmitted(true); // Treat as success to avoid enumeration
+            } else {
+                setError("Failed to send reset email. Please try again.");
+            }
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     }
 
     return (

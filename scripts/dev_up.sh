@@ -12,13 +12,8 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-echo "Starting Docker services..."
-DOCKER_OPTS="-d"
-if [ "$REBUILD" = true ]; then
-  DOCKER_OPTS="$DOCKER_OPTS --build --force-recreate"
-fi
-
-docker-compose -f "$ROOT_DIR/docker-compose.yml" up $DOCKER_OPTS redis api worker
+echo "Starting Docker services (Redis)..."
+docker-compose -f "$ROOT_DIR/docker-compose.yml" up -d redis
 
 cleanup() {
   echo "Stopping Docker services..."
@@ -33,13 +28,22 @@ if [ ! -d "$FRONTEND_DIR" ]; then
   exit 1
 fi
 
-if [ ! -d "$FRONTEND_DIR/node_modules" ] || [ "$REBUILD" = true ]; then
-  echo "Ensuring frontend dependencies..."
-  (cd "$FRONTEND_DIR" && npm install)
-fi
-
 echo "API: http://localhost:8001"
 echo "Frontend: http://localhost:3000"
 echo "Press Ctrl+C to stop the frontend dev server."
 
-(cd "$FRONTEND_DIR" && npm run dev)
+# Kill previous background backend if running
+pkill -f "uvicorn app.main:app" || true
+
+# Start backend in background locally (avoiding Docker rebuild issues)
+echo "Starting Backend locally..."
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload &
+BACKEND_PID=$!
+
+cleanup() {
+  echo "Stopping services..."
+  kill $BACKEND_PID || true
+  docker-compose -f "$ROOT_DIR/docker-compose.yml" stop
+}
+
+(cd "$FRONTEND_DIR" && pnpm run dev)

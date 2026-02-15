@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.core.config import settings
-from app.core.security import generate_api_key, hash_api_key, normalize_origin, get_api_key_fast_hash
+from app.core.security import (
+    generate_api_key,
+    get_api_key_fast_hash,
+    hash_api_key,
+    normalize_origin,
+)
 from app.models import ApiKey, Project, User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.schemas.ingestion import SourceResponse

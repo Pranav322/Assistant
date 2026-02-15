@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     WIDGET_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     MIN_PASSWORD_LENGTH: int = 8
+    FIREBASE_CREDENTIALS_PATH: str = (
+        "contextly-86e4d-firebase-adminsdk-fbsvc-ee1a051661.json"
+    )
 
     # Azure OpenAI
     AZURE_OPENAI_API_KEY: str | None = None

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     admin,
     auth,
+    auth_firebase,
     chat,
     ingestion,
     metrics,
@@ -20,3 +21,4 @@ api_router.include_router(projects.router, tags=["projects"])
 api_router.include_router(usage.router, tags=["usage"])
 api_router.include_router(admin.router, tags=["admin"])
 api_router.include_router(auth.router, tags=["auth"])
+api_router.include_router(auth_firebase.router, tags=["auth"])
