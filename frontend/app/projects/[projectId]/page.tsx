@@ -950,7 +950,20 @@ export default function ProjectDetailPage() {
                           </p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <div className="space-y-3">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Allowed Origin</Label>
+                            <Input
+                              placeholder={`e.g., ${originValue}`}
+                              value={customOrigin}
+                              onChange={(e) => setCustomOrigin(e.target.value)}
+                              className="font-mono text-sm h-9 shadow-sm"
+                            />
+                            <p className="text-[11px] text-muted-foreground italic">
+                              Restricts embedding to this domain for security.
+                            </p>
+                          </div>
+
                           <div className="space-y-3">
                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dimensions</Label>
                             <div className="flex gap-2">
@@ -975,18 +988,6 @@ export default function ProjectDetailPage() {
                             </div>
                             <p className="text-[11px] text-muted-foreground italic px-1">
                               px, %, or vh.
-                            </p>
-                          </div>
-                          <div className="space-y-3">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Allowed Origin</Label>
-                            <Input
-                              placeholder={`e.g., ${originValue}`}
-                              value={customOrigin}
-                              onChange={(e) => setCustomOrigin(e.target.value)}
-                              className="font-mono text-sm h-9 shadow-sm"
-                            />
-                            <p className="text-[11px] text-muted-foreground italic px-1">
-                              Domain security.
                             </p>
                           </div>
                         </div>
