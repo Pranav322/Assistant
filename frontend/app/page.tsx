@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CopyBlock from "@/components/CopyBlock";
+import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3, Code, Package } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 
 export default function Home() {
@@ -120,66 +122,84 @@ export default function Home() {
               <div className="relative animate-slide-in-from-top">
                 <div className="rounded-3xl border bg-muted/40 p-6 shadow-sm">
                   <div className="rounded-2xl border bg-background p-6 shadow-lg">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                          Integrate in 3 steps
-                        </p>
-                        <h3 className="mt-2 text-xl font-semibold tracking-tight">
-                          From data to embedded chat
-                        </h3>
+                    <Tabs defaultValue="widget" className="w-full">
+                      <div className="flex items-center justify-between mb-4">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="widget">
+                            <Code className="mr-2 h-4 w-4" />
+                            Script Tag
+                          </TabsTrigger>
+                          <TabsTrigger value="package">
+                            <Package className="mr-2 h-4 w-4" />
+                            React Package
+                          </TabsTrigger>
+                        </TabsList>
                       </div>
-                      <Badge variant="secondary" className="rounded-full">
-                        10 min integration
-                      </Badge>
-                    </div>
 
-                    <div className="mt-6 space-y-4">
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Layers className="h-5 w-5" />
+                      <TabsContent value="widget" className="space-y-4">
+                        <div className="rounded-lg border bg-muted/50 p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium">Embed with one line</h4>
+                            <Badge variant="outline" className="text-xs">HTML / Any Framework</Badge>
+                          </div>
+                          <div className="relative rounded-md bg-muted font-mono text-xs p-3 overflow-x-auto">
+                            <pre className="text-muted-foreground">
+                              {`<script 
+  src="https://widget.contextly.ai/embed.js"
+  data-project-id="YOUR_PROJECT_ID"
+  async
+></script>`}
+                            </pre>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold">Connect your sources</p>
-                          <p className="text-sm text-muted-foreground">
-                            Drag in docs or sync your website URL to train the bot on your own content.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Search className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">Tune retrieval</p>
-                          <p className="text-sm text-muted-foreground">
-                            Hybrid search and ranking ship with sensible defaults.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Zap className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">Embed the widget</p>
-                          <p className="text-sm text-muted-foreground">
-                            Copy the embed snippet and go live in your app in minutes.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <span>Auto-updates with new features</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <span>Zero configuration required</span>
+                          </li>
+                        </ul>
+                      </TabsContent>
 
-                    <div className="mt-6 rounded-xl border bg-muted/40 p-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        <span>Widget link generated automatically</span>
-                      </div>
-                      <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        <span>Insights and logs wired into your dashboard</span>
-                      </div>
-                    </div>
+                      <TabsContent value="package" className="space-y-4">
+                        <div className="rounded-lg border bg-muted/50 p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium">Full React Integration</h4>
+                            <Badge variant="outline" className="text-xs">npm / pnpm</Badge>
+                          </div>
+                          <div className="relative rounded-md bg-muted font-mono text-xs p-3 overflow-x-auto mb-2">
+                             <pre className="text-muted-foreground">npm install contextly</pre>
+                          </div>
+                          <div className="relative rounded-md bg-muted font-mono text-xs p-3 overflow-x-auto">
+                            <pre className="text-muted-foreground">
+                              {`import { Chat } from "contextly";
+
+export default function App() {
+  return (
+    <Chat 
+      projectId="YOUR_PROJECT_ID"
+      token="YOUR_WIDGET_TOKEN"
+    />
+  );
+}`}
+                            </pre>
+                          </div>
+                        </div>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <span>Headless hooks for custom UI</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <span>TypeScript support included</span>
+                          </li>
+                        </ul>
+                      </TabsContent>
+                    </Tabs>
                   </div>
                 </div>
 
