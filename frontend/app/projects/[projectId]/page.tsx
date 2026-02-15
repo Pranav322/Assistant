@@ -866,6 +866,24 @@ export default function ProjectDetailPage() {
 
 
           <TabsContent value="integration" className="space-y-8">
+            {isNewProject && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200 flex items-start gap-4">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm">Your chatbot is currently generic</h4>
+                  <p className="text-sm opacity-90">
+                    You haven&apos;t connected any data sources yet. To personalize the bot with your own content, please upload documents or connect a website URL.
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-amber-900 dark:text-amber-200 underline font-semibold mt-2"
+                    onClick={() => setActiveTab("knowledge-base")}
+                  >
+                    Go to Knowledge Base
+                  </Button>
+                </div>
+              </div>
+            )}
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
@@ -907,11 +925,11 @@ export default function ProjectDetailPage() {
                       <div className="grid gap-6">
                         <div className="space-y-3">
                           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Mode</Label>
-                          <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                          <div className="flex gap-2 p-1 bg-muted rounded-lg w-full">
                             <Button
                               variant={embedMode === "popup" ? "default" : "ghost"}
                               onClick={() => setEmbedMode("popup")}
-                              className="flex-1 rounded-md"
+                              className="flex-1 rounded-md shadow-sm"
                               size="sm"
                             >
                               Popup
@@ -919,13 +937,13 @@ export default function ProjectDetailPage() {
                             <Button
                               variant={embedMode === "embedded" ? "default" : "ghost"}
                               onClick={() => setEmbedMode("embedded")}
-                              className="flex-1 rounded-md"
+                              className="flex-1 rounded-md shadow-sm"
                               size="sm"
                             >
                               Embedded
                             </Button>
                           </div>
-                          <p className="text-[11px] text-muted-foreground italic">
+                          <p className="text-[11px] text-muted-foreground italic px-1">
                             {embedMode === "popup"
                               ? "Floating bubble. Best for general assistance."
                               : "Fixed in place. Best for sidebars or full pages."}
@@ -937,25 +955,25 @@ export default function ProjectDetailPage() {
                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dimensions</Label>
                             <div className="flex gap-2">
                               <div className="relative flex-1">
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">W</span>
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50 select-none">W</span>
                                 <Input
                                   placeholder={embedMode === "popup" ? "360px" : "100%"}
                                   value={embedWidth}
                                   onChange={(e) => setEmbedWidth(e.target.value)}
-                                  className="pl-7 h-9 text-sm"
+                                  className="pl-7 h-9 text-sm shadow-sm"
                                 />
                               </div>
                               <div className="relative flex-1">
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50">H</span>
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50 select-none">H</span>
                                 <Input
                                   placeholder={embedMode === "popup" ? "600px" : "100%"}
                                   value={embedHeight}
                                   onChange={(e) => setEmbedHeight(e.target.value)}
-                                  className="pl-7 h-9 text-sm"
+                                  className="pl-7 h-9 text-sm shadow-sm"
                                 />
                               </div>
                             </div>
-                            <p className="text-[11px] text-muted-foreground italic">
+                            <p className="text-[11px] text-muted-foreground italic px-1">
                               px, %, or vh.
                             </p>
                           </div>
@@ -965,9 +983,9 @@ export default function ProjectDetailPage() {
                               placeholder={`e.g., ${originValue}`}
                               value={customOrigin}
                               onChange={(e) => setCustomOrigin(e.target.value)}
-                              className="font-mono text-sm h-9"
+                              className="font-mono text-sm h-9 shadow-sm"
                             />
-                            <p className="text-[11px] text-muted-foreground italic">
+                            <p className="text-[11px] text-muted-foreground italic px-1">
                               Domain security.
                             </p>
                           </div>
@@ -1002,7 +1020,7 @@ export default function ProjectDetailPage() {
                           <p className="text-xs text-muted-foreground">
                             Test your widget configuration in a simulated environment.
                           </p>
-                          <Button asChild className="w-full h-11 shadow-md hover:shadow-lg transition-all font-semibold" size="default">
+                          <Button asChild className="w-full h-11 shadow-sm hover:shadow-md transition-all font-semibold" size="default">
                             <a href={previewSnippet} target="_blank" rel="noreferrer">
                               Launch Preview Simulator <LinkIcon className="ml-2 h-4 w-4" />
                             </a>
