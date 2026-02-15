@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import useSWR, { mutate } from "swr";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play, Terminal } from "lucide-react";
+import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play, Terminal, ChevronDown } from "lucide-react";
 import { apiRequest, API_BASE_URL, fetcher } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
@@ -27,6 +27,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -969,14 +975,36 @@ export default function ProjectDetailPage() {
 
                     <div className="space-y-3">
                       <Label className="text-sm font-medium">Allowed Origin (Security)</Label>
-                      <Input
-                        placeholder={`e.g., ${originValue}`}
-                        value={customOrigin}
-                        onChange={(e) => setCustomOrigin(e.target.value)}
-                        className="font-mono text-sm h-9"
-                      />
+                      {project.allowed_origins && project.allowed_origins.length > 0 ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-between font-mono text-sm h-9 shadow-sm px-3"
+                            >
+                              {customOrigin || originValue}
+                              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-[200px]">
+                            {project.allowed_origins.map((origin) => (
+                              <DropdownMenuItem
+                                key={origin}
+                                onClick={() => setCustomOrigin(origin)}
+                                className="font-mono text-xs cursor-pointer"
+                              >
+                                {origin}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground bg-muted/30">
+                          No origins configured. Go to Settings to add one.
+                        </div>
+                      )}
                       <p className="text-[11px] text-muted-foreground">
-                        The widget will ONLY load on this domain.
+                        Select which allowed domain this snippet is for.
                       </p>
                     </div>
 
@@ -1065,21 +1093,40 @@ export default function ProjectDetailPage() {
                 <CardContent className="space-y-8">
                   <div className="space-y-6">
                     {/* 1. Generate Key Section */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-semibold">Generate New API Key</Label>
-                      <form onSubmit={createKey} className="flex gap-3">
-                        <Input
-                          value={newKeyName}
-                          onChange={(e) => setNewKeyName(e.target.value)}
-                          placeholder="e.g. Server Automation Key"
-                          className="flex-1 h-10 shadow-sm"
-                          disabled={creatingKey}
-                        />
-                        <Button type="submit" disabled={creatingKey} className="shadow-sm">
-                          {creatingKey ? "Creating..." : "Generate Key"}
-                        </Button>
-                      </form>
-                    </div>
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium">Allowed Origin (Security)</Label>
+                          {project.allowed_origins && project.allowed_origins.length > 0 ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-between font-mono text-sm h-9 shadow-sm px-3"
+                                >
+                                  {customOrigin || originValue}
+                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-[200px]">
+                                {project.allowed_origins.map((origin) => (
+                                  <DropdownMenuItem
+                                    key={origin}
+                                    onClick={() => setCustomOrigin(origin)}
+                                    className="font-mono text-xs cursor-pointer"
+                                  >
+                                    {origin}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground bg-muted/30">
+                              No origins configured. Go to Settings to add one.
+                            </div>
+                          )}
+                          <p className="text-[11px] text-muted-foreground">
+                            Select which allowed domain this snippet is for.
+                          </p>
+                        </div>
 
                     {/* 2. New Key Display */}
                     {freshKey?.api_key && (
