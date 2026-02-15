@@ -16,7 +16,7 @@ from app.core.security import (
 from app.models import ApiKey, Project, User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.schemas.ingestion import SourceResponse
-from app.schemas.project import ProjectCreate, ProjectResponse
+from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.services.audit import log_audit_event
 
 router = APIRouter()
@@ -197,6 +197,53 @@ async def get_project(
     project = result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    return ProjectResponse(
+        id=str(project.id),
+        owner_id=str(project.owner_id),
+        name=project.name,
+        allowed_origins=project.allowed_origins or [],
+        settings=project.settings or {},
+        usage=project.usage or {},
+        is_active=project.is_active,
+    )
+
+
+@router.patch("/projects/{project_id}", response_model=ProjectResponse)
+async def update_project(
+    project_id: uuid.UUID,
+    payload: ProjectUpdate,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.project_access_required("projects")),
+):
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if payload.name is not None:
+        project.name = payload.name
+    if payload.settings is not None:
+        project.settings = payload.settings
+    if payload.allowed_origins is not None:
+        project.allowed_origins = [
+            normalize_origin(origin) for origin in payload.allowed_origins
+        ]
+
+    await db.commit()
+    await db.refresh(project)
+
+    await log_audit_event(
+        db,
+        action="project_updated",
+        project_id=project_id,
+        resource_type="project",
+        resource_id=str(project.id),
+        detail=payload.model_dump(exclude_unset=True),
+        commit=False,
+    )
 
     return ProjectResponse(
         id=str(project.id),

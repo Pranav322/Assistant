@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import useSWR, { mutate } from "swr";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play, Terminal, ChevronDown } from "lucide-react";
+import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play, Terminal, ChevronDown, Plus, X } from "lucide-react";
 import { apiRequest, API_BASE_URL, fetcher } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
@@ -137,6 +137,11 @@ export default function ProjectDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [sourceToDelete, setSourceToDelete] = useState<Source | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+
+  // Allowed Origins Management State
+  const [newOriginInput, setNewOriginInput] = useState("");
+  const [isUpdatingOrigins, setIsUpdatingOrigins] = useState(false);
+  const [originError, setOriginError] = useState("");
 
   // Embed Configuration State
   const [embedMode, setEmbedMode] = useState<"popup" | "embedded">("embedded");
@@ -447,6 +452,64 @@ export default function ProjectDetailPage() {
     } catch (err) {
       setError((err as Error).message);
       setDeletingProject(false);
+    }
+  }
+
+  async function handleAddOrigin(e: React.FormEvent) {
+    e.preventDefault();
+    setOriginError("");
+    if (!newOriginInput.trim()) return;
+    if (!project) return;
+    const token = getToken();
+    if (!token) return;
+
+    const toAdd = newOriginInput.trim();
+    if (project.allowed_origins.includes(toAdd)) {
+      setOriginError("Origin already exists.");
+      return;
+    }
+
+    const updatedList = [...project.allowed_origins, toAdd];
+
+    setIsUpdatingOrigins(true);
+    try {
+      await apiRequest(`/projects/${projectId}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ allowed_origins: updatedList }),
+      });
+      await mutate(`/projects/${projectId}`);
+      setNewOriginInput("");
+    } catch (err) {
+      setOriginError((err as Error).message);
+    } finally {
+      setIsUpdatingOrigins(false);
+    }
+  }
+
+  async function handleRemoveOrigin(originToRemove: string) {
+    if (!project) return;
+    const token = getToken();
+    if (!token) return;
+
+    const updatedList = project.allowed_origins.filter(o => o !== originToRemove);
+    if (updatedList.length === 0) {
+      setOriginError("You must have at least one allowed origin.");
+      return;
+    }
+
+    setIsUpdatingOrigins(true);
+    try {
+      await apiRequest(`/projects/${projectId}`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ allowed_origins: updatedList }),
+      });
+      await mutate(`/projects/${projectId}`);
+    } catch (err) {
+      setOriginError((err as Error).message);
+    } finally {
+      setIsUpdatingOrigins(false);
     }
   }
 
@@ -1080,6 +1143,63 @@ export default function ProjectDetailPage() {
 
           <TabsContent value="settings" className="space-y-12">
             <div className="grid gap-8">
+              {/* Allowed Origins Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" /> Allowed Origins
+                  </CardTitle>
+                  <CardDescription>
+                    Whitelist the domains where your chatbot widget is allowed to load.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold">Add New Origin</Label>
+                    <form onSubmit={handleAddOrigin} className="flex gap-3">
+                      <Input
+                        value={newOriginInput}
+                        onChange={(e) => setNewOriginInput(e.target.value)}
+                        placeholder="e.g. https://myapp.com or http://localhost:3000"
+                        className="flex-1 h-10 shadow-sm"
+                        disabled={isUpdatingOrigins}
+                      />
+                      <Button type="submit" disabled={isUpdatingOrigins} className="shadow-sm">
+                        {isUpdatingOrigins ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                        <span className="ml-2 hidden sm:inline">Add</span>
+                      </Button>
+                    </form>
+                    {originError && <p className="text-sm text-destructive">{originError}</p>}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Domains</Label>
+                    <div className="rounded-md border bg-muted/20 divide-y">
+                      {project.allowed_origins && project.allowed_origins.length > 0 ? (
+                        project.allowed_origins.map((origin) => (
+                          <div key={origin} className="flex items-center justify-between p-3 text-sm">
+                            <span className="font-mono">{origin}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoveOrigin(origin)}
+                              disabled={isUpdatingOrigins}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-muted-foreground text-sm">
+                          No origins configured. The widget will not load anywhere.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Advanced Section */}
               <Card>
                 <CardHeader>

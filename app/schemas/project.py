@@ -10,6 +10,12 @@ class ProjectCreate(BaseModel):
     settings: Optional[Dict[str, Any]] = None
 
 
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    allowed_origins: Optional[List[str]] = None
+    settings: Optional[Dict[str, Any]] = None
+
+
 class ProjectResponse(BaseModel):
     id: str
     owner_id: str
