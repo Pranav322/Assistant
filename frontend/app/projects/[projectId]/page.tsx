@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import useSWR, { mutate } from "swr";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play } from "lucide-react";
+import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, MessageSquare, Play, Terminal } from "lucide-react";
 import { apiRequest, API_BASE_URL, fetcher } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import CopyBlock from "@/components/CopyBlock";
@@ -865,7 +865,7 @@ export default function ProjectDetailPage() {
 
 
 
-          <TabsContent value="integration" className="space-y-8">
+          <TabsContent value="integration" className="space-y-6">
             {isNewProject && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200 flex items-start gap-4">
                 <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -874,8 +874,8 @@ export default function ProjectDetailPage() {
                   <p className="text-sm opacity-90">
                     You haven&apos;t connected any data sources yet. To personalize the bot with your own content, please upload documents or connect a website URL.
                   </p>
-                  <Button 
-                    variant="link" 
+                  <Button
+                    variant="link"
                     className="p-0 h-auto text-amber-900 dark:text-amber-200 underline font-semibold mt-2"
                     onClick={() => setActiveTab("knowledge-base")}
                   >
@@ -884,155 +884,170 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
             )}
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Code className="h-5 w-5" /> Integration</CardTitle>
-                <CardDescription>Configure how you embed the chatbot in your own site.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-                  <div className="space-y-8">
-                    {/* 1. Token Generation */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-base font-semibold">1. Generate Widget Token</Label>
-                        {widgetToken && <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Active Token</Badge>}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Generate a short-lived token to preview and authorize the widget.
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Button onClick={generateWidgetToken} disabled={tokenLoading} size="sm">
-                          {tokenLoading ? "Generating..." : widgetToken ? "Regenerate token" : "Generate token"}
-                        </Button>
-                        {tokenExpiresIn ? (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <RefreshCw className="h-3 w-3 animate-spin" /> Expires in {tokenExpiresIn}s
+
+            <div className="grid gap-6 lg:grid-cols-2 items-start">
+              {/* Left Column: Configuration */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Key className="h-4 w-4" /> Widget Authentication
+                    </CardTitle>
+                    <CardDescription>Generate a secure token to activate the widget.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border bg-muted/40 p-3">
+                      <div className="flex items-center gap-2">
+                        {widgetToken ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            Active Token
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">No Active Token</Badge>
+                        )}
+                        {tokenExpiresIn && (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            Expires in {Math.floor(tokenExpiresIn / 60)}m {tokenExpiresIn % 60}s
                           </span>
-                        ) : null}
+                        )}
                       </div>
-                      {widgetToken && <CopyBlock value={widgetToken} />}
-                      {tokenError && <p className="text-sm text-destructive">{tokenError}</p>}
+                      <Button onClick={generateWidgetToken} disabled={tokenLoading} size="sm" variant={widgetToken ? "outline" : "default"}>
+                        {tokenLoading ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                        ) : (
+                          <RefreshCw className="h-3 w-3 mr-2" />
+                        )}
+                        {widgetToken ? "Regenerate" : "Generate"}
+                      </Button>
                     </div>
-
-                    <div className="h-px bg-border w-full lg:hidden" />
-
-                    {/* 2. Configuration */}
-                    <div className="space-y-6">
-                      <Label className="text-base font-semibold">2. Configuration</Label>
-                      <p className="text-sm text-muted-foreground">Fine-tune the appearance and security.</p>
-
-                      <div className="grid gap-6">
-                        <div className="space-y-3">
-                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Mode</Label>
-                          <div className="flex gap-2 p-1 bg-muted rounded-lg w-full">
-                            <Button
-                              variant={embedMode === "popup" ? "default" : "ghost"}
-                              onClick={() => setEmbedMode("popup")}
-                              className="flex-1 rounded-md shadow-sm"
-                              size="sm"
-                            >
-                              Popup
-                            </Button>
-                            <Button
-                              variant={embedMode === "embedded" ? "default" : "ghost"}
-                              onClick={() => setEmbedMode("embedded")}
-                              className="flex-1 rounded-md shadow-sm"
-                              size="sm"
-                            >
-                              Embedded
-                            </Button>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground italic px-1">
-                            {embedMode === "popup"
-                              ? "Floating bubble. Best for general assistance."
-                              : "Fixed in place. Best for sidebars or full pages."}
-                          </p>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="space-y-3">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Allowed Origin</Label>
-                            <Input
-                              placeholder={`e.g., ${originValue}`}
-                              value={customOrigin}
-                              onChange={(e) => setCustomOrigin(e.target.value)}
-                              className="font-mono text-sm h-9 shadow-sm"
-                            />
-                            <p className="text-[11px] text-muted-foreground italic">
-                              Restricts embedding to this domain for security.
-                            </p>
-                          </div>
-
-                          <div className="space-y-3">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dimensions</Label>
-                            <div className="flex gap-2">
-                              <div className="relative flex-1">
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50 select-none">W</span>
-                                <Input
-                                  placeholder={embedMode === "popup" ? "360px" : "100%"}
-                                  value={embedWidth}
-                                  onChange={(e) => setEmbedWidth(e.target.value)}
-                                  className="pl-7 h-9 text-sm shadow-sm"
-                                />
-                              </div>
-                              <div className="relative flex-1">
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground opacity-50 select-none">H</span>
-                                <Input
-                                  placeholder={embedMode === "popup" ? "600px" : "100%"}
-                                  value={embedHeight}
-                                  onChange={(e) => setEmbedHeight(e.target.value)}
-                                  className="pl-7 h-9 text-sm shadow-sm"
-                                />
-                              </div>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground italic px-1">
-                              px, %, or vh.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-8">
-                    {/* 3. Snippet */}
-                    <div className="space-y-4">
-                      <Label className="text-base font-semibold">3. Embed Snippet</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Copy and paste this code snippet into your HTML.
-                      </p>
-                      <div className="relative">
-                        <CopyBlock value={embedSnippet} />
-                      </div>
-                    </div>
-
-                    {/* 4. Preview */}
                     {widgetToken && (
-                      <div className="space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-primary font-bold">
-                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                            4. Interactive Preview
-                          </div>
-                          <Badge variant="outline" className="bg-background text-[10px] uppercase font-bold tracking-tighter">Authorized</Badge>
-                        </div>
-                        <div className="space-y-3">
-                          <p className="text-xs text-muted-foreground">
-                            Test your widget configuration in a simulated environment.
-                          </p>
-                          <Button asChild className="w-full h-11 shadow-sm hover:shadow-md transition-all font-semibold" size="default">
-                            <a href={previewSnippet} target="_blank" rel="noreferrer">
-                              Launch Preview Simulator <LinkIcon className="ml-2 h-4 w-4" />
-                            </a>
-                          </Button>
-                        </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-muted-foreground uppercase">Token</Label>
+                        <CopyBlock value={widgetToken} />
                       </div>
                     )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    {tokenError && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">{tokenError}</p>}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Code className="h-4 w-4" /> Customization & Security
+                    </CardTitle>
+                    <CardDescription>Tailor the look and restrict where the widget can load.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Display Mode</Label>
+                      <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+                        <Button
+                          variant={embedMode === "popup" ? "default" : "ghost"}
+                          onClick={() => setEmbedMode("popup")}
+                          className="h-8 rounded-md shadow-sm text-xs font-medium"
+                        >
+                          Popup Bubble
+                        </Button>
+                        <Button
+                          variant={embedMode === "embedded" ? "default" : "ghost"}
+                          onClick={() => setEmbedMode("embedded")}
+                          className="h-8 rounded-md shadow-sm text-xs font-medium"
+                        >
+                          Embedded Flat
+                        </Button>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {embedMode === "popup"
+                          ? "A floating button that opens a chat window. Best for support."
+                          : "A flat component that fits into a div. Best for full-page chat."}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Allowed Origin (Security)</Label>
+                      <Input
+                        placeholder={`e.g., ${originValue}`}
+                        value={customOrigin}
+                        onChange={(e) => setCustomOrigin(e.target.value)}
+                        className="font-mono text-sm h-9"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        The widget will ONLY load on this domain.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Dimensions (Optional)</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground/50 select-none">W</span>
+                          <Input
+                            placeholder={embedMode === "popup" ? "360px" : "100%"}
+                            value={embedWidth}
+                            onChange={(e) => setEmbedWidth(e.target.value)}
+                            className="pl-8 h-9 text-sm"
+                          />
+                        </div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground/50 select-none">H</span>
+                          <Input
+                            placeholder={embedMode === "popup" ? "600px" : "100%"}
+                            value={embedHeight}
+                            onChange={(e) => setEmbedHeight(e.target.value)}
+                            className="pl-8 h-9 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column: Code & Preview */}
+              <div className="space-y-6">
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Terminal className="h-4 w-4" /> Embed Code
+                    </CardTitle>
+                    <CardDescription>Paste this into your HTML `&lt;body&gt;`.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="relative">
+                      <CopyBlock value={embedSnippet} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {widgetToken && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Play className="h-4 w-4" /> Live Simulator
+                      </CardTitle>
+                      <CardDescription>Test your configuration before deploying.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="rounded-lg border bg-background p-4 flex flex-col items-center justify-center gap-4 text-center min-h-[120px]">
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm">Ready to Launch</p>
+                          <p className="text-xs text-muted-foreground">Opens in a new window with your current settings.</p>
+                        </div>
+                        <Button asChild size="sm" className="w-full sm:w-auto shadow-md">
+                          <a href={previewSnippet} target="_blank" rel="noreferrer">
+                            Launch Preview <LinkIcon className="ml-2 h-3 w-3" />
+                          </a>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-12">
