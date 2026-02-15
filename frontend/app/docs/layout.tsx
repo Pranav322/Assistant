@@ -8,33 +8,22 @@ export default function DocsLayout({
   const navItems = {
     "Getting Started": [
       { href: "/docs/getting-started/", label: "Overview" },
-      { href: "/docs/getting-started/installation", label: "Installation" },
       { href: "/docs/getting-started/quickstart", label: "Quickstart" },
-      { href: "/docs/getting-started/configuration", label: "Configuration" },
     ],
-    Guides: [
-      { href: "/docs/guides/", label: "Overview" },
-      { href: "/docs/guides/widget-embedding", label: "Widget Embedding" },
-      { href: "/docs/guides/api-keys", label: "API Keys" },
-      { href: "/docs/guides/authentication", label: "Authentication" },
+    "Using the Platform": [
+      { href: "/docs/platform/", label: "Overview" },
+      { href: "/docs/platform/projects", label: "Projects" },
+      { href: "/docs/platform/widget", label: "Chat Widget" },
+      { href: "/docs/platform/api-keys", label: "API Keys" },
+      { href: "/docs/platform/analytics", label: "Analytics" },
     ],
-    "API Reference": [
-      { href: "/docs/api-reference/", label: "Overview" },
-      { href: "/docs/api-reference/authentication", label: "Authentication" },
-      { href: "/docs/api-reference/projects", label: "Projects" },
-      { href: "/docs/api-reference/chat", label: "Chat" },
-      { href: "/docs/api-reference/sources", label: "Sources" },
-    ],
-    Concepts: [
-      { href: "/docs/concepts/", label: "Overview" },
-      { href: "/docs/concepts/architecture", label: "Architecture" },
-      { href: "/docs/concepts/retrieval-pipeline", label: "Retrieval Pipeline" },
-      { href: "/docs/concepts/security", label: "Security" },
-    ],
-    Deployment: [
-      { href: "/docs/deployment/", label: "Overview" },
-      { href: "/docs/deployment/docker", label: "Docker" },
-      { href: "/docs/deployment/production", label: "Production" },
+    "Self-Hosting": [
+      { href: "/docs/self-hosting/", label: "Overview" },
+      { href: "/docs/self-hosting/installation", label: "Installation" },
+      { href: "/docs/self-hosting/configuration", label: "Configuration" },
+      { href: "/docs/self-hosting/architecture", label: "Architecture" },
+      { href: "/docs/self-hosting/docker", label: "Docker" },
+      { href: "/docs/self-hosting/production", label: "Production" },
     ],
   };
 
@@ -56,9 +45,9 @@ export default function DocsLayout({
             <Link href="/docs" className="text-zinc-900 dark:text-zinc-100">
               Docs
             </Link>
-            <a 
-              href="https://github.com" 
-              target="_blank" 
+            <a
+              href="https://github.com"
+              target="_blank"
               rel="noreferrer"
               className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
             >
@@ -71,7 +60,7 @@ export default function DocsLayout({
       <div className="flex-1">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-10 py-10">
-            
+
             {/* Sidebar - with more space from left */}
             <aside className="hidden lg:block sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
               <nav className="flex flex-col gap-8 text-sm">

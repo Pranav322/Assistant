@@ -2,94 +2,57 @@ import { Markdown } from "@/components/markdown";
 
 const content = `# Quickstart
 
-Get up and running with the RAG Chatbot Platform in 5 minutes.
+Get your first AI chatbot running in under 5 minutes.
 
 ## Step 1: Create an Account
 
-1. Visit \`http://localhost:3000/auth/register\`
-2. Fill in your email and password
+1. Visit the platform and click **Register**
+2. Enter your email and password
 
 ## Step 2: Create a Project
 
-1. After logging in, click **New Project**
-2. Enter a project name (e.g., "My Support Bot")
-3. Configure allowed origins (where the widget will be embedded)
-4. Click **Create Project**
+1. From the dashboard, click **New Project**
+2. Give it a name (e.g., "Support Bot")
+3. Add your website domain to **Allowed Origins** (e.g., \`https://mysite.com\`)
 
-## Step 3: Get API Credentials
+## Step 3: Upload Your Content
 
-1. Navigate to your project settings
-2. Copy your **API Key** (starts with \`chat_\`)
-3. Note your **Project ID**
-
-## Step 4: Add Documents
-
-### Via Dashboard
-
-1. Go to your project page
+1. Open your new project
 2. Click **Add Source**
 3. Upload a PDF or enter a URL
-4. Wait for processing to complete
+4. Wait for the status to show **Completed** — your content is now indexed
 
-### Via API
+## Step 4: Get Your Credentials
 
-\`\`\`bash
-# Upload a file
-curl -X POST "http://localhost:8000/sources/upload" \\
-  -H "X-API-Key: your-api-key" \\
-  -F "file=@document.pdf"
+1. Go to **Settings → API Keys** in your project
+2. Click **Create API Key** and copy it (you'll only see it once)
+3. Note your **Project ID** from the project dashboard
 
-# Or add a URL
-curl -X POST "http://localhost:8000/sources/url" \\
-  -H "X-API-Key: your-api-key" \\
-  -H "Content-Type: application/json" \\
-  -d '{"url": "https://example.com/page"}'
-\`\`\`
+## Step 5: Embed the Widget
 
-## Step 5: Get a Widget Token
-
-\`\`\`bash
-curl -X POST "http://localhost:8000/tokens/widget" \\
-  -H "X-API-Key: your-api-key" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "project_id": "your-project-id",
-    "origin": "https://example.com"
-  }'
-\`\`\`
-
-Response:
-\`\`\`json
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "expires_in": 86400
-}
-\`\`\`
-
-## Step 6: Embed the Widget
+Add this snippet to your website, just before \`</body>\`:
 
 \`\`\`html
-<script src="https://widget.yourdomain.com/embed.js" defer></script>
-
-<div id="chatbot-container"></div>
-
-<script>
-  window.ChatbotWidget.init({
-    container: '#chatbot-container',
-    token: 'your-widget-token',
-    projectId: 'your-project-id'
-  });
-</script>
+<script
+  src="https://widget.contextly.live/embed.js"
+  data-token="YOUR_WIDGET_TOKEN"
+  data-project-id="YOUR_PROJECT_ID"
+  data-origin="https://yourwebsite.com"
+  async
+></script>
 \`\`\`
 
-## Step 7: Chat!
+> To generate a widget token, see the [Chat Widget guide](/docs/platform/widget).
 
-The widget is now live. Type a question related to your documents and get AI-powered answers with citations.
+## Step 6: Chat!
+
+Your chatbot is now live. Users can ask questions about your uploaded content and get AI-powered answers with citations.
 
 ## What's Next?
 
-- [Widget Embedding Guide](/docs/guides/widget-embedding) - More embedding options
-- [API Keys Guide](/docs/guides/api-keys) - Manage API keys
+- [Projects](/docs/platform/projects) — Managing content and knowledge bases
+- [Chat Widget](/docs/platform/widget) — Customization and advanced embedding
+- [API Keys](/docs/platform/api-keys) — Programmatic access
 `;
 
 export default function QuickstartPage() {

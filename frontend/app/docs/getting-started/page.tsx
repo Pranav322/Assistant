@@ -1,55 +1,31 @@
 import { Markdown } from "@/components/markdown";
 
-const content = `# Getting Started
+const content = `# Welcome to Contextly
 
-Welcome to the RAG Chatbot Platform documentation. This section will help you get up and running quickly.
+Contextly is a platform that lets you build AI chatbots powered by your own content. Upload your documents, and your users can chat with them through an embeddable widget on your website.
 
-## What is RAG Chatbot Platform?
+## How It Works
 
-RAG Chatbot Platform is a production-ready AI chatbot solution that combines:
+1. **Create a project** — Each project is an independent chatbot with its own knowledge base
+2. **Add your content** — Upload PDFs, text files, or paste URLs. Contextly processes and indexes them automatically
+3. **Embed the widget** — Drop a single script tag on your site and your chatbot is live
 
-- **Hybrid Search** - Vector + keyword search for optimal relevance
-- **Semantic Chunking** - Intelligent document parsing and splitting
-- **Widget Integration** - Easy embeddable chat widget
-- **Background Processing** - Async ingestion with Dramatiq workers
+## What You Can Do
 
-## Quick Navigation
-
-| Guide | Description |
-|-------|-------------|
-| [Installation](/docs/getting-started/installation) | Set up your development environment |
-| [Quickstart](/docs/getting-started/quickstart) | Get running in 5 minutes |
-| [Configuration](/docs/getting-started/configuration) | Configure environment variables |
-
-## Architecture Overview
-
-\`\`\`
-┌─────────────────────────────────────────────────────────┐
-│                    Your Website                          │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │              Chat Widget (iframe)                │   │
-│  └─────────────────────────────────────────────────┘   │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│                      API Server                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
-│  │   Auth      │  │   Chat      │  │  Ingestion  │   │
-│  └─────────────┘  └─────────────┘  └─────────────┘   │
-└────────────────────────┬────────────────────────────────┘
-                         │
-          ┌──────────────┼──────────────┐
-          ▼              ▼              ▼
-    ┌──────────┐  ┌──────────┐  ┌──────────┐
-    │ Postgres │  │  Redis   │  │    S3    │
-    │(pgvector)│  │          │  │          │
-    └──────────┘  └──────────┘  └──────────┘
-\`\`\`
+- **Upload documents** — PDF, Markdown, and plain text files
+- **Add web pages** — Paste a URL and the content is fetched automatically
+- **Embed a chat widget** — Works on any website with a single script tag
+- **Manage API keys** — Control programmatic access to your project
+- **Track usage** — See how many messages and tokens your chatbot is using
 
 ## Next Steps
 
-Ready to get started? Head to the [Installation](/docs/getting-started/installation) guide.
+| Guide | Description |
+|-------|-------------|
+| [Quickstart](/docs/getting-started/quickstart) | Create your first chatbot in 5 minutes |
+| [Projects](/docs/platform/projects) | Managing projects and knowledge bases |
+| [Chat Widget](/docs/platform/widget) | Embedding the widget on your site |
+| [Self-Hosting](/docs/self-hosting/) | Run the platform on your own infrastructure |
 `;
 
 export default function GettingStartedPage() {
