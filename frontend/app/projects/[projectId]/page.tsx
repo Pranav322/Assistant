@@ -469,7 +469,7 @@ export default function ProjectDetailPage() {
       return envWidget.replace(/\/$/, "");
     }
     if (typeof window === "undefined") {
-      return isLocal ? "http://localhost:3000" : "https://widget.pranavbuilds.tech";
+      return isLocal ? "http://localhost:3000" : "https://widget.contextly.live";
     }
     try {
       const current = new URL(window.location.origin);
@@ -479,7 +479,7 @@ export default function ProjectDetailPage() {
       }
       return current.origin;
     } catch {
-      return isLocal ? "http://localhost:3000" : "https://widget.pranavbuilds.tech";
+      return isLocal ? "http://localhost:3000" : "https://widget.contextly.live";
     }
   })();
 

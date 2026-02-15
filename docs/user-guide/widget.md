@@ -49,7 +49,7 @@ Copy the following code snippet and paste it into your website's HTML, preferabl
 
 ```html
 <script 
-  src="https://widget.pranavbuilds.tech/embed.js"
+  src="https://widget.contextly.live/embed.js"
   data-token="YOUR_WIDGET_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
   data-origin="https://yourwebsite.com"
@@ -99,7 +99,7 @@ You can customize the widget behavior by adding data attributes to the script ta
 
 ```html
 <script 
-  src="https://widget.pranavbuilds.tech/embed.js"
+  src="https://widget.contextly.live/embed.js"
   data-token="YOUR_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
   data-origin="https://yourwebsite.com"
@@ -114,7 +114,7 @@ You can customize the widget behavior by adding data attributes to the script ta
 
 ```html
 <script 
-  src="https://widget.pranavbuilds.tech/embed.js"
+  src="https://widget.contextly.live/embed.js"
   data-token="YOUR_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
   data-origin="https://yourwebsite.com"
@@ -151,7 +151,7 @@ The widget will try to refresh the token using your API endpoint.
 
 ```html
 <script 
-  src="https://widget.pranavbuilds.tech/embed.js"
+  src="https://widget.contextly.live/embed.js"
   data-token="YOUR_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
   data-origin="https://yourwebsite.com"
@@ -237,6 +237,7 @@ window.addEventListener('message', (event) => {
 -   **401 Errors?** Ensure your domain is listed in "Allowed Origins".
 -   **Token expired?** The widget should auto-refresh. If not, check your refresh endpoint.
 -   **CORS errors?** Ensure your API allows the widget origin.
+-   **Set `WIDGET_PUBLIC_ORIGIN`** (e.g. `https://widget.contextly.live`).
 
 ## Security Notes
 
