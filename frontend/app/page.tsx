@@ -62,8 +62,8 @@ export default function Home() {
           <div className="absolute inset-y-0 right-0 -z-10 w-1/2 bg-muted/30" />
           <div className="absolute right-0 top-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
           <div className="mx-auto w-full max-w-[1400px] px-6 py-20 sm:px-8 md:py-28 lg:px-12">
-            <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-              <div className="text-left animate-slide-in-from-bottom">
+            <div className="grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="text-left animate-slide-in-from-bottom lg:mt-12">
                 <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
                   The Chatbot for Your Platform
                 </Badge>
@@ -121,8 +121,8 @@ export default function Home() {
 
               <div className="relative animate-slide-in-from-top">
                 <div className="rounded-3xl border bg-muted/40 p-6 shadow-sm">
-                  <div className="rounded-2xl border bg-background p-6 shadow-lg">
-                    <Tabs defaultValue="widget" className="w-full">
+                  <div className="rounded-2xl border bg-background p-6 shadow-lg h-[550px] flex flex-col">
+                    <Tabs defaultValue="widget" className="w-full flex-1 flex flex-col">
                       <div className="flex items-center justify-between mb-4">
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="widget">
@@ -138,19 +138,17 @@ export default function Home() {
 
                       <TabsContent value="widget" className="space-y-4">
                         <div className="rounded-lg border bg-muted/50 p-4">
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between mb-4">
                             <h4 className="text-sm font-medium">Embed with one line</h4>
                             <Badge variant="outline" className="text-xs">HTML / Any Framework</Badge>
                           </div>
-                          <div className="relative rounded-md bg-muted font-mono text-xs p-3 overflow-x-auto">
-                            <pre className="text-muted-foreground">
-                              {`<script 
-  src="https://widget.contextly.ai/embed.js"
+                          <CopyBlock value={`<script 
+  src="https://www.contextly.live/embed.js"
+  data-token="YOUR_WIDGET_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
-  async
-></script>`}
-                            </pre>
-                          </div>
+  data-api-base-url="https://api.contextly.live/api/v1"
+  defer
+></script>`} />
                         </div>
                         <ul className="space-y-2 text-sm text-muted-foreground">
                           <li className="flex items-center gap-2">
@@ -166,16 +164,14 @@ export default function Home() {
 
                       <TabsContent value="package" className="space-y-4">
                         <div className="rounded-lg border bg-muted/50 p-4">
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between mb-4">
                             <h4 className="text-sm font-medium">Full React Integration</h4>
                             <Badge variant="outline" className="text-xs">npm / pnpm</Badge>
                           </div>
-                          <div className="relative rounded-md bg-muted font-mono text-xs p-3 overflow-x-auto mb-2">
-                             <pre className="text-muted-foreground">npm install contextly</pre>
+                          <div className="mb-4">
+                            <CopyBlock value="npm install contextly" />
                           </div>
-                          <div className="relative rounded-md bg-muted font-mono text-xs p-3 overflow-x-auto">
-                            <pre className="text-muted-foreground">
-                              {`import { Chat } from "contextly";
+                          <CopyBlock value={`import { Chat } from "contextly";
 
 export default function App() {
   return (
@@ -184,9 +180,7 @@ export default function App() {
       token="YOUR_WIDGET_TOKEN"
     />
   );
-}`}
-                            </pre>
-                          </div>
+}`} />
                         </div>
                         <ul className="space-y-2 text-sm text-muted-foreground">
                           <li className="flex items-center gap-2">
