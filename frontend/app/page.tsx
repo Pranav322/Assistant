@@ -142,7 +142,7 @@ export default function Home() {
                         <div>
                           <p className="text-sm font-semibold">Connect your sources</p>
                           <p className="text-sm text-muted-foreground">
-                            Drag in docs or sync a URL. Chunking and embeddings included.
+                            Drag in docs or sync your website URL to train the bot on your own content.
                           </p>
                         </div>
                       </div>
@@ -224,7 +224,7 @@ export default function Home() {
                   </div>
                   <h3 className="text-lg font-semibold tracking-tight">Document Ingestion</h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Upload PDFs, Markdown, or crawl URLs. We handle chunking, embedding, and storage automatically.
+                    Upload PDFs, Markdown, or simply paste your website URL to instantly train the chatbot on your specific knowledge base.
                   </p>
                 </div>
                 <div className="rounded-xl border bg-background p-6 shadow-sm">
@@ -240,9 +240,9 @@ export default function Home() {
                   <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
                     <Zap className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold tracking-tight">Embeddable Widget</h3>
+                  <h3 className="text-lg font-semibold tracking-tight">Embeddable Widget & SDK</h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Generate a pre-built chat widget with one click to embed directly into your existing application or website.
+                    Use our pre-built widget or the <code className="text-xs bg-muted px-1 py-0.5 rounded">contextly</code> npm package for React apps. Full control, zero config.
                   </p>
                 </div>
                 <div className="rounded-xl border bg-background p-6 shadow-sm">

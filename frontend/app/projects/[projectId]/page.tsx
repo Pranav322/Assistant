@@ -133,7 +133,7 @@ export default function ProjectDetailPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   // Embed Configuration State
-  const [embedMode, setEmbedMode] = useState<"popup" | "embedded">("popup");
+  const [embedMode, setEmbedMode] = useState<"popup" | "embedded">("embedded");
   const [embedWidth, setEmbedWidth] = useState("");
   const [embedHeight, setEmbedHeight] = useState("");
   const [customOrigin, setCustomOrigin] = useState("");
