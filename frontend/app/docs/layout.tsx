@@ -32,11 +32,11 @@ export default function DocsLayout({
       {/* Top header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-6 flex h-16 items-center">
-          <Link href="/" className="flex items-center gap-3 font-bold text-xl">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
-              R
-            </span>
-            <span className="hidden sm:inline">RAG Platform</span>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+              C
+            </div>
+            <span className="text-sm font-semibold tracking-tight">Contextly</span>
           </Link>
           <nav className="ml-auto flex items-center gap-8 text-sm font-medium">
             <Link href="/projects" className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors">
