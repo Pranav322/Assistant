@@ -29,7 +29,7 @@ export default function App() {
       <Chat 
         projectId="YOUR_PROJECT_ID"
         token="YOUR_WIDGET_TOKEN"
-        apiBaseUrl="https://api.contextly.ai/api/v1"
+        apiBaseUrl="https://api.pranavbuilds.tech/api/v1"
         title="Support Bot"
       />
     </div>
