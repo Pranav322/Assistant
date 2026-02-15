@@ -105,6 +105,15 @@ export function useChat({
           return;
         }
 
+        if (response.status === 403) {
+          updateMessage(assistantId, {
+            status: "error",
+            content: "Access denied. Please check your allowed origins in the project settings.",
+          });
+          onError?.(new Error("Forbidden"));
+          return;
+        }
+
         if (!response.ok) {
           updateMessage(assistantId, {
             status: "error",

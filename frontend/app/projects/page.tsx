@@ -176,7 +176,7 @@ export default function ProjectsPage() {
                 className="col-span-3"
               />
               <p className="text-[0.8rem] text-muted-foreground">
-                The domain where you&apos;ll embed the chat widget (e.g., https://your-website.com).
+                The domain where you&apos;ll embed the chat widget. You can change this or add more domains later in Project Settings.
               </p>
             </div>
             {createError && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">{createError}</p>}

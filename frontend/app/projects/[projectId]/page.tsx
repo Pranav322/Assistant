@@ -32,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -1059,6 +1060,13 @@ export default function ProjectDetailPage() {
                                 {origin}
                               </DropdownMenuItem>
                             ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setActiveTab("settings")}
+                              className="text-xs cursor-pointer text-primary font-semibold flex items-center gap-2"
+                            >
+                              <Plus className="h-3 w-3" /> Add more origins...
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (

@@ -146,6 +146,13 @@ function WidgetContent() {
         });
         return;
       }
+      if (response.status === 403) {
+        updateMessage(assistantId, {
+          status: "error",
+          content: "Access denied. Please check your allowed origins in the project settings.",
+        });
+        return;
+      }
       if (!response.ok) {
         updateMessage(assistantId, {
           status: "error",
@@ -377,3 +384,4 @@ export default function WidgetPage() {
     </Suspense>
   );
 }
+                                                                                                                                                                                                                                                                                            
