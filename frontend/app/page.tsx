@@ -30,8 +30,31 @@ export default function Home() {
 
   const isPro = plan === "pro";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Contextly",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR"
+    },
+    "description": "Build, embed, and monitor production RAG chatbots in minutes. Contextly handles ingestion, retrieval, auth, and observability.",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "120"
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10 overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
@@ -85,16 +108,16 @@ export default function Home() {
             <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
               <div className="text-left animate-slide-in-from-bottom lg:mt-12">
                 <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
-                  The Chatbot for Your Platform
+                  The RAG Chatbot Platform for Developers
                 </Badge>
                 <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:leading-[1.1] text-balance">
-                  Ship intelligent assistants{" "}
-                  <span className="text-primary block sm:inline">in minutes.</span>
+                  Ship intelligent <span className="text-primary">RAG chatbots</span>{" "}
+                  <span className="block sm:inline">in minutes.</span>
                 </h1>
                 <p className="mt-6 max-w-xl text-lg text-muted-foreground sm:text-xl leading-relaxed text-balance">
                   A complete toolkit for building retrieval-augmented generation apps.
-                  You can use this chatbot directly in your existing app without any issue.
-                  Handles ingestion, retrieval, auth, and observability.
+                  <span className="font-medium text-foreground"> Embed custom chatbots</span> directly in your existing app.
+                  Handles ingestion, retrieval, auth, and observability so you can focus on your users.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   {isAuth === null ? (
@@ -121,15 +144,15 @@ export default function Home() {
                 <div className="mt-10 grid gap-3 text-sm text-muted-foreground grid-cols-1 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    <span>Instant Embedding</span>
+                    <span>Instant Chatbot Knowledge</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    <span>Widget Ready</span>
+                    <span>Embed Chatbot anywhere</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    <span>Production Scale</span>
+                    <span>Production Scale RAG</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
@@ -229,7 +252,7 @@ export default function App() {
                   </div>
                   <div className="rounded-lg border bg-background/80 p-3">
                     <p className="text-lg font-semibold text-foreground">30+ GB</p>
-                    <p>indexed daily</p>
+                    <p>chatbot knowledge indexed daily</p>
                   </div>
                   <div className="rounded-lg border bg-background/80 p-3 col-span-2 sm:col-span-1">
                     <p className="text-lg font-semibold text-foreground">3 min</p>

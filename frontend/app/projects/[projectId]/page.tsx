@@ -1030,21 +1030,44 @@ export default function ProjectDetailPage() {
                   <CardContent className="space-y-6">
                     <div className="space-y-3">
                       <Label className="text-sm font-medium">Display Mode</Label>
-                      <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
-                        <Button
-                          variant={embedMode === "popup" ? "default" : "ghost"}
-                          onClick={() => setEmbedMode("popup")}
-                          className="h-8 rounded-md shadow-sm text-xs font-medium"
-                        >
-                          Popup Bubble
-                        </Button>
-                        <Button
-                          variant={embedMode === "embedded" ? "default" : "ghost"}
-                          onClick={() => setEmbedMode("embedded")}
-                          className="h-8 rounded-md shadow-sm text-xs font-medium"
-                        >
-                          Embedded Flat
-                        </Button>
+                      <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg relative z-10">
+                        <div className="relative group">
+                          <Button
+                            variant={embedMode === "popup" ? "default" : "ghost"}
+                            onClick={() => setEmbedMode("popup")}
+                            className="w-full h-8 rounded-md shadow-sm text-xs font-medium"
+                          >
+                            Popup Bubble
+                          </Button>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden lg:group-hover:block w-64 z-50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+                            <div className="rounded-lg border bg-popover p-2 shadow-md">
+                              <img src="/images/popup-preview.png" alt="Popup Preview" className="rounded border w-full h-auto aspect-video object-cover" />
+                              <p className="mt-2 text-[10px] text-muted-foreground text-center">
+                                Floats above content in the corner.
+                              </p>
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-popover rotate-45 border-r border-b"></div>
+                          </div>
+                        </div>
+
+                        <div className="relative group">
+                          <Button
+                            variant={embedMode === "embedded" ? "default" : "ghost"}
+                            onClick={() => setEmbedMode("embedded")}
+                            className="w-full h-8 rounded-md shadow-sm text-xs font-medium"
+                          >
+                            Embedded Flat
+                          </Button>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden lg:group-hover:block w-64 z-50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+                            <div className="rounded-lg border bg-popover p-2 shadow-md">
+                              <img src="/images/embed-preview.png" alt="Embed Preview" className="rounded border w-full h-auto aspect-video object-cover" />
+                              <p className="mt-2 text-[10px] text-muted-foreground text-center">
+                                Sits inline with your page content.
+                              </p>
+                            </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-popover rotate-45 border-r border-b"></div>
+                          </div>
+                        </div>
                       </div>
                       <p className="text-[11px] text-muted-foreground">
                         {embedMode === "popup"
