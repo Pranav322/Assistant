@@ -26,3 +26,5 @@ class UserResponse(BaseModel):
     id: str
     email: EmailStr
     email_verified: bool
+    plan: str = "free"
+    plan_expires_at: Optional[str] = None

@@ -54,6 +54,10 @@ async def register_user(
         id=str(user.id),
         email=user.email,
         email_verified=user.email_verified,
+        plan=user.plan,
+        plan_expires_at=(
+            user.plan_expires_at.isoformat() if user.plan_expires_at else None
+        ),
     )
 
 
@@ -122,4 +126,8 @@ async def get_me(
         id=str(user.id),
         email=user.email,
         email_verified=user.email_verified,
+        plan=user.plan,
+        plan_expires_at=(
+            user.plan_expires_at.isoformat() if user.plan_expires_at else None
+        ),
     )

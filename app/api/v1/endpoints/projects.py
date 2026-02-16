@@ -18,6 +18,7 @@ from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.schemas.ingestion import SourceResponse
 from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
 from app.services.audit import log_audit_event
+from app.services.billing import get_effective_plan
 
 router = APIRouter()
 
@@ -140,18 +141,23 @@ async def create_project(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.plan == "free":
-        count_result = await db.execute(
-            select(func.count())
-            .select_from(Project)
-            .where(Project.owner_id == owner_id, Project.deleted_at.is_(None))
+    effective_plan = get_effective_plan(user)
+    max_projects = (
+        settings.MAX_PROJECTS_PER_USER
+        if effective_plan == "free"
+        else settings.PRO_MAX_PROJECTS_PER_USER
+    )
+    count_result = await db.execute(
+        select(func.count())
+        .select_from(Project)
+        .where(Project.owner_id == owner_id, Project.deleted_at.is_(None))
+    )
+    project_count = int(count_result.scalar_one() or 0)
+    if project_count >= max_projects:
+        raise HTTPException(
+            status_code=403,
+            detail="Project limit reached. Upgrade required.",
         )
-        project_count = int(count_result.scalar_one() or 0)
-        if project_count >= settings.MAX_PROJECTS_PER_USER:
-            raise HTTPException(
-                status_code=403,
-                detail="Project limit reached. Upgrade required.",
-            )
 
     project = Project(
         owner_id=owner_id,

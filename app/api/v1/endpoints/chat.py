@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.models import Project, User
 from app.observability.metrics import record_rate_limit_hit
 from app.schemas.chat import ChatRequest, ChatResponse
+from app.services.billing import get_effective_plan
 from app.services.chat import ChatService
 from app.services.rate_limit import RateLimiter
 from app.services.user_usage import get_or_create_user_usage
@@ -35,9 +36,15 @@ async def chat(
     if owner_id:
         user_result = await db.execute(select(User).where(User.id == owner_id))
         user = user_result.scalar_one_or_none()
-        if user and user.plan == "free":
+        if user:
+            effective_plan = get_effective_plan(user)
             usage = await get_or_create_user_usage(db, owner_id)
-            if usage.tokens_used >= settings.USER_TOKEN_CAP:
+            cap = (
+                settings.USER_TOKEN_CAP
+                if effective_plan == "free"
+                else settings.PRO_USER_TOKEN_CAP
+            )
+            if usage.tokens_used >= cap:
                 raise HTTPException(
                     status_code=429,
                     detail="Token limit reached. Upgrade required.",
