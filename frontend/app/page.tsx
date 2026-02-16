@@ -8,13 +8,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CopyBlock from "@/components/CopyBlock";
 import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3, Code, Package, Sparkles } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
 
 export default function Home() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [plan, setPlan] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsAuth(isAuthenticated());
+    const auth = isAuthenticated();
+    setIsAuth(auth);
+
+    if (auth) {
+      const token = localStorage.getItem("rag_user_token");
+      if (token) {
+        apiRequest<{ plan: string }>("/billing/plan", { token })
+          .then((data) => setPlan(data.plan))
+          .catch(() => { });
+      }
+    }
   }, []);
+
+  const isPro = plan === "pro";
 
   return (
     <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10 overflow-x-hidden">
@@ -330,9 +344,9 @@ export default function App() {
               </div>
 
               {/* Pro Tier */}
-              <div className="rounded-xl border-2 border-primary/30 bg-background p-8 shadow-md relative">
+              <div className={`rounded-xl border-2 ${isPro ? "border-primary bg-primary/5" : "border-primary/30 bg-background"} p-8 shadow-md relative transition-colors`}>
                 <Badge className="absolute -top-2.5 left-6 text-[10px]">
-                  Most Popular
+                  {isPro ? "Current Plan" : "Most Popular"}
                 </Badge>
                 <h3 className="text-xl font-semibold tracking-tight flex items-center gap-2">
                   Pro
@@ -362,9 +376,9 @@ export default function App() {
                   </li>
                 </ul>
                 <div className="mt-8">
-                  <Button className="w-full" asChild>
+                  <Button className="w-full" variant={isPro ? "outline" : "default"} asChild>
                     <Link href={isAuth ? "/billing" : "/auth/register"}>
-                      {isAuth ? "Upgrade Now" : "Start Free, Upgrade Later"}
+                      {isPro ? "Manage Subscription" : isAuth ? "Upgrade Now" : "Start Free, Upgrade Later"}
                     </Link>
                   </Button>
                 </div>
