@@ -5,6 +5,11 @@ This file is a living summary derived from the specs below and can be updated.
 ## for forntend 
 
 use pnpm for package management 
+
+## contextly-widget directory
+
+It is a standalong npm package just like frontend is standalone directory
+
 ## Primary Specification Files
 These files define the intended behavior of the system. Use them as the baseline
 for implementation decisions and update this guide if the specs change:
