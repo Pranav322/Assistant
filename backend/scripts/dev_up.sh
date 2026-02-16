@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-FRONTEND_DIR="$ROOT_DIR/frontend"
+FRONTEND_DIR="$ROOT_DIR/../frontend"
 
 # ── Colors ──────────────────────────────────────────────────
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
@@ -12,6 +13,16 @@ NC='\033[0m'
 
 log()  { echo -e "${GREEN}[dev]${NC} $1"; }
 warn() { echo -e "${YELLOW}[dev]${NC} $1"; }
+error() { echo -e "${RED}[dev]${NC} $1"; }
+
+# Check if ROOT_DIR exists
+if [ ! -d "$ROOT_DIR" ]; then
+    error "Backend directory not found at $ROOT_DIR"
+    exit 1
+fi
+
+# Change to ROOT_DIR to ensure all backend commands run correctly
+cd "$ROOT_DIR" || exit 1
 
 # ── 1. Ensure Docker is running ─────────────────────────────
 if ! docker info &>/dev/null; then
@@ -34,7 +45,7 @@ fi
 
 # ── 2. Start Redis via docker-compose ───────────────────────
 log "Starting Redis..."
-docker-compose -f "$ROOT_DIR/docker-compose.yml" up -d redis 2>&1 | grep -v "version.*obsolete" || true
+docker-compose -f "docker-compose.yml" up -d redis 2>&1 | grep -v "version.*obsolete" || true
 
 # Wait until Redis is actually accepting connections
 printf "  Waiting for Redis"
@@ -54,7 +65,7 @@ cleanup() {
   echo ""
   log "Shutting down..."
   [[ -n "$BACKEND_PID" ]] && kill "$BACKEND_PID" 2>/dev/null || true
-  docker-compose -f "$ROOT_DIR/docker-compose.yml" stop 2>&1 | grep -v "version.*obsolete" || true
+  docker-compose -f "docker-compose.yml" stop 2>&1 | grep -v "version.*obsolete" || true
   log "Done."
 }
 trap cleanup EXIT

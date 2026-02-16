@@ -3,8 +3,8 @@ name: Deploy Backend to VPS
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - 'frontend/**'
+    paths:
+      - 'backend/**'
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd ${{ secrets.VPS_PROJECT_PATH }}
+            cd ${{ secrets.VPS_PROJECT_PATH }}/backend
             echo "Pulling latest changes..."
             git pull origin main
             
