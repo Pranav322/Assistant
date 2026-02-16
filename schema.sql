@@ -33,6 +33,7 @@ CREATE TABLE users (
     password_hash TEXT,
     email_verified BOOLEAN DEFAULT false,
     plan TEXT DEFAULT 'free',
+    plan_expires_at TIMESTAMPTZ,
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()

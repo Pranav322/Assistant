@@ -18,6 +18,9 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     plan: Mapped[str] = mapped_column(String, default="free")
+    plan_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

@@ -76,6 +76,16 @@ class Settings(BaseSettings):
     MAX_PROJECTS_PER_USER: int = 1
     USER_TOKEN_CAP: int = 200000
 
+    # Razorpay
+    RAZORPAY_KEY_ID: str | None = None
+    RAZORPAY_KEY_SECRET: str | None = None
+
+    # Pro plan
+    PRO_PLAN_AMOUNT_PAISE: int = 49900
+    PRO_PLAN_DURATION_DAYS: int = 30
+    PRO_MAX_PROJECTS_PER_USER: int = 5
+    PRO_USER_TOKEN_CAP: int = 2_000_000
+
     # Ingestion limits
     MAX_FILE_SIZE_MB: int = 50
     MAX_PDF_PAGES: int = 1000
