@@ -1,49 +1,112 @@
-# Contextly
+# Contextly - RAG Chatbot Platform
 
-This is the repository for Contextly, a RAG (Retrieval-Augmented Generation) chatbot platform. This is a production-grade system composed of several moving parts that actually do something useful.
+Welcome to **Contextly**, a production-ready RAG (Retrieval-Augmented Generation) chatbot platform designed to be powerful, scalable, and easy to deploy.
 
-## Structure
+## Overview
 
-The repository is split into three main components. 
+Contextly allows you to create custom chatbots trained on your own data. It features a robust backend for processing and vector search, a modern dashboard for management, and a lightweight widget for embedding chats on any website.
 
-### 1. Backend (`/backend`)
-The brain of the operation.
-- **Stack**: FastAPI (Python), PostgreSQL with `pgvector` for embeddings, Redis for caching/queueing, and Dramatiq for background workers.
-- **Function**: Handles ingestion, vector search, chat logic, and user management.
-- **Deployment**: It runs in Docker. 
-
-### 2. Frontend (`/frontend`)
-The face of the operation.
-- **Stack**: Next.js (React), TailwindCSS.
-- **Function**: Provides the dashboard for managing chatbots, projects, and viewing analytics.
-- **Deployment**: Next.js standard deployment. Vercel.
-
-### 3. Widget (`/contextly-widget`)
-The appendable limb.
-- **Type**: NPM Package (`contextly-widget`).
-- **Function**: A lightweight, framework-agnostic script that embeds the chat interface into third-party websites.
-- **Usage**:
-  ```bash
-  npm install contextly
-  ```
-  Then import it and initialize it. It renders inside an iframe or shadow DOM to avoid polluting the host site's CSS.
-
-## Development
-
-
-### Quick Start
-To spin up the local development environment (Backend + Database + Redis):
-
-```bash
-./backend/scripts/dev_up.sh
-```
-
-This script is smart enough to find the docker executables and set up the environment. 
-## Deployment
-
-The backend is containerized. The `deploy.yml` workflow handles pushing updates to the VPS.
-- It expects specific secrets to be set in the repository.
-- It expects the VPS to have the environment files (`.env`, `firebase-credentials.json`) inside the `backend/` directory.
+### Key Features
+- **Hybrid Search**: Combines vector semantic search with keyword search for optimal retrieval.
+- **Semantic Chunking**: Intelligently splits documents to preserve context.
+- **Async Processing**: Heavy lifting (ingestion, embedding) is handled in the background by Dramatiq workers.
+- **Widget Integration**: Easily embeddable chat widget for semantic search on your site.
 
 ---
 
+## Project Structure
+
+The repository is organized into three main components:
+
+- **Backend** (`/backend`): The core logic, API, and background workers. Built with **FastAPI**, **PostgreSQL** (`pgvector`), and **Redis**.
+- **Frontend** (`/frontend`): The user dashboard and widget UI. Built with **Next.js**, **React**, and **TailwindCSS**.
+- **Contextly Widget** (`/contextly-widget`): A framework-agnostic NPM package for embedding the chatbot.
+
+---
+
+## Quick Start
+
+We provide a helper script to get your local development environment (Database + Redis + Backend) up and running quickly.
+
+### Prerequisites
+- Docker & Docker Compose
+- Node.js & npm/pnpm (for frontend)
+
+### 1. Start Development Environment
+Run the development setup script:
+```bash
+./backend/scripts/dev_up.sh
+```
+This script acts as a "one-stop shop" to:
+- Check for Docker and start Redis/Infrastructure.
+- Start the FastAPI backend on `http://localhost:8001`.
+- Start the Next.js frontend on `http://localhost:3000`.
+
+*Note: The first time you run this, you may need to install frontend dependencies manually if the script doesn't handle it, or just run `pnpm install` in `frontend/` once.*
+
+---
+
+## Backend Documentation
+
+Located in `/backend`. **[Read the Backend Guide](backend/README.md)**
+
+### Core Stack
+- **API**: FastAPI
+- **Database**: PostgreSQL with `pgvector`
+- **Queue**: Redis + Dramatiq
+- **LLM**: Azure OpenAI (extensible to others)
+
+### Configuration
+Create a `.env` file in the `backend/` directory. See `backend/.env.example` for a template.
+
+**Key Environment Variables:**
+- `DATABASE_URL`: Connection string for PostgreSQL.
+- `REDIS_URL`: Connection string for Redis.
+- `AZURE_OPENAI_API_KEY`: Your LLM provider key.
+- `JWT_SECRET`: Secret for signing auth tokens.
+
+For a full list of configuration options, please refer to `backend/README.md`.
+
+---
+
+## Frontend Documentation
+
+Located in `/frontend`. **[Read the Frontend Guide](frontend/README.md)**
+
+### Routes
+- `/` - Marketing Landing Page
+- `/projects` - Main Dashboard
+- `/auth/*` - Authentication logic
+- `/widget` - The iframe rendering the chat interface
+
+### Commands
+- `npm run dev`: Start development server.
+- `npm run build`: Build for production.
+
+---
+
+## Widget Package
+
+The `contextly-widget` is available as an NPM package for easy integration. **[Read the Widget Guide](contextly-widget/README.md)**
+
+```bash
+npm install contextly-widget
+```
+
+It allows you to inject the chat bubble into any website with a simple script tag or import, keeping your host site's styles clean by using an iframe/shadow DOM.
+
+---
+
+## Deployment
+
+### Docker
+The backend is fully containerized. To deploy updates:
+1. Ensure your `.env` and Firebase credentials are in the `backend/` directory on your server.
+2. The GitHub Action (`.github/workflows/deploy.yml`) will automatically build and deploy changes pushed to `main` (specifically for changes in `backend/`).
+
+### Frontend
+The frontend is a standard Next.js application, deployable to Vercel or any container service.
+
+---
+
+*Built with ❤️ by me , Antigravity , chatgpt , grok.ai , deepseek , claude , gemini*
