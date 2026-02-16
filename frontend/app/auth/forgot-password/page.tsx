@@ -27,17 +27,17 @@ export default function ForgotPasswordPage() {
         e.preventDefault();
         setLoading(true);
         setError("");
-        
+
         try {
             await sendPasswordResetEmail(auth, email);
             setSubmitted(true);
         } catch (err: any) {
             console.error(err);
             if (err.code === 'auth/user-not-found') {
-                 // Even if user not found, for security we often say sent. 
-                 // But for UX here let's be explicit or generic.
-                 setError("If an account exists, an email has been sent.");
-                 setSubmitted(true); // Treat as success to avoid enumeration
+                // Even if user not found, for security we often say sent. 
+                // But for UX here let's be explicit or generic.
+                setError("If an account exists, an email has been sent.");
+                setSubmitted(true); // Treat as success to avoid enumeration
             } else {
                 setError("Failed to send reset email. Please try again.");
             }
@@ -64,6 +64,7 @@ export default function ForgotPasswordPage() {
                         <p className="font-semibold">Check your email</p>
                         <p className="mt-1">
                             If an account exists for {email}, we have sent a password reset link.
+                            Please check your spam folder if you don't see it.
                         </p>
                         <Button className="w-full mt-4" variant="outline" onClick={() => setSubmitted(false)}>
                             Try another email

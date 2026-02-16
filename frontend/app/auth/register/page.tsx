@@ -20,7 +20,7 @@ import {
 
 type AuthResponse = { access_token: string };
 
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, sendEmailVerification, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 export default function RegisterPage() {
@@ -39,15 +39,62 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (verificationSent) {
+      interval = setInterval(async () => {
+        try {
+          if (auth.currentUser) {
+            await auth.currentUser.reload();
+            if (auth.currentUser.emailVerified) {
+              // User verified, proceed to backend sync and redirect
+              const idToken = await auth.currentUser.getIdToken();
+              const data = await apiRequest<AuthResponse>("/auth/firebase", {
+                method: "POST",
+                body: JSON.stringify({ id_token: idToken }),
+              });
+              setToken(data.access_token);
+              setUserEmail(auth.currentUser.email || "");
+              router.push("/projects");
+            }
+          }
+        } catch (e) {
+          console.error("Error checking verification status", e);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [verificationSent, router]);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const handleResendEmail = async () => {
+    if (auth.currentUser && resendCooldown === 0) {
+      try {
+        await sendEmailVerification(auth.currentUser);
+        setResendCooldown(60);
+      } catch (err: any) {
+        setError(err.message || "Failed to resend email");
+      }
+    }
+  };
 
   async function handleSocialLogin(providerName: "google" | "github") {
     setError("");
     setLoading(true);
     try {
-      const provider = providerName === "google" 
-        ? new GoogleAuthProvider() 
+      const provider = providerName === "google"
+        ? new GoogleAuthProvider()
         : new GithubAuthProvider();
-      
+
       const userCredential = await signInWithPopup(auth, provider);
       const idToken = await userCredential.user.getIdToken();
 
@@ -83,26 +130,22 @@ export default function RegisterPage() {
     try {
       // 1. Create user in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const idToken = await userCredential.user.getIdToken();
 
-      // 2. Exchange token with backend (which creates user in DB if missing)
-      const data = await apiRequest<AuthResponse>("/auth/firebase", {
-        method: "POST",
-        body: JSON.stringify({ id_token: idToken }),
-      });
+      // 2. Send verification email
+      await sendEmailVerification(userCredential.user);
+      setVerificationSent(true);
 
-      setToken(data.access_token);
-      setUserEmail(email);
-      router.push("/projects");
+      // Note: We do NOT exchange token yet. We wait for verification.
+
     } catch (err: any) {
       console.error(err);
       let msg = "Registration failed";
       if (err.code === 'auth/email-already-in-use') {
-          msg = "Email already in use";
+        msg = "Email already in use";
       } else if (err.code === 'auth/weak-password') {
-          msg = "Password is too weak";
+        msg = "Password is too weak";
       } else if (err.message) {
-          msg = err.message;
+        msg = err.message;
       }
       setError(msg);
     } finally {
@@ -112,6 +155,42 @@ export default function RegisterPage() {
 
   if (checkingAuth) {
     return null; // or a loading spinner
+  }
+
+  if (verificationSent) {
+    return (
+      <Card className="border bg-background/90 shadow-xl">
+        <CardHeader>
+          <CardTitle>Verify your email</CardTitle>
+          <CardDescription>
+            We sent a verification link to <strong>{email}</strong>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Please click the link in the email to verify your account.
+            If you don't see it, check your spam folder.
+            This page will automatically refresh once you're verified.
+          </p>
+          {error && (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleResendEmail}
+            disabled={resendCooldown > 0}
+          >
+            {resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : "Resend Verification Email"}
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => setVerificationSent(false)}>
+            Back to registration
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -170,13 +249,12 @@ export default function RegisterPage() {
               />
               <div className="flex gap-1 h-1 mt-1">
                 <div className={`flex-1 rounded-full ${password.length > 0 ? (password.length < 8 ? "bg-red-500" : "bg-green-500") : "bg-muted"}`} />
-                <div className={`flex-1 rounded-full ${
-                  password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)
-                    ? "bg-green-500"
-                    : password.length >= 8
-                      ? "bg-yellow-500"
-                      : "bg-muted"
-                }`} />
+                <div className={`flex-1 rounded-full ${password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)
+                  ? "bg-green-500"
+                  : password.length >= 8
+                    ? "bg-yellow-500"
+                    : "bg-muted"
+                  }`} />
                 <div className={`flex-1 rounded-full ${password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password) ? "bg-green-500" : "bg-muted"}`} />
               </div>
               <p className="text-xs text-muted-foreground">

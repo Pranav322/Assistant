@@ -61,7 +61,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-muted/40 blur-3xl" />
 
-        <div className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col gap-12 px-4 py-8 sm:px-8 sm:py-12 lg:flex-row lg:items-center lg:gap-16 lg:px-12">
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1400px] flex-col gap-12 px-4 py-8 sm:px-8 sm:py-12 lg:flex-row lg:items-center lg:gap-16 lg:px-12">
           <div className="flex-1 space-y-8">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
