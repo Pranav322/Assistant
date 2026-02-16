@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CopyBlock from "@/components/CopyBlock";
-import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3, Code, Package } from "lucide-react";
+import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3, Code, Package, Sparkles } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 
 export default function Home() {
@@ -29,6 +29,12 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-4">
+            <Link
+              href="#pricing"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Pricing
+            </Link>
             {isAuth === null ? (
               // Loading state or placeholder to prevent layout shift/flash
               <div className="w-20 h-9 bg-muted/20 animate-pulse rounded-md" />
@@ -267,6 +273,95 @@ export default function App() {
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                     Enterprise-grade auth with API keys, rate limiting, and tenant isolation built in.
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="border-t">
+          <div className="mx-auto w-full max-w-[1400px] px-6 py-20 sm:px-8 lg:px-12">
+            <div className="text-center mb-12">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-4">
+                Pricing
+              </p>
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Start free, scale when ready
+              </h2>
+              <p className="mt-4 text-muted-foreground max-w-lg mx-auto">
+                Get started with a generous free tier. Upgrade to Pro when you need more projects and higher limits.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {/* Free Tier */}
+              <div className="rounded-xl border bg-background p-8 shadow-sm">
+                <h3 className="text-xl font-semibold tracking-tight">Free</h3>
+                <p className="text-sm text-muted-foreground mt-1">For getting started</p>
+                <div className="mt-6 mb-8">
+                  <span className="text-4xl font-extrabold">₹0</span>
+                  <span className="text-muted-foreground ml-2">forever</span>
+                </div>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    1 project
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    200K token cap
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    Community support
+                  </li>
+                </ul>
+                <div className="mt-8">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/auth/register">Get Started</Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Pro Tier */}
+              <div className="rounded-xl border-2 border-primary/30 bg-background p-8 shadow-md relative">
+                <Badge className="absolute -top-2.5 left-6 text-[10px]">
+                  Most Popular
+                </Badge>
+                <h3 className="text-xl font-semibold tracking-tight flex items-center gap-2">
+                  Pro
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">For serious projects</p>
+                <div className="mt-6 mb-8">
+                  <span className="text-4xl font-extrabold">₹499</span>
+                  <span className="text-muted-foreground ml-2">/ 30 days</span>
+                </div>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    5 projects
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    2M token cap
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    Higher token limits
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    Priority support
+                  </li>
+                </ul>
+                <div className="mt-8">
+                  <Button className="w-full" asChild>
+                    <Link href={isAuth ? "/billing" : "/auth/register"}>
+                      {isAuth ? "Upgrade Now" : "Start Free, Upgrade Later"}
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </div>

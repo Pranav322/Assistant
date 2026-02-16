@@ -6,6 +6,7 @@ import {
     AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,9 +16,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings } from "lucide-react";
+import { CreditCard, LogOut, Settings } from "lucide-react";
 import { clearToken, getUserEmail } from "@/lib/auth";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 function getInitials(email: string): string {
     const atIndex = email.indexOf("@");
@@ -31,12 +34,28 @@ function getInitials(email: string): string {
 
 export function UserNav() {
     const [email, setEmail] = useState("");
+    const [plan, setPlan] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const userEmail = getUserEmail();
         if (userEmail) {
             setEmail(userEmail);
         }
+    }, []);
+
+    useEffect(() => {
+        async function fetchPlan() {
+            try {
+                const token = localStorage.getItem("rag_user_token");
+                if (!token) return;
+                const data = await apiRequest<{ plan: string }>("/billing/plan", { token });
+                setPlan(data.plan);
+            } catch {
+                // Silently fail — badge just won't show
+            }
+        }
+        fetchPlan();
     }, []);
 
     function logout() {
@@ -56,8 +75,18 @@ export function UserNav() {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{email || "My Account"}</p>
+                    <div className="flex flex-col space-y-1.5">
+                        <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium leading-none">{email || "My Account"}</p>
+                            {plan && (
+                                <Badge
+                                    variant={plan === "pro" ? "default" : "secondary"}
+                                    className="text-[10px] px-1.5 py-0"
+                                >
+                                    {plan === "pro" ? "Pro" : "Free"}
+                                </Badge>
+                            )}
+                        </div>
                         {email && (
                             <p className="text-xs leading-none text-muted-foreground">
                                 Manage your account
@@ -67,6 +96,10 @@ export function UserNav() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => router.push("/billing")}>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        <span>Billing</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
-import { Plus, Terminal, Settings2 } from "lucide-react";
+import { Plus, Terminal, Settings2, Sparkles, X } from "lucide-react";
 import { fetcher, apiRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,12 +39,28 @@ export default function ProjectsPage() {
   const [createError, setCreateError] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [plan, setPlan] = useState<string | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     setTitle("Projects");
     setBackHref(null);
     setProjectName(null);
   }, [setTitle, setBackHref, setProjectName]);
+
+  useEffect(() => {
+    async function fetchPlan() {
+      try {
+        const token = localStorage.getItem("rag_user_token");
+        if (!token) return;
+        const data = await apiRequest<{ plan: string }>("/billing/plan", { token });
+        setPlan(data.plan);
+      } catch {
+        // silently fail
+      }
+    }
+    fetchPlan();
+  }, []);
 
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
@@ -87,6 +103,33 @@ export default function ProjectsPage() {
             New Project
           </Button>
         </div>
+
+        {plan === "free" && !bannerDismissed && (
+          <div className="mb-6 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Unlock more with Pro</p>
+                <p className="text-xs text-muted-foreground">
+                  Get 5 projects, 2M tokens, and priority support — ₹499/month
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" asChild>
+                <Link href="/billing">Upgrade</Link>
+              </Button>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
