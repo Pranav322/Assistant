@@ -30,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-6 sm:px-8 lg:px-12">
+        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-4 sm:px-8 lg:px-12">
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
@@ -61,7 +61,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-muted/40 blur-3xl" />
 
-        <div className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col gap-12 px-6 py-12 sm:px-8 lg:flex-row lg:items-center lg:gap-16 lg:px-12">
+        <div className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col gap-12 px-4 py-8 sm:px-8 sm:py-12 lg:flex-row lg:items-center lg:gap-16 lg:px-12">
           <div className="flex-1 space-y-8">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">

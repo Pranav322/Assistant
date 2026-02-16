@@ -90,34 +90,34 @@ export default function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-background selection:bg-primary/10">
-      <main className="mx-auto w-full max-w-[1400px] px-6 py-12 animate-fade-in sm:px-8 lg:px-12">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="mx-auto w-full max-w-[1400px] px-4 py-8 animate-fade-in sm:px-8 lg:px-12">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
             <p className="text-muted-foreground">
               Manage your assistants and integrations.
             </p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             New Project
           </Button>
         </div>
 
         {plan === "free" && !bannerDismissed && (
-          <div className="mb-6 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="mb-6 flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-medium">Unlock more with Pro</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground text-pretty">
                   Get 5 projects, 2M tokens, and priority support — ₹499/month
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end sm:self-auto">
               <Button size="sm" asChild>
                 <Link href="/billing">Upgrade</Link>
               </Button>
@@ -158,8 +158,8 @@ export default function ProjectsPage() {
                       {project.id.slice(0, 8)}
                     </Badge>
                   </div>
-                  <div>
-                    <h3 className="font-semibold tracking-tight">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold tracking-tight truncate">
                       {project.name}
                     </h3>
                     <p className="text-sm text-muted-foreground truncate">

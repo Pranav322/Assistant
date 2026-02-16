@@ -562,7 +562,21 @@ export default function ProjectDetailPage() {
   };
 
   const originToUse = customOrigin ? normalizeOrigin(customOrigin) : originValue;
-  const embedSnippet = `<script src="${widgetBaseUrl}/embed.js" data-token="<WIDGET_TOKEN>" data-origin="${originToUse}" data-project-id="${project.id}" data-api-base-url="${apiBaseUrl}" data-mode="${embedMode}"${embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth) ? ` data-width="${embedWidth}"` : ""}${embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight) ? ` data-height="${embedHeight}"` : ""} defer></script>`;
+  const embedSnippet = `<script
+  src="${widgetBaseUrl}/embed.js"
+  data-token="<WIDGET_TOKEN>"
+  data-origin="${originToUse}"
+  data-project-id="${project.id}"
+  data-api-base-url="${apiBaseUrl}"
+  data-mode="${embedMode}"${embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth)
+      ? `\n  data-width="${embedWidth}"`
+      : ""
+    }${embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight)
+      ? `\n  data-height="${embedHeight}"`
+      : ""
+    }
+  defer
+></script>`;
 
   const previewOrigin = originToUse;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
@@ -571,15 +585,17 @@ export default function ProjectDetailPage() {
   const isNewProject = (sources?.length ?? 0) === 0;
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-20">
-      <main className="mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-8 lg:px-12 relative">
+    <div className="min-h-screen bg-muted/30 pb-20 w-full max-w-[100vw] overflow-x-hidden">
+      <main className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-8 lg:px-12 relative overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
-            <TabsTrigger value="integration">Integration</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="w-auto inline-flex justify-start h-auto p-1 bg-muted/50 rounded-lg">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
+              <TabsTrigger value="integration">Integration</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+          </div>
 
 
           <TabsContent value="overview" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -592,7 +608,7 @@ export default function ProjectDetailPage() {
 
                 <div className="grid gap-6 md:grid-cols-3">
                   {/* Step 1: Add Data */}
-                  <Card 
+                  <Card
                     className="relative overflow-hidden border-2 border-primary/20 bg-primary/5 hover:border-primary/50 transition-colors cursor-pointer group"
                     onClick={() => setActiveTab("knowledge-base")}
                   >
@@ -612,7 +628,7 @@ export default function ProjectDetailPage() {
                   </Card>
 
                   {/* Step 2: Configure Widget */}
-                  <Card 
+                  <Card
                     className="relative overflow-hidden hover:border-primary/50 transition-colors cursor-pointer group"
                     onClick={() => setActiveTab("integration")}
                   >
@@ -631,11 +647,11 @@ export default function ProjectDetailPage() {
                     </CardContent>
                   </Card>
 
-                   {/* Step 3: Embed */}
-                   <Card 
+                  {/* Step 3: Embed */}
+                  <Card
                     className="relative overflow-hidden hover:border-primary/50 transition-colors cursor-pointer group"
                     onClick={() => setActiveTab("integration")}
-                   >
+                  >
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                       <MessageSquare className="w-24 h-24" />
                     </div>
@@ -654,15 +670,15 @@ export default function ProjectDetailPage() {
               </div>
             ) : (
               <div className="space-y-8">
-                 <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold tracking-tight">Project Dashboard</h2>
-                      <p className="text-muted-foreground">Monitor your chatbot&apos;s performance and usage.</p>
-                    </div>
-                    <Button onClick={() => setActiveTab("integration")} className="gap-2">
-                      <Play className="w-4 h-4" /> Test Chatbot
-                    </Button>
-                 </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight">Project Dashboard</h2>
+                    <p className="text-muted-foreground">Monitor your chatbot&apos;s performance and usage.</p>
+                  </div>
+                  <Button onClick={() => setActiveTab("integration")} className="gap-2">
+                    <Play className="w-4 h-4" /> Test Chatbot
+                  </Button>
+                </div>
 
                 <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <Card>
@@ -689,50 +705,50 @@ export default function ProjectDetailPage() {
                 </section>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                   <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-500"/> System Status</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                           <div className="flex justify-between items-center border-b pb-2">
-                              <span className="text-sm">Knowledge Base</span>
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
-                           </div>
-                           <div className="flex justify-between items-center border-b pb-2">
-                              <span className="text-sm">Widget API</span>
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Operational</Badge>
-                           </div>
-                           <div className="flex justify-between items-center">
-                              <span className="text-sm">Embed Script</span>
-                              <div className="flex items-center gap-2">
-                                <span className="relative flex h-2 w-2">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                </span>
-                                <span className="text-xs text-muted-foreground">Ready</span>
-                              </div>
-                           </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-500" /> System Status</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b pb-2">
+                          <span className="text-sm">Knowledge Base</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
                         </div>
-                      </CardContent>
-                   </Card>
+                        <div className="flex justify-between items-center border-b pb-2">
+                          <span className="text-sm">Widget API</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Operational</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Embed Script</span>
+                          <div className="flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            <span className="text-xs text-muted-foreground">Ready</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                   <Card>
-                      <CardHeader>
-                         <CardTitle>Quick Actions</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                         <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("knowledge-base")}>
-                            <Upload className="mr-2 h-4 w-4" /> Add New Documents
-                         </Button>
-                         <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("integration")}>
-                            <Code className="mr-2 h-4 w-4" /> Update Widget Settings
-                         </Button>
-                         <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("settings")}>
-                            <Key className="mr-2 h-4 w-4" /> Manage API Keys
-                         </Button>
-                      </CardContent>
-                   </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("knowledge-base")}>
+                        <Upload className="mr-2 h-4 w-4" /> Add New Documents
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("integration")}>
+                        <Code className="mr-2 h-4 w-4" /> Update Widget Settings
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start h-auto py-3" onClick={() => setActiveTab("settings")}>
+                        <Key className="mr-2 h-4 w-4" /> Manage API Keys
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             )}
@@ -955,9 +971,9 @@ export default function ProjectDetailPage() {
               </div>
             )}
 
-            <div className="grid gap-6 lg:grid-cols-2 items-start">
+            <div className="grid gap-6 lg:grid-cols-2 items-start min-w-0">
               {/* Left Column: Configuration */}
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
@@ -1046,8 +1062,10 @@ export default function ProjectDetailPage() {
                               variant="outline"
                               className="w-full justify-between font-mono text-sm h-9 shadow-sm px-3"
                             >
-                              {customOrigin || originValue}
-                              <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                              <span className="truncate flex-1 text-left">
+                                {customOrigin || originValue}
+                              </span>
+                              <ChevronDown className="ml-2 h-4 w-4 opacity-50 flex-shrink-0" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-[200px]">
@@ -1057,7 +1075,7 @@ export default function ProjectDetailPage() {
                                 onClick={() => setCustomOrigin(origin)}
                                 className="font-mono text-xs cursor-pointer"
                               >
-                                {origin}
+                                <span className="truncate block max-w-[240px]">{origin}</span>
                               </DropdownMenuItem>
                             ))}
                             <DropdownMenuSeparator />
@@ -1107,7 +1125,7 @@ export default function ProjectDetailPage() {
               </div>
 
               {/* Right Column: Code & Preview */}
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0">
                 <Card className="bg-primary/5 border-primary/20">
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
@@ -1116,8 +1134,8 @@ export default function ProjectDetailPage() {
                     <CardDescription>Paste this into your HTML `&lt;body&gt;`.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="relative">
-                      <CopyBlock value={embedSnippet} />
+                    <div className="relative w-full max-w-full overflow-hidden">
+                      <CopyBlock value={embedSnippet} className="whitespace-pre-wrap break-all" />
                     </div>
                   </CardContent>
                 </Card>
@@ -1128,7 +1146,6 @@ export default function ProjectDetailPage() {
                       <CardTitle className="text-base flex items-center gap-2">
                         <Play className="h-4 w-4" /> Live Simulator
                       </CardTitle>
-                      <CardDescription>Test your configuration before deploying.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="rounded-lg border bg-background p-4 flex flex-col items-center justify-center gap-4 text-center min-h-[120px]">
@@ -1150,7 +1167,7 @@ export default function ProjectDetailPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-12">
-            <div className="grid gap-8">
+            <div className="grid gap-8 min-w-0">
               {/* Allowed Origins Section */}
               <Card>
                 <CardHeader>
@@ -1185,12 +1202,12 @@ export default function ProjectDetailPage() {
                     <div className="rounded-md border bg-muted/20 divide-y">
                       {project.allowed_origins && project.allowed_origins.length > 0 ? (
                         project.allowed_origins.map((origin) => (
-                          <div key={origin} className="flex items-center justify-between p-3 text-sm">
-                            <span className="font-mono">{origin}</span>
+                          <div key={origin} className="flex items-center justify-between p-3 text-sm group">
+                            <span className="font-mono truncate mr-2 block min-w-0 flex-1" title={origin}>{origin}</span>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
                               onClick={() => handleRemoveOrigin(origin)}
                               disabled={isUpdatingOrigins}
                             >
@@ -1221,46 +1238,50 @@ export default function ProjectDetailPage() {
                 <CardContent className="space-y-8">
                   <div className="space-y-6">
                     {/* 1. Generate Key Section */}
-                        <div className="space-y-3">
-                          <Label className="text-sm font-medium">Allowed Origin (Security)</Label>
-                          {project.allowed_origins && project.allowed_origins.length > 0 ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full justify-between font-mono text-sm h-9 shadow-sm px-3"
-                                >
-                                  {customOrigin || originValue}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-[200px]">
-                                {project.allowed_origins.map((origin) => (
-                                  <DropdownMenuItem
-                                    key={origin}
-                                    onClick={() => setCustomOrigin(origin)}
-                                    className="font-mono text-xs cursor-pointer"
-                                  >
-                                    {origin}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground bg-muted/30">
-                              No origins configured. Go to Settings to add one.
-                            </div>
-                          )}
-                          <p className="text-[11px] text-muted-foreground">
-                            Select which allowed domain this snippet is for.
-                          </p>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Allowed Origin (Security)</Label>
+                      {project.allowed_origins && project.allowed_origins.length > 0 ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-between font-mono text-sm h-9 shadow-sm px-3"
+                            >
+                              <span className="truncate flex-1 text-left">
+                                {customOrigin || originValue}
+                              </span>
+                              <ChevronDown className="ml-2 h-4 w-4 opacity-50 flex-shrink-0" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] min-w-[200px]">
+                            {project.allowed_origins.map((origin) => (
+                              <DropdownMenuItem
+                                key={origin}
+                                onClick={() => setCustomOrigin(origin)}
+                                className="font-mono text-xs cursor-pointer"
+                              >
+                                <span className="truncate block max-w-[240px]">{origin}</span>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground bg-muted/30">
+                          No origins configured. Go to Settings to add one.
                         </div>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">
+                        Select which allowed domain this snippet is for.
+                      </p>
+                    </div>
 
                     {/* 2. New Key Display */}
                     {freshKey?.api_key && (
                       <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20 animate-in fade-in zoom-in-95 duration-300">
                         <p className="text-xs font-bold uppercase text-green-700 dark:text-green-400 mb-2">New Key Created</p>
-                        <CopyBlock value={freshKey.api_key} />
+                        <div className="relative w-full max-w-full overflow-hidden">
+                          <CopyBlock value={freshKey.api_key} className="break-all whitespace-pre-wrap" />
+                        </div>
                         <p className="mt-2 text-xs text-muted-foreground italic">Important: Copy this key now. It will not be shown again for security reasons.</p>
                       </div>
                     )}
@@ -1273,12 +1294,15 @@ export default function ProjectDetailPage() {
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         Use the \`x-api-key\` header in your requests. This key provides full access to your project - keep it safe!
                       </p>
-                      <CopyBlock
-                        value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
+                      <div className="relative w-full max-w-full overflow-hidden">
+                        <CopyBlock
+                          className="whitespace-pre-wrap break-all"
+                          value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
   -H "x-api-key: ${freshKey?.api_key || "YOUR_API_KEY"}" \\
   -H "Content-Type: application/json" \\
   -d '{"url": "https://example.com"}'`}
-                      />
+                        />
+                      </div>
                     </div>
 
                     {/* 4. Active Keys List */}

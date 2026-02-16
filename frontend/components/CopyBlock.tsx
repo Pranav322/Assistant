@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 type CopyBlockProps = {
   label?: string;
   value: string;
+  className?: string;
 };
 
-export default function CopyBlock({ label, value }: CopyBlockProps) {
+export default function CopyBlock({ label, value, className }: CopyBlockProps) {
   const [copied, setCopied] = useState(false);
 
   async function onCopy() {
@@ -23,7 +24,7 @@ export default function CopyBlock({ label, value }: CopyBlockProps) {
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
       <div className="relative rounded-lg border bg-muted font-mono text-sm">
-        <pre className="overflow-x-auto p-4 pr-12">
+        <pre className={`p-4 pr-12 ${className || "overflow-x-auto"}`}>
           <code>{value}</code>
         </pre>
         <div className="absolute right-1 top-1">

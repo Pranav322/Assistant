@@ -28,7 +28,7 @@ export default function Home() {
               Contextly
             </span>
           </div>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2 sm:gap-4">
             <Link
               href="#pricing"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
