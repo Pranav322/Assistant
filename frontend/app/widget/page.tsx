@@ -192,7 +192,7 @@ function WidgetContent() {
   const containerClasses = cn(
     "flex w-full flex-col bg-background text-foreground overflow-hidden font-sans",
     mode === "popup"
-      ? "h-[100dvh] sm:h-[600px] sm:max-w-[400px] border shadow-2xl rounded-2xl "
+      ? "fixed bottom-4 right-4 z-50 h-[600px] w-full max-w-[400px] border shadow-2xl rounded-2xl overflow-hidden flex flex-col bg-background"
       : "h-[100dvh] w-full"
   );
 
