@@ -2,7 +2,7 @@
 
 A production-ready RAG chatbot platform built with FastAPI, PostgreSQL (pgvector), Redis, and Dramatiq.
 
-## Documentation
+## Documentation 
 
 - **[User Guide](docs/user-guide/index.md)**: For end-users and administrators managing projects. 
 - **[Developer Guide](docs/developer-guide/index.md)**: For developers, self-hosters, and contributors.
