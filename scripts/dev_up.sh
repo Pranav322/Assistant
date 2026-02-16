@@ -2,48 +2,78 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-REBUILD=false
-
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --build) REBUILD=true ;;
-        *) echo "Unknown parameter: $1"; exit 1 ;;
-    esac
-    shift
-done
-
-echo "Starting Docker services (Redis)..."
-docker-compose -f "$ROOT_DIR/docker-compose.yml" up -d redis
-
-cleanup() {
-  echo "Stopping Docker services..."
-  docker-compose -f "$ROOT_DIR/docker-compose.yml" stop
-}
-
-trap cleanup EXIT
-
 FRONTEND_DIR="$ROOT_DIR/frontend"
-if [ ! -d "$FRONTEND_DIR" ]; then
-  echo "Frontend directory not found: $FRONTEND_DIR"
-  exit 1
+
+# ── Colors ──────────────────────────────────────────────────
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log()  { echo -e "${GREEN}[dev]${NC} $1"; }
+warn() { echo -e "${YELLOW}[dev]${NC} $1"; }
+
+# ── 1. Ensure Docker is running ─────────────────────────────
+if ! docker info &>/dev/null; then
+  log "Docker is not running."
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+      log "Starting Docker Desktop..."
+      open -a Docker
+  else
+      warn "Please start Docker manually."
+  fi
+
+  printf "  Waiting for Docker"
+  while ! docker info &>/dev/null; do
+    printf "."
+    sleep 2
+  done
+  echo ""
+  log "Docker is ready."
 fi
 
-echo "API: http://localhost:8001"
-echo "Frontend: http://localhost:3000"
-echo "Press Ctrl+C to stop the frontend dev server."
+# ── 2. Start Redis via docker-compose ───────────────────────
+log "Starting Redis..."
+docker-compose -f "$ROOT_DIR/docker-compose.yml" up -d redis 2>&1 | grep -v "version.*obsolete" || true
 
-# Kill previous background backend if running
-pkill -f "uvicorn app.main:app" || true
+# Wait until Redis is actually accepting connections
+printf "  Waiting for Redis"
+until docker exec chatbot-redis redis-cli ping &>/dev/null; do
+  printf "."
+  sleep 1
+done
+echo ""
+log "Redis is ready on localhost:6379."
 
-# Start backend in background locally (avoiding Docker rebuild issues)
-echo "Starting Backend locally..."
+# ── 3. Kill any stale backend processes ─────────────────────
+pkill -f "uvicorn app.main:app" 2>/dev/null || true
+
+# ── 4. Cleanup on exit (Ctrl+C) ────────────────────────────
+BACKEND_PID=""
+cleanup() {
+  echo ""
+  log "Shutting down..."
+  [[ -n "$BACKEND_PID" ]] && kill "$BACKEND_PID" 2>/dev/null || true
+  docker-compose -f "$ROOT_DIR/docker-compose.yml" stop 2>&1 | grep -v "version.*obsolete" || true
+  log "Done."
+}
+trap cleanup EXIT
+
+# ── 5. Start backend ───────────────────────────────────────
+log "Starting backend on http://localhost:8001 ..."
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload &
 BACKEND_PID=$!
 
-cleanup() {
-  echo "Stopping services..."
-  kill $BACKEND_PID || true
-  docker-compose -f "$ROOT_DIR/docker-compose.yml" stop
-}
+# Give backend a moment to boot
+sleep 2
 
-(cd "$FRONTEND_DIR" && pnpm run dev)
+# ── 6. Start frontend (foreground — Ctrl+C stops everything)
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  API:      http://localhost:8001${NC}"
+echo -e "${CYAN}  Frontend: http://localhost:3000${NC}"
+echo -e "${CYAN}  Press Ctrl+C to stop everything.${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+cd "$FRONTEND_DIR" && pnpm run dev
