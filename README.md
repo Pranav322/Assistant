@@ -1,4 +1,4 @@
-# RAG Chatbot Platform
+# RAG Chatbot Platform 
 
 A production-ready RAG chatbot platform built with FastAPI, PostgreSQL (pgvector), Redis, and Dramatiq.
 
