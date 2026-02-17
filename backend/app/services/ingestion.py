@@ -147,6 +147,12 @@ class IngestionService:
             texts_to_embed = [c.text for c in chunks]
             embeddings_list = await self.embedder.get_embeddings(texts_to_embed)
 
+            # Issue #6: Verify embedding count matches chunk count
+            if len(embeddings_list) != len(chunks):
+                raise ValueError(
+                    f"Embedding mismatch: {len(chunks)} chunks but {len(embeddings_list)} embeddings returned"
+                )
+
             # 7. Save Chunks and Embeddings (Bulk Insert)
             chunk_records = []
             for idx, chunk_data in enumerate(chunks):

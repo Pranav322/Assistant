@@ -30,6 +30,8 @@ async def upload_document(
     Upload a document for processing.
     This creates a source record and queues a background task for chunking and embedding.
     """
+    from sqlalchemy import select, update, func
+
     # 1. Read file content
     content = await file.read()
     filename = cast(str, file.filename) if file.filename else "upload"
@@ -46,14 +48,7 @@ async def upload_document(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # 2. Check project exists
-    # (In a real app, this would be validated by auth/ownership)
-    # project = await db.get(Project, project_id)
-    # if not project: ...
-
-    # 3. Check for existing source
-    from sqlalchemy import select
-
+    # 2. Check for existing source
     existing_source = await db.execute(
         select(Source).where(
             Source.project_id == project_id, Source.content_hash == content_hash
@@ -68,11 +63,57 @@ async def upload_document(
                 "status": source.status,
                 "message": "File already processed",
             }
-        # If pending/failed, we might want to re-process. For now, let's continue.
+        if source.status in ["pending", "processing"]:
+            return {
+                "source_id": source.id,
+                "status": source.status,
+                "message": "File is already being processed",
+            }
+        # If status is "failed", we will attempt to re-process.
 
-    if not source:
-        # Create Source record
+    # 3. Upload to Storage (Mandatory)
+    # We use existing source ID if available, or generate a new one for the path
+    source_id_for_path = source.id if source else uuid.uuid4()
+    storage_service = StorageService()
+    storage_path = f"{project_id}/sources/{source_id_for_path}_{filename}"
+
+    uploaded_path = await storage_service.upload_file(
+        content,
+        storage_path,
+        content_type=validation.mime_type,
+        metadata={"content_hash": content_hash},
+    )
+
+    if not uploaded_path:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload file to storage",
+        )
+
+    # 4. Create or Update Source
+    if source:
+        # Atomic update: 'failed' -> 'pending' (Issue #10)
+        result = await db.execute(
+            update(Source)
+            .where(Source.id == source.id, Source.status == "failed")
+            .values(
+                status="pending",
+                storage_location=uploaded_path,
+                metadata_=func.jsonb_set(Source.metadata_, "{error}", "null"),
+                updated_at=func.now(),
+            )
+        )
+        if result.rowcount == 0:
+            # If update failed, it means status changed concurrently or wasn't failed
+            await db.refresh(source)
+            return {
+                "source_id": source.id,
+                "status": source.status,
+                "message": "Status updated concurrently",
+            }
+    else:
         source = Source(
+            id=source_id_for_path,
             project_id=project_id,
             type=file_type,
             content_hash=content_hash,
@@ -82,53 +123,34 @@ async def upload_document(
                 "size_bytes": validation.size_bytes,
                 "page_count": validation.page_count,
             },
+            storage_location=uploaded_path,
             status="pending",
         )
         db.add(source)
-        await db.commit()
-        await db.refresh(source)
 
-        await log_audit_event(
-            db,
-            action="file_uploaded",
-            project_id=project_id,
-            user_id=getattr(request.state, "user_id", None),
-            resource_type="source",
-            resource_id=str(source.id),
-        )
+    await db.commit()
+    await db.refresh(source)
 
-    # 4. Storage (Optional but recommended)
-    storage_service = StorageService()
-    storage_path = f"{project_id}/sources/{source.id}_{filename}"
-    uploaded_path = await storage_service.upload_file(
-        content,
-        storage_path,
-        content_type=validation.mime_type,
-        metadata={"content_hash": content_hash},
+    if not source:  # Should not happen, but satisfies type checker if needed
+        raise HTTPException(status_code=500, detail="Failed to create source")
+
+    await log_audit_event(
+        db,
+        action="file_uploaded",
+        project_id=project_id,
+        user_id=getattr(request.state, "user_id", None),
+        resource_type="source",
+        resource_id=str(source.id),
     )
 
-    if uploaded_path:
-        source.storage_location = uploaded_path
-        source.metadata_ = {
-            **(source.metadata_ or {}),
-            "storage_path": uploaded_path,
-        }
-        await db.commit()
-
-    import base64
-
-    # 5. Queue Task
-    # If storage skipped, we pass content directly (only for small files in this Phase 3 MVP)
-    # Dramatiq requires JSON serializable arguments, so we base64 encode bytes.
+    # 5. Queue Task (Issue #7: No base64 content)
     process_ingestion_task.send(
         source_id=str(source.id),
         project_id=str(project_id),
         filename=filename,
         file_type=source.type,
         storage_path=uploaded_path,
-        file_content=(
-            base64.b64encode(content).decode("utf-8") if not uploaded_path else None
-        ),
+        file_content=None,
     )
 
     return {
@@ -185,7 +207,7 @@ async def ingest_url(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     content_hash = hashlib.sha256(url.encode()).hexdigest()
-    from sqlalchemy import select
+    from sqlalchemy import select, update, func
 
     existing_source = await db.execute(
         select(Source).where(
@@ -195,16 +217,35 @@ async def ingest_url(
     )
     source = existing_source.scalar_one_or_none()
     if source:
-        return {"source_id": source.id, "status": source.status}
+        if source.status == "completed":
+            return {"source_id": source.id, "status": source.status}
+        if source.status in ["pending", "processing"]:
+            return {"source_id": source.id, "status": source.status}
 
-    source = Source(
-        project_id=project_id,
-        type="url",
-        content_hash=content_hash,
-        metadata_={"source_url": url},
-        status="pending",
-    )
-    db.add(source)
+        # Issue #4: Retry failed URL ingestion
+        result = await db.execute(
+            update(Source)
+            .where(Source.id == source.id, Source.status == "failed")
+            .values(
+                status="pending",
+                metadata_=func.jsonb_set(Source.metadata_, "{error}", "null"),
+                updated_at=func.now(),
+            )
+        )
+        if result.rowcount == 0:
+            await db.refresh(source)
+            return {"source_id": source.id, "status": source.status}
+
+    else:
+        source = Source(
+            project_id=project_id,
+            type="url",
+            content_hash=content_hash,
+            metadata_={"source_url": url},
+            status="pending",
+        )
+        db.add(source)
+
     await db.commit()
     await db.refresh(source)
 

@@ -253,6 +253,13 @@ def widget_token_required(endpoint: str):
             record_auth_failure("token_invalid")
             raise HTTPException(status_code=401, detail="Invalid token type")
 
+        # Issue #8: Check if project is deleted
+        project_id = uuid.UUID(claims["sub"])
+        project = await _load_project(project_id, db)
+        if not project:
+            record_auth_failure("token_invalid_project")
+            raise HTTPException(status_code=404, detail="Project not found or deleted")
+
         origin = _get_request_origin(request)
         if not origin or not validate_origin(origin, claims.get("origins", [])):
             await log_audit_event(
@@ -268,7 +275,6 @@ def widget_token_required(endpoint: str):
             record_auth_failure("origin_mismatch")
             raise HTTPException(status_code=403, detail="Origin not allowed")
 
-        project_id = uuid.UUID(claims["sub"])
         token_hash = hash_widget_token(token)
         result = await db.execute(
             select(BrowserToken).where(

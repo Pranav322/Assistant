@@ -2,6 +2,7 @@ from typing import BinaryIO, Optional
 
 import aioboto3
 import structlog
+from botocore.client import Config
 
 from app.core.config import settings
 
@@ -42,6 +43,7 @@ class StorageService:
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
                 region_name=self.region,
+                config=Config(signature_version="s3v4"),
             ) as s3:
                 await s3.put_object(
                     Bucket=self.bucket,
@@ -71,8 +73,10 @@ class StorageService:
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
                 region_name=self.region,
+                config=Config(signature_version="s3v4"),
             ) as s3:
                 response = await s3.get_object(Bucket=self.bucket, Key=path)
+
                 async with response["Body"] as stream:
                     return await stream.read()
         except Exception as e:
@@ -93,8 +97,10 @@ class StorageService:
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
                 region_name=self.region,
+                config=Config(signature_version="s3v4"),
             ) as s3:
                 await s3.delete_object(Bucket=self.bucket, Key=path)
+
                 logger.info("file_deleted", path=path)
                 return True
         except Exception as e:
@@ -111,8 +117,10 @@ class StorageService:
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
                 region_name=self.region,
+                config=Config(signature_version="s3v4"),
             ) as s3:
                 await s3.head_bucket(Bucket=self.bucket)
+
             return True
         except Exception as e:
             logger.error("storage_health_check_failed", error=str(e))

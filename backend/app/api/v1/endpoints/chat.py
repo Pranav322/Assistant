@@ -27,7 +27,10 @@ async def chat(
     _auth: deps.AuthContext = Depends(deps.chat_auth_required()),
     redis_client: redis.Redis = Depends(deps.get_redis),
 ):
-    project_result = await db.execute(select(Project).where(Project.id == project_id))
+    # Issue #8: Check if project is deleted
+    project_result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
     project = project_result.scalar_one_or_none()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")

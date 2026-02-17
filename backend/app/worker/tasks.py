@@ -53,6 +53,20 @@ async def process_ingestion_async(
                 error="No content found",
                 source_id=source_id,
             )
+            # Issue #3: Update status to failed so user is not stuck in pending
+            result = await db.execute(
+                select(Source).where(
+                    Source.id == source_uuid, Source.project_id == project_uuid
+                )
+            )
+            source_record = result.scalar_one_or_none()
+            if source_record:
+                source_record.status = "failed"
+                source_record.metadata_ = {
+                    **(source_record.metadata_ or {}),
+                    "error": "Content not found or empty",
+                }
+                await db.commit()
             return
 
         try:
@@ -106,12 +120,41 @@ async def process_ingestion_async(
             logger.info("ingestion_task_completed", source_id=source_id)
         except Exception as e:
             logger.error("ingestion_task_failed", error=str(e), source_id=source_id)
+            # Issue #2: Re-raise to trigger Dramatiq retry.
+            # On final retry, we should ideally write to dead letter, but Dramatiq
+            # middleware is the standard place. Here we just ensure retries happen.
+            # We also ensure the status is marked failed in the DB by the service
+            # but we re-raise so the task queue knows it failed.
+
+            # Write to Dead Letter Queue if retries exhausted (naive check)
+            # Note: This is an approximation. Ideally use middleware.
+            try:
+                msg = dramatiq.middleware.CurrentMessage.get_current_message()
+                retries = msg.options.get("retries", 0) if msg else 0
+                if retries >= 3:  # 0, 1, 2, 3 (final attempt)
+                    from app.models import IngestionDeadLetter
+
+                    dead_letter = IngestionDeadLetter(
+                        source_id=source_uuid,
+                        error=str(e),
+                        payload={
+                            "filename": filename,
+                            "file_type": file_type,
+                            "storage_path": storage_path,
+                            "source_url": source_url,
+                        },
+                    )
+                    db.add(dead_letter)
+                    await db.commit()
+            except Exception:
+                pass  # Don't let DLQ failure hide original error
+
+            raise e
 
 
 @dramatiq.actor(
     queue_name="ingestion",
     max_retries=3,
-    retry_on_errors=[Exception],
 )
 def process_ingestion_task(
     source_id: str,

@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     # User limits
     MAX_PROJECTS_PER_USER: int = 1
     USER_TOKEN_CAP: int = 200000
+    CHAT_HISTORY_TOKEN_BUDGET: int = 4096
 
     # Razorpay
     RAZORPAY_KEY_ID: str | None = None

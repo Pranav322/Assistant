@@ -42,7 +42,9 @@ class ChatService:
             token_count=len(self.tokenizer.encode(query)),
         )
 
-        history = await self._get_conversation_history(conversation.id, limit=5)
+        history = await self._get_conversation_history(
+            conversation.id, limit=20
+        )  # Increase fetch limit for budgeting
         retrieval = await self.retrieval.retrieve(
             project_id,
             query,
@@ -50,7 +52,9 @@ class ChatService:
             query_id=conversation.id,
         )
 
-        response_text, usage = await self._chat_completion(retrieval.context.full_text)
+        response_text, usage = await self._chat_completion(
+            retrieval.context.full_text, history
+        )
         await self._store_message(
             conversation.id,
             "assistant",
@@ -121,14 +125,38 @@ class ChatService:
                 history.append({"role": message.role, "content": message.content})
         return history
 
-    async def _chat_completion(self, prompt: str) -> tuple[str, dict[str, Any] | None]:
+    async def _chat_completion(
+        self, prompt: str, history: list[dict[str, str]] | None = None
+    ) -> tuple[str, dict[str, Any] | None]:
         system_prompt = (
             "You are a helpful assistant. Use the provided documents to answer."
         )
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Issue #1: Inject history with token budget
+        if history:
+            budget = settings.CHAT_HISTORY_TOKEN_BUDGET
+            selected_history = []
+            used_tokens = 0
+            # History is returned newest-first from _get_conversation_history?
+            # No, _get_conversation_history reverses it to chronological (oldest first).
+            # Wait, line 117: messages = list(reversed(result.scalars().all())) -> Oldest First
+            # So history is [Oldest, ..., Newest]
+
+            # We want to keep recent messages, so iterate backwards
+            for msg in reversed(history):
+                content = msg.get("content") or ""
+                token_count = len(self.tokenizer.encode(content))
+                if used_tokens + token_count > budget:
+                    break
+                selected_history.append(msg)
+                used_tokens += token_count
+
+            # Restore chronological order
+            messages.extend(reversed(selected_history))
+
+        messages.append({"role": "user", "content": prompt})
+
         response = await self.client.chat.completions.create(
             model=settings.AZURE_DEPLOYMENT_NAME,
             messages=messages,
@@ -179,10 +207,16 @@ class ChatService:
             "total_tokens": (conversation.token_usage or {}).get("total_tokens", 0)
             + total_tokens,
         }
-        conversation.last_message_at = datetime.now(timezone.utc)
-        conversation.message_count += 2
+        # Issue #5: Race condition fix.
+        # DB trigger handles message_count and last_message_at updates.
+        # Removing manual increment.
+        # conversation.last_message_at = datetime.now(timezone.utc)
+        # conversation.message_count += 2
 
-        result = await self.db.execute(select(Project).where(Project.id == project_id))
+        # Issue #5 & Review Point 3: Race condition fix with locking
+        result = await self.db.execute(
+            select(Project).where(Project.id == project_id).with_for_update()
+        )
         project = result.scalar_one()
         usage_data = project.usage or {}
         usage_data["requests"] = int(usage_data.get("requests", 0)) + 1
@@ -203,3 +237,4 @@ class ChatService:
             )
 
         await self.db.commit()
+        await self.db.refresh(conversation)  # Refresh to get trigger-updated counts
