@@ -56,10 +56,23 @@ done
 echo ""
 log "Redis is ready on localhost:6379."
 
-# ── 3. Kill any stale backend processes ─────────────────────
+# ── 3. Start worker via docker-compose ────────────────────────
+log "Starting worker..."
+docker-compose -f "docker-compose.yml" up -d worker 2>&1 | grep -v "version.*obsolete" || true
+
+# Wait for worker to be healthy
+printf "  Waiting for worker"
+until docker exec chatbot-worker test -f /app/.venv/bin/dramatiq 2>/dev/null; do
+  printf "."
+  sleep 1
+done
+echo ""
+log "Worker is ready."
+
+# ── 4. Kill any stale backend processes ─────────────────────
 pkill -f "uvicorn app.main:app" 2>/dev/null || true
 
-# ── 4. Cleanup on exit (Ctrl+C) ────────────────────────────
+# ── 7. Cleanup on exit (Ctrl+C) ─────────────────────────────
 BACKEND_PID=""
 cleanup() {
   echo ""
@@ -70,7 +83,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# ── 5. Start backend ───────────────────────────────────────
+# ── 5. Start backend (API) ─────────────────────────────────
 log "Starting backend on http://localhost:8001 ..."
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload &
 BACKEND_PID=$!
