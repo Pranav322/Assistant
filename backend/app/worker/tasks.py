@@ -118,6 +118,26 @@ async def process_ingestion_async(
                 source_id=source_uuid,
             )
             logger.info("ingestion_task_completed", source_id=source_id)
+        except ValueError as e:
+            # Permanent failure (e.g. SSL error, 404, validation error).
+            # Log, mark as failed, and DO NOT retry.
+            logger.error(
+                "ingestion_task_permanent_failure", error=str(e), source_id=source_id
+            )
+            result = await db.execute(
+                select(Source).where(
+                    Source.id == source_uuid, Source.project_id == project_uuid
+                )
+            )
+            source_record = result.scalar_one_or_none()
+            if source_record:
+                source_record.status = "failed"
+                source_record.metadata_ = {
+                    **(source_record.metadata_ or {}),
+                    "error": str(e),
+                }
+                await db.commit()
+            return
         except Exception as e:
             logger.error("ingestion_task_failed", error=str(e), source_id=source_id)
             # Issue #2: Re-raise to trigger Dramatiq retry.

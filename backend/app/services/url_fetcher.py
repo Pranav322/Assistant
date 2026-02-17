@@ -77,28 +77,33 @@ async def fetch_url_content(url: str) -> tuple[bytes, Optional[str], str]:
 
     async with aiohttp.ClientSession(timeout=timeout) as session:
         current_url = validated_url
-        for _ in range(settings.URL_FETCH_MAX_REDIRECTS + 1):
-            async with session.get(current_url, allow_redirects=False) as response:
-                if response.status in (301, 302, 303, 307, 308):
-                    location = response.headers.get("Location")
-                    if not location:
-                        raise ValueError("Redirect without location")
-                    current_url = urljoin(current_url, location)
-                    await validate_url(current_url)
-                    continue
+        try:
+            for _ in range(settings.URL_FETCH_MAX_REDIRECTS + 1):
+                async with session.get(current_url, allow_redirects=False) as response:
+                    if response.status in (301, 302, 303, 307, 308):
+                        location = response.headers.get("Location")
+                        if not location:
+                            raise ValueError("Redirect without location")
+                        current_url = urljoin(current_url, location)
+                        await validate_url(current_url)
+                        continue
 
-                if response.status != 200:
-                    raise ValueError(f"HTTP {response.status}")
+                    if response.status != 200:
+                        raise ValueError(f"HTTP {response.status}")
 
-                content_length = response.headers.get("Content-Length")
-                if content_length and int(content_length) > max_bytes:
-                    raise ValueError("URL content exceeds maximum size")
+                    content_length = response.headers.get("Content-Length")
+                    if content_length and int(content_length) > max_bytes:
+                        raise ValueError("URL content exceeds maximum size")
 
-                content = await response.content.read(max_bytes + 1)
-                if len(content) > max_bytes:
-                    raise ValueError("URL content exceeds maximum size")
+                    content = await response.content.read(max_bytes + 1)
+                    if len(content) > max_bytes:
+                        raise ValueError("URL content exceeds maximum size")
 
-                content_type = response.headers.get("Content-Type")
-                return content, content_type, current_url
+                    content_type = response.headers.get("Content-Type")
+                    return content, content_type, current_url
+        except aiohttp.ClientConnectorCertificateError as e:
+            raise ValueError(f"SSL certificate error: {e}")
+        except aiohttp.ClientError as e:
+            raise ValueError(f"Network error: {e}")
 
     raise ValueError("Too many redirects")
