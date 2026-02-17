@@ -111,11 +111,11 @@ class IngestionService:
                 content_type = metadata.get("content_type") or ""
                 if content_type.startswith("text/html") or file_type == "url":
                     loop = asyncio.get_running_loop()
+                    html_content = file_content.decode("utf-8", errors="ignore")
                     text_content = await loop.run_in_executor(
                         None,
-                        markdownify,
-                        file_content.decode("utf-8", errors="ignore"),
-                        heading_style="ATX",
+                        lambda h: markdownify(h, heading_style="ATX"),
+                        html_content,
                     )
                 else:
                     text_content = file_content.decode("utf-8", errors="ignore")
