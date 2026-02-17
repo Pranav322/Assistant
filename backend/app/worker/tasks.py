@@ -7,8 +7,8 @@ import dramatiq
 import structlog
 from sqlalchemy import select
 
-from app.api.deps import AsyncSessionLocal
 from app.models import Source
+from app.worker.db import WorkerAsyncSessionLocal
 from app.services.ingestion import IngestionService
 from app.services.ingestion_validation import derive_file_type
 from app.services.storage import StorageService
@@ -28,7 +28,10 @@ async def process_ingestion_async(
 ) -> None:
     import base64
 
-    async with AsyncSessionLocal() as db:
+    # Use worker-specific session factory to avoid MissingGreenlet error
+    # This factory creates a fresh engine without pool_pre_ping
+    session_factory = WorkerAsyncSessionLocal()
+    async with session_factory() as db:
         ingestion_service = IngestionService(db)
         storage_service = StorageService()
 

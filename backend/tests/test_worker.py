@@ -1,6 +1,6 @@
 import base64
 import uuid
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -41,8 +41,12 @@ async def test_process_ingestion_task_logic(db):
         mock_service.process_file = AsyncMock()
 
         # 3. Execution (Running the async logic directly)
-        with patch("app.worker.tasks.AsyncSessionLocal") as MockSession:
-            MockSession.return_value.__aenter__.return_value = db
+        with patch("app.worker.tasks.WorkerAsyncSessionLocal") as MockSessionFactory:
+            # WorkerAsyncSessionLocal() returns the session factory
+            mock_session_factory = MagicMock()
+            mock_session_factory.return_value.__aenter__ = AsyncMock(return_value=db)
+            mock_session_factory.return_value.__aexit__ = AsyncMock(return_value=None)
+            MockSessionFactory.return_value = mock_session_factory
 
             await process_ingestion_async(
                 source_id=str(source.id),
