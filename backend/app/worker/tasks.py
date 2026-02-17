@@ -108,7 +108,11 @@ async def process_ingestion_async(
             logger.error("ingestion_task_failed", error=str(e), source_id=source_id)
 
 
-@dramatiq.actor(queue_name="ingestion")
+@dramatiq.actor(
+    queue_name="ingestion",
+    max_retries=3,
+    retry_on_errors=[Exception],
+)
 def process_ingestion_task(
     source_id: str,
     project_id: str,
