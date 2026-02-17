@@ -193,7 +193,7 @@ export default function ProjectDetailPage() {
 
     const apiBaseUrl = API_BASE_URL.replace(/\/$/, "");
     const isLocal = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
-    const defaultOrigin = isLocal ? "http://localhost:3000" : "https://customer.com";
+    const defaultOrigin = isLocal ? "http://localhost:3000" : "https://contextly.live";
     const originValue = normalizeOrigin(project.allowed_origins?.[0] || defaultOrigin);
 
     setTokenLoading(true);
@@ -531,7 +531,7 @@ export default function ProjectDetailPage() {
 
   const apiBaseUrl = API_BASE_URL.replace(/\/$/, "");
   const isLocal = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
-  const defaultOrigin = isLocal ? "http://localhost:3000" : "https://customer.com";
+  const defaultOrigin = isLocal ? "http://localhost:3000" : "https://contextly.live";
   const originValue = normalizeOrigin(project.allowed_origins?.[0] || defaultOrigin);
   const widgetBaseUrl = (() => {
     const envWidget = process.env.NEXT_PUBLIC_WIDGET_BASE_URL;

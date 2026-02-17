@@ -35,7 +35,7 @@ export default function ProjectsPage() {
   const { data: projects, error, isLoading, mutate } = useSWR<Project[]>("/projects", fetcher);
 
   const [name, setName] = useState("");
-  const [origin, setOrigin] = useState("http://localhost:3000");
+  const [origin, setOrigin] = useState("https://contextly.live");
   const [createError, setCreateError] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
