@@ -1,173 +1,139 @@
 # Agent Guide (rag-prod)
 
-This repository is primarily specification docs for a RAG chatbot platform.
-This file is a living summary derived from the specs below and can be updated.
-## for forntend 
+This repository is primarily specification docs for a RAG chatbot platform. This file is a living summary derived from the specs in `.context/` and can be updated.
 
-use pnpm for package management 
+## Project Structure
 
-## contextly-widget directory
-
-It is a standalong npm package just like frontend is standalone directory
+- **backend/** - Python FastAPI application (PEP 621 `pyproject.toml`, uses `uv`)
+- **frontend/** - Next.js 16 application (uses `pnpm`)
+- **contextly-widget/** - Standalone React widget npm package (uses `pnpm`)
 
 ## Primary Specification Files
-These files define the intended behavior of the system. Use them as the baseline
-for implementation decisions and update this guide if the specs change:
+
+These files define intended behavior; use them as the baseline for implementation:
 
 - **.context/Database:** `schema.sql` (Tables, RLS policies, Indexes)
 - **.context/API:** `api_spec.md` (Endpoints, Auth headers, Response formats)
-- **.context/Retrieval:** `retrieval.md` (Chunking, Embedding settings, Hybrid search logic)
-- **.context/Security:** `security.md` (Auth, Encryption, Rate limiting matches)
+- **.context/Retrieval:** `retrieval.md` (Chunking, Embedding settings)
+- **.context/Security:** `security.md` (Auth, Encryption, Rate limiting)
 - **.context/Observability:** `observability.md` (Metrics, Logging standards)
 - **.context/Deployment:** `deployment.md` (Env vars, Docker config)
+- **.context/Testing:** `testing.md` (Test strategy, CI pipeline)
 - **Protocol:** `widget_protocol.md` (Iframe communication)
-- **Cost:** `cost.md` (Resource usage limits)
-- **Testing:** `testing.md` (Test strategy)
-
-If a rule is in one of the above files, prefer it over this summary.
-
-## Quick Facts
-- Language focus: Python 3.11 (FastAPI-style), SQL (Postgres/pgvector), Docker.
-- Testing framework: pytest.
-- Package manager: `uv` (PEP 621 compliant `pyproject.toml`).
-- Use `uv` for all dependency management and virtual environment creation.
-
-If new tooling is added, update this file to match it.
-
-## Flow of Work
-- Read `.context/*`, this guide, and `IMPLEMENTATION_PLAN.md` before changes.
-- Update `IMPLEMENTATION_PLAN.md` checkboxes as work is completed.
-- Always add or update tests for new behavior.
-- Update CI/CD workflows when tests, commands, or dependencies change.
-- Keep changes aligned with the specs and document any new tooling here.
-
-## When to Ask the User
-- Ask if a required input is missing (API keys, endpoints, domains, secrets, rate limits).
-- Ask before any destructive or irreversible action.
-- Ask when a choice materially changes behavior and is not defined in `.context/*`.
-- Do not guess credentials or external service details.
 
 ## Build / Lint / Test Commands
 
-### Build
-- **Docker:**
-  - `docker-compose build`
-  - `docker build -f Dockerfile.api .`
-  - `docker build -f Dockerfile.worker .`
-- **Local:**
-  - `uv pip install -e .`
+### Backend (Python)
 
-### Lint / Format
-- **Black:** `uv run black app tests`
-- **Isort:** `uv run isort app tests`
-- **Mypy:** `uv run mypy app`
+```bash
+# Install dependencies
+cd backend && uv pip install -e .
 
-### Tests (Primary)
-- Run all tests:
-  - `uv run pytest tests/ --cov=app`
-- Run a single test file:
-  - `uv run pytest tests/unit/test_chunking.py`
-- Run a single test function:
-  - `uv run pytest tests/unit/test_chunking.py::test_chunk_text_splits_correctly`
-- Run tests by keyword:
-  - `uv run pytest -k chunking`
+# Run all tests
+uv run pytest tests/ --cov=app
 
-### Tests (Integration / Containers)
-- Run integration tests (requires Docker services up):
-  - `docker-compose up -d postgres redis`
-  - `uv run pytest tests/integration/`
+# Run single test file
+uv run pytest tests/unit/test_chunking.py
 
-### E2E / Widget
-- Playwright is referenced for widget E2E testing (Python or Node). Command not
-  specified in repo docs; add it when a test harness is created.
+# Run single test function
+uv run pytest tests/unit/test_chunking.py::test_chunk_text_splits_correctly
 
-### Load Testing
-- Load testing tools mentioned: `k6` or `Locust` (no concrete commands).
+# Run tests by keyword
+uv run pytest -k chunking
 
-## Repository-Specific Rules
+# Lint/Format
+uv run black app tests
+uv run isort app tests
+uv run mypy app
 
-### Security (Non-Negotiable)
+# Docker build
+docker build -f backend/Dockerfile.api .
+docker build -f backend/Dockerfile.worker .
+```
+
+### Frontend (Next.js)
+
+```bash
+cd frontend
+pnpm install
+pnpm dev      # Development server
+pnpm build    # Production build
+pnpm lint     # ESLint
+```
+
+### Contextly Widget
+
+```bash
+cd contextly-widget
+pnpm install
+pnpm build    # Builds JS + generates CSS
+```
+
+### Integration Tests (requires Docker)
+
+```bash
+docker-compose up -d postgres redis
+uv run pytest tests/integration/
+```
+
+## Code Style Guidelines
+
+### General
+- Favor clarity and explicitness over cleverness.
+- Use ASCII-only text unless file already contains Unicode.
+- Keep business logic in services; keep FastAPI routes thin.
+
+### Python
+- Use type hints for public functions and core services.
+- Prefer async I/O for API, DB, Redis, and external calls.
+- Follow pytest naming: files `test_*.py`, functions `test_*`.
+- Use fixtures in `conftest.py` for shared setup.
+
+### Imports (Python)
+- Standard library first, third-party second, local imports last.
+- Keep imports sorted and grouped; use `isort`.
+- Avoid unused imports.
+
+### Naming
+- Python: snake_case (functions/variables), PascalCase (classes), UPPER_SNAKE_CASE (constants)
+- SQL: lowercase with underscores
+
+### Errors & Validation
+- Validate inputs early (Pydantic models or explicit checks).
+- Use domain-specific exceptions; map to HTTP errors at edges.
+- Never leak secrets in error messages or logs.
+
+### Database Access
+- ALWAYS include `project_id` in WHERE clauses (tenant isolation).
+- Use parameterized queries to prevent SQL injection.
+
+## Security (Non-Negotiable)
+
 From `security.md`:
 - API keys: bcrypt only; NEVER SHA-256.
 - All DB queries MUST filter by `project_id` to avoid tenant leaks.
 - Never store secrets in code; use environment variables.
 - Origin validation for widget/iframe; no wildcard origins in production.
-- CSP headers must be generated from allowed origins.
+- JWT validation must check signature, expiry, audience, issuer, and origin.
 
-### Logging & Observability
+## Logging & Observability
+
 From `observability.md`:
 - Use JSON structured logging with `structlog`.
-- Log context fields (request_id, project_id, service, duration_ms, model).
+- Log context fields: request_id, project_id, service, duration_ms, model.
 - Do NOT log PII, secrets, or message contents.
 - Log stack traces only on ERROR.
 
-### Data Handling
-- Treat uploaded files, URLs, and parsed content as untrusted input.
-- Enforce size/type/SSRF protections (see `security.md`).
+## When to Ask the User
 
-## Code Style Guidelines
+- Ask if a required input is missing (API keys, endpoints, secrets).
+- Ask before any destructive or irreversible action.
+- Ask when a choice materially changes behavior and is not defined in specs.
+- Do not guess credentials or external service details.
 
-### General
-- Keep implementations aligned with the specs in:
-  - `testing.md`, `security.md`, `retrieval.md`, `observability.md`,
-    `deployment.md`, and `api_spec.md`.
-- Favor clarity and explicitness over cleverness.
-- Use ASCII-only text unless the file already contains Unicode.
+## Flow of Work
 
-### Python
-- Use type hints for public functions and core services.
-- Prefer async I/O for API, DB, Redis, and external calls.
-- Keep business logic in services; keep FastAPI routes thin.
-- Follow pytest naming conventions:
-  - Files: `test_*.py`
-  - Functions: `test_*`
-- Use fixtures in `conftest.py` for shared setup (DB, Redis, clients).
-
-### Imports
-- Standard library first, third-party second, local imports last.
-- Keep imports sorted and grouped; avoid unused imports.
-
-### Formatting
-- Use consistent, readable formatting; keep lines reasonable in length.
-- Prefer explicit keyword arguments for clarity in public APIs.
-
-### Naming
-- snake_case for Python functions/variables.
-- PascalCase for classes.
-- UPPER_SNAKE_CASE for module-level constants.
-- SQL tables and columns: lowercase with underscores.
-
-### Errors & Validation
-- Validate inputs early (Pydantic models or explicit checks).
-- Use domain-specific exceptions where helpful; map to HTTP errors at edges.
-- Never leak secrets in error messages or logs.
-
-### Database Access
-- Always include `project_id` in WHERE clauses (tenant isolation).
-- Avoid reliance on connection-scoped variables due to PgBouncer pooling.
-- Use parameterized queries to prevent SQL injection.
-
-### Caching
-- Embedding and response caches should have explicit TTLs.
-- Prefer Redis hot cache + Postgres cold cache pattern per spec.
-
-### Security-Sensitive Code
-- JWT validation must check signature, expiry, audience, issuer, and origin.
-- API key verification must use bcrypt.compare/checkpw.
-- Never use wildcard origins in production.
-
-## Documentation Sources (Truth)
-- `testing.md` for test strategy and CI example.
-- `deployment.md` for docker-compose and runtime setup.
-- `security.md` for mandatory security rules.
-- `retrieval.md` for pipeline design and config defaults.
-- `observability.md` for logging/metrics/tracing standards.
-- `api_spec.md` for endpoint behavior and payloads.
-- `widget_protocol.md` for widget messaging and origin validation.
-- `docs/observability.md` for monitoring setup.
-- `frontend_flow.md` for frontend integration flow.
-
-## When Adding New Tooling
-- Update this file with exact build/lint/test commands.
-- Note how to run a single test for each test framework.
-- Record any formatter/linter rules that affect style.
+1. Read `.context/*` and this guide before changes.
+2. Update `IMPLEMENTATION_PLAN.md` checkboxes as work is completed.
+3. Always add or update tests for new behavior.
+4. Update CI/CD workflows when tests, commands, or dependencies change.
