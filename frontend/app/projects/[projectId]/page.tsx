@@ -771,8 +771,8 @@ export default function ProjectDetailPage() {
                   </CardTitle>
                   <CardDescription>Upload documents (PDF, TXT, MD) to your knowledge base.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
+                <CardContent className="space-y-6 pt-6 pb-6">
+                  <div className="space-y-4 py-2">
                     <Label className="block text-center w-full">Select File</Label>
                     <div className="flex flex-col items-center justify-center gap-4">
                       <Input
