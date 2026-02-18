@@ -774,16 +774,30 @@ export default function ProjectDetailPage() {
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <Label>Select File</Label>
-                    <div className="flex items-center gap-3 h-10">
-                      <Input
-                        key={fileInputKey}
-                        type="file"
-                        accept=".pdf,.txt,.md,.markdown"
-                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                        className="text-sm file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 h-full"
-                      />
-                      <Button onClick={uploadFile} disabled={uploading}>
-                        {uploading ? "Uploading..." : "Upload"}
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1 group">
+                        <Input
+                          key={fileInputKey}
+                          type="file"
+                          accept=".pdf,.txt,.md,.markdown"
+                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer z-10 h-11 w-full"
+                        />
+                        <div className="flex items-center h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background group-hover:border-primary/50 transition-colors shadow-sm">
+                          <div className="bg-primary text-primary-foreground text-xs font-bold uppercase px-3 py-1.5 rounded-full mr-3 shrink-0">
+                            Browse
+                          </div>
+                          <span className="text-muted-foreground truncate font-medium">
+                            {selectedFile?.name || "Choose a file..."}
+                          </span>
+                        </div>
+                      </div>
+                      <Button onClick={uploadFile} disabled={uploading} className="h-11 px-6 font-semibold">
+                        {uploading ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Uploading
+                          </span>
+                        ) : "Upload"}
                       </Button>
                     </div>
                     {uploading && (
