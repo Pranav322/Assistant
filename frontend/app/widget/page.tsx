@@ -29,6 +29,17 @@ function LoadingDots() {
   );
 }
 
+function decodeJwt(token: string): { exp: number } | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 function WidgetContent() {
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<"popup" | "embedded">("popup");
@@ -40,6 +51,12 @@ function WidgetContent() {
   const [isOpen, setIsOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const controllersRef = useRef(new Map<string, AbortController>());
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshingRef = useRef(false);
+  const tokenRef = useRef<string | null>(null);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
 
   useEffect(() => {
     const initialToken = searchParams.get("token");
@@ -83,6 +100,59 @@ function WidgetContent() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  async function refreshToken() {
+    if (!token || isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
+    try {
+      const response = await fetch(`${API_BASE_URL}/tokens/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          setToken(data.token);
+          if (allowedOrigin) {
+            window.parent?.postMessage({ type: "chatbot:set_token", token: data.token }, allowedOrigin);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Token refresh failed", error);
+    } finally {
+      isRefreshingRef.current = false;
+    }
+  }
+
+  useEffect(() => {
+    if (!token || !allowedOrigin) return;
+    const payload = decodeJwt(token);
+    if (!payload?.exp) return;
+    const expiresAt = payload.exp * 1000;
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+    const refreshBefore = 5 * 60 * 1000;
+    const timeUntilRefresh = timeUntilExpiry - refreshBefore;
+    if (timeUntilRefresh <= 0) {
+      refreshToken();
+      return;
+    }
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+    refreshTimerRef.current = setTimeout(() => {
+      refreshToken();
+    }, timeUntilRefresh);
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
+  }, [token, allowedOrigin]);
 
   function updateMessage(id: string, updates: Partial<Message>) {
     setMessages((prev) =>
@@ -137,13 +207,42 @@ function WidgetContent() {
       });
 
       if (response.status === 401) {
-        if (allowedOrigin) {
-          window.parent?.postMessage({ type: "chatbot:token_expired" }, allowedOrigin);
+        updateMessage(assistantId, {
+          status: "pending",
+          content: "Session expired. Refreshing...",
+        });
+        await refreshToken();
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const newToken = tokenRef.current;
+        if (newToken) {
+          const retryResponse = await fetch(`${API_BASE_URL}/projects/${projectId}/chat`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${newToken}`,
+            },
+            body: JSON.stringify({ query: question }),
+            signal: controller.signal,
+          });
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            updateMessage(assistantId, {
+              status: "complete",
+              content: data.response || "",
+            });
+            if (allowedOrigin) {
+              window.parent?.postMessage({ type: "chatbot:resize" }, allowedOrigin);
+            }
+            return;
+          }
         }
         updateMessage(assistantId, {
           status: "error",
-          content: "Session expired. Refreshing token...",
+          content: "Session expired. Please refresh the page.",
         });
+        if (allowedOrigin) {
+          window.parent?.postMessage({ type: "chatbot:token_expired" }, allowedOrigin);
+        }
         return;
       }
       if (response.status === 403) {
