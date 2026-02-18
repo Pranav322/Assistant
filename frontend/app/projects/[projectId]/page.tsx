@@ -773,14 +773,14 @@ export default function ProjectDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
-                    <Label>Select File</Label>
-                    <div className="flex items-center gap-3">
+                    <Label className="block text-center w-full">Select File</Label>
+                    <div className="flex flex-col items-center justify-center gap-4">
                       <Input
                         key={fileInputKey}
                         type="file"
                         accept=".pdf,.txt,.md,.markdown"
                         onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 max-w-xs"
                       />
                       <Button onClick={uploadFile} disabled={uploading}>
                         {uploading ? "Uploading..." : "Upload"}
