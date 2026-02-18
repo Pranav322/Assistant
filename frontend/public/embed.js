@@ -28,6 +28,8 @@
   const widgetUrlAttr = scriptTag.getAttribute("data-widget-url");
   const position = scriptTag.getAttribute("data-position") || "right";
   const offset = scriptTag.getAttribute("data-offset") || "24px";
+  const triggerSelector = scriptTag.getAttribute("data-trigger-selector");
+  const hideLauncher = scriptTag.getAttribute("data-hide-launcher") === "true";
   // For embedded mode, we always default to open. For popup, we respect the attribute.
   const defaultOpen = mode === "embedded" ? true : scriptTag.getAttribute("data-open") !== "false";
   const buttonLabel = scriptTag.getAttribute("data-button-label") || "Chat";
@@ -147,7 +149,8 @@
   button.style.boxShadow = "0 18px 36px rgba(15, 23, 42, 0.2)";
 
   // In embedded mode, button is never shown
-  if (mode === "embedded") {
+  const shouldShowButton = mode !== "embedded" && !hideLauncher && !triggerSelector;
+  if (!shouldShowButton) {
     button.style.display = "none";
   } else {
     button.style.display = defaultOpen ? "none" : "flex";
@@ -164,15 +167,34 @@
 
     open = nextOpen;
     panel.style.display = open ? "block" : "none";
-    button.style.display = open ? "none" : "flex";
+    if (shouldShowButton) {
+      button.style.display = open ? "none" : "flex";
+    }
   }
 
   button.addEventListener("click", function () {
     setOpen(true);
   });
 
+  if (triggerSelector) {
+    const bindTrigger = () => {
+      const triggers = document.querySelectorAll(triggerSelector);
+      triggers.forEach((el) => {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          setOpen(!open);
+        });
+      });
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bindTrigger);
+    } else {
+      bindTrigger();
+    }
+  }
+
   root.appendChild(panel);
-  if (mode !== "embedded") {
+  if (shouldShowButton) {
     root.appendChild(button);
   }
 

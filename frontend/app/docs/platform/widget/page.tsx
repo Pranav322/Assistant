@@ -153,6 +153,28 @@ Control the widget's appearance with data attributes:
 | \`data-mode\` | \`popup\` or \`embedded\` | \`popup\` |
 | \`data-primary-color\` | Button color (hex) | \`#c2410c\` |
 | \`data-greeting\` | Initial message | \`How can I help you?\` |
+| \`data-trigger-selector\` | CSS selector for custom open buttons | \`null\` |
+| \`data-hide-launcher\` | Hide the default floating bubble | \`false\` |
+
+### Example: Custom Trigger Button
+
+If you want to use your own button instead of our floating bubble:
+
+\`\`\`html
+<!-- Your custom button -->
+<button id="support-btn">Contact Support</button>
+
+<script
+  src="https://widget.contextly.live/embed.js"
+  data-token="YOUR_TOKEN"
+  data-project-id="YOUR_PROJECT_ID"
+  data-trigger-selector="#support-btn"
+  data-hide-launcher="true"
+  async
+></script>
+\`\`\`
+
+---
 
 ### Example: Embedded Mode
 
