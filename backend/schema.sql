@@ -156,6 +156,7 @@ CREATE TABLE sources (
     type TEXT CHECK (type IN ('pdf','url','text','markdown')),
     content_hash TEXT NOT NULL,
     metadata JSONB DEFAULT '{}'::jsonb,
+    progress JSONB DEFAULT '{}'::jsonb,
 
     storage_location TEXT,
     status TEXT DEFAULT 'pending'

@@ -186,6 +186,7 @@ async def get_source_status(
     return {
         "id": source.id,
         "status": source.status,
+        "progress": source.progress,
         "type": source.type,
         "filename": (source.metadata_ or {}).get("filename"),
         "error": (source.metadata_ or {}).get("error"),

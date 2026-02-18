@@ -35,6 +35,7 @@ class Source(Base):
     type: Mapped[str] = mapped_column(String, nullable=True)  # pdf, url, text, markdown
     content_hash: Mapped[str] = mapped_column(String, nullable=False)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
+    progress: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     storage_location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="pending")

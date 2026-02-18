@@ -125,6 +125,12 @@ export default function ProjectDetailPage() {
     sourceId: string;
     status: string;
     message?: string;
+    progress?: {
+      stage: string;
+      percent: number;
+      total_chunks?: number;
+      processed_chunks?: number;
+    };
   } | null>(null);
   const [ingestionError, setIngestionError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -386,6 +392,7 @@ export default function ProjectDetailPage() {
       const data = await apiRequest<{
         id: string;
         status: string;
+        progress?: any;
         filename?: string;
         error?: string;
       }>(`/ingestion/${ingestionStatus.sourceId}?project_id=${projectId}`, {
@@ -396,6 +403,7 @@ export default function ProjectDetailPage() {
           ? {
             ...prev,
             status: data.status,
+            progress: data.progress,
             message: data.error || prev.message,
           }
           : prev
@@ -799,6 +807,26 @@ export default function ProjectDetailPage() {
                           <div className="mt-2 flex items-center gap-2 text-muted-foreground">
                             <AlertCircle className="h-3 w-3" />
                             <span>{ingestionStatus.message}</span>
+                          </div>
+                        )}
+
+                        {ingestionStatus.progress && (
+                          <div className="mt-3">
+                            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-primary h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${ingestionStatus.progress.percent}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {ingestionStatus.progress.stage} — {ingestionStatus.progress.percent}%
+                            </p>
+                            {ingestionStatus.progress.total_chunks && (
+                              <p className="text-xs text-muted-foreground">
+                                {ingestionStatus.progress.processed_chunks} / {" "}
+                                {ingestionStatus.progress.total_chunks} chunks processed
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>

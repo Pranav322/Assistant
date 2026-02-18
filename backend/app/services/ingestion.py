@@ -85,6 +85,13 @@ class IngestionService:
             await self.db.flush()
 
         try:
+            # Mark as processing with initial progress
+            source.status = "processing"
+            source.progress = {
+                "stage": "extracting",
+                "percent": 5,
+            }
+            await self.db.flush()
             # 4. Extract Text
             # ... (rest of the logic remains same, but we'll use 'source' object)
             text_content = ""
@@ -134,6 +141,15 @@ class IngestionService:
                 )
 
             chunks: list[ProcessedChunk] = page_chunks
+            total_chunks = len(chunks)
+
+            source.progress = {
+                "stage": "embedding",
+                "percent": 40,
+                "total_chunks": total_chunks,
+                "processed_chunks": 0,
+            }
+            await self.db.flush()
             for idx, chunk in enumerate(chunks):
                 chunk.metadata["chunk_index"] = idx
                 chunk.metadata["total_chunks"] = len(chunks)
@@ -145,7 +161,28 @@ class IngestionService:
 
             # 6. Embedding (Batch)
             texts_to_embed = [c.text for c in chunks]
-            embeddings_list = await self.embedder.get_embeddings(texts_to_embed)
+            embeddings_list = []
+            batch_size = 20
+            processed = 0
+
+            for i in range(0, len(texts_to_embed), batch_size):
+                batch = texts_to_embed[i : i + batch_size]
+                batch_embeddings = await self.embedder.get_embeddings(batch)
+                embeddings_list.extend(batch_embeddings)
+
+                processed += len(batch)
+
+                percent = 40
+                if total_chunks > 0:
+                    percent = 40 + int((processed / total_chunks) * 50)
+
+                source.progress = {
+                    "stage": "embedding",
+                    "percent": percent,
+                    "total_chunks": total_chunks,
+                    "processed_chunks": processed,
+                }
+                await self.db.flush()
 
             # Issue #6: Verify embedding count matches chunk count
             if len(embeddings_list) != len(chunks):
@@ -182,8 +219,19 @@ class IngestionService:
                 if embedding_records:
                     self.db.add_all(embedding_records)
 
-            # 8. Update Source Status
+            # 8. Saving stage
+            source.progress = {
+                "stage": "saving",
+                "percent": 95,
+            }
+            await self.db.flush()
+
+            # 9. Update Source Status
             source.status = "completed"
+            source.progress = {
+                "stage": "completed",
+                "percent": 100,
+            }
             await self.db.commit()
 
             return source
@@ -202,6 +250,10 @@ class IngestionService:
             meta = dict(fail_source.metadata_ or {})
             meta["error"] = str(e)
             fail_source.metadata_ = meta
+            fail_source.progress = {
+                "stage": "failed",
+                "percent": 0,
+            }
             await self.db.commit()
             raise e
 
