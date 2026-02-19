@@ -808,6 +808,59 @@ export default function ProjectDetailPage() {
   defer
 ></script>`;
 
+  const htmlExample = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contextly Integration</title>
+
+  <style>
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      line-height: 1.5;
+    }
+    .help-btn {
+      padding: 12px 20px;
+      background: #c2410c;
+      color: #fff;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(194, 65, 12, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Welcome to My Awesome Site</h1>
+  <p>The chatbot should appear as a ${embedMode === "popup" ? "floating bubble" : "static window"} on this page.</p>
+
+  <!-- Custom button to trigger the chat -->
+  <button class="help-btn" onclick="openChat()">Need Help?</button>
+
+  <!-- Contextly Script Tag -->
+  ${embedSnippet}
+
+  <script>
+    function openChat() {
+      if (window.ChatbotWidget) {
+        window.ChatbotWidget.open();
+      } else {
+        console.warn("ChatbotWidget not loaded yet");
+      }
+    }
+
+    window.addEventListener('load', () => {
+      console.log('Contextly Chatbot ready');
+    });
+  </script>
+
+</body>
+</html>`;
+
   const previewOrigin = originToUse;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
   const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
@@ -1148,7 +1201,18 @@ export default function ProjectDetailPage() {
                     <button className="underline font-medium" onClick={() => setActiveTab("settings")}>Settings tab</button>.
                   </AlertDescription>
                 </Alert>
-                <CopyBlock value={embedSnippet} className="text-xs" />
+                <Tabs defaultValue="script" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 h-9">
+                    <TabsTrigger value="script" className="text-xs">Script Only</TabsTrigger>
+                    <TabsTrigger value="html" className="text-xs">Full HTML Example</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="script" className="mt-0">
+                    <CopyBlock value={embedSnippet} className="text-xs" />
+                  </TabsContent>
+                  <TabsContent value="html" className="mt-0">
+                    <CopyBlock value={htmlExample} className="text-xs" />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
 
