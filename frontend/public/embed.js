@@ -321,6 +321,10 @@
         panel.style.width = `${data.payload.width}px`;
       }
     }
+    if (data.type === "chatbot:close") {
+      console.log('[Embed] Received chatbot:close, calling setOpen(false)');
+      setOpen(false);
+    }
     if (data.type === "chatbot:token_expired") {
       refreshToken();
       const refreshEvent = new CustomEvent("chatbot:token_expired", {

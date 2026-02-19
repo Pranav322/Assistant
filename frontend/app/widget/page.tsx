@@ -128,6 +128,9 @@ function WidgetContent() {
       if (data.type === "chatbot:toggle") {
         setIsOpen((prev) => !prev);
       }
+      if (data.type === "chatbot:close") {
+        setIsOpen(false);
+      }
     }
     window.addEventListener("message", onMessage);
 
@@ -339,7 +342,7 @@ function WidgetContent() {
     }
   }
 
-  if (!isOpen && mode === "popup") return null;
+  const showContent = isOpen || mode !== "popup";
 
   // Aesthetic Styles
   const primaryColor = config?.primary_color || "#4f46e5";
@@ -377,7 +380,8 @@ function WidgetContent() {
 
   return (
     <div
-      className={containerClasses}
+      className={cn(containerClasses, !showContent && "hidden")}
+      aria-hidden={!showContent}
       style={{
         ["--primary" as any]: primaryColor,
         ["--primary-foreground" as any]: "#ffffff",
@@ -400,7 +404,21 @@ function WidgetContent() {
           </div>
         </div>
         {mode === "popup" && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/10 text-white" onClick={() => setIsOpen(false)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full hover:bg-black/10 text-white"
+            onClick={() => {
+              console.log('[Widget] Close button clicked, allowedOrigin:', allowedOrigin);
+              setIsOpen(false);
+              if (allowedOrigin) {
+                console.log('[Widget] Sending chatbot:close to parent');
+                window.parent?.postMessage({ type: "chatbot:close" }, allowedOrigin);
+              } else {
+                console.warn('[Widget] allowedOrigin is not set, message not sent');
+              }
+            }}
+          >
             <X className="h-4 w-4" />
           </Button>
         )}
