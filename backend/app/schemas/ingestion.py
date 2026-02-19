@@ -16,5 +16,6 @@ class SourceResponse(BaseModel):
     content_hash: str
     metadata: dict = {}
     status: str
+    progress: dict = {}
     created_at: datetime
     updated_at: datetime

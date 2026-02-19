@@ -19,6 +19,15 @@ type Message = {
   status?: "pending" | "complete" | "error" | "stopped";
 };
 
+type ProjectConfig = {
+  id: string;
+  title: string;
+  primary_color: string;
+  welcome_message: string;
+  starter_questions: string[];
+  logo_url: string | null;
+};
+
 function LoadingDots() {
   return (
     <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -49,6 +58,10 @@ function WidgetContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(true);
+  const [config, setConfig] = useState<ProjectConfig | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const controllersRef = useRef(new Map<string, AbortController>());
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,6 +87,31 @@ function WidgetContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    const isClientMobile = window.innerWidth < 640;
+    setIsMobile(isClientMobile);
+
+    // Auto-fetch config when projectId is available
+    async function fetchConfig() {
+      if (!projectId) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/projects/${projectId}/config`);
+        if (res.ok) {
+          const data = await res.json();
+          setConfig(data);
+          setConfigError(null);
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          setConfigError(errorData.detail || `Failed to load chatbot config (${res.status})`);
+        }
+      } catch (e) {
+        console.error("Config fetch failed", e);
+        setConfigError("Network error. Please check your connection.");
+      }
+    }
+    fetchConfig();
+  }, [projectId, allowedOrigin]);
+
+  useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (allowedOrigin && event.origin !== allowedOrigin) {
         return;
@@ -92,7 +130,14 @@ function WidgetContent() {
       }
     }
     window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [allowedOrigin]);
 
   useEffect(() => {
@@ -101,8 +146,8 @@ function WidgetContent() {
     }
   }, [messages]);
 
-  async function refreshToken() {
-    if (!token || isRefreshingRef.current) return;
+  async function refreshToken(): Promise<string | null> {
+    if (!token || isRefreshingRef.current) return null;
     isRefreshingRef.current = true;
     try {
       const response = await fetch(`${API_BASE_URL}/tokens/refresh`, {
@@ -119,6 +164,7 @@ function WidgetContent() {
           if (allowedOrigin) {
             window.parent?.postMessage({ type: "chatbot:set_token", token: data.token }, allowedOrigin);
           }
+          return data.token;
         }
       }
     } catch (error) {
@@ -126,6 +172,7 @@ function WidgetContent() {
     } finally {
       isRefreshingRef.current = false;
     }
+    return null;
   }
 
   useEffect(() => {
@@ -171,10 +218,10 @@ function WidgetContent() {
     controllersRef.current.clear();
   }
 
-  async function sendMessage(e?: React.FormEvent) {
+  async function sendMessage(e?: React.FormEvent, overrideQuestion?: string) {
     e?.preventDefault();
-    if (!token || !projectId || !input.trim()) return;
-    const question = input.trim();
+    const question = (overrideQuestion || input).trim();
+    if (!token || !projectId || !question) return;
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
@@ -202,7 +249,10 @@ function WidgetContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ query: question }),
+        body: JSON.stringify({
+          query: question,
+          conversation_id: conversationId
+        }),
         signal: controller.signal,
       });
 
@@ -211,9 +261,7 @@ function WidgetContent() {
           status: "pending",
           content: "Session expired. Refreshing...",
         });
-        await refreshToken();
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const newToken = tokenRef.current;
+        const newToken = await refreshToken();
         if (newToken) {
           const retryResponse = await fetch(`${API_BASE_URL}/projects/${projectId}/chat`, {
             method: "POST",
@@ -221,7 +269,10 @@ function WidgetContent() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${newToken}`,
             },
-            body: JSON.stringify({ query: question }),
+            body: JSON.stringify({
+              query: question,
+              conversation_id: conversationId
+            }),
             signal: controller.signal,
           });
           if (retryResponse.ok) {
@@ -264,6 +315,9 @@ function WidgetContent() {
         status: "complete",
         content: data.response || "",
       });
+      if (data.conversation_id) {
+        setConversationId(data.conversation_id);
+      }
       if (allowedOrigin) {
         window.parent?.postMessage({ type: "chatbot:resize" }, allowedOrigin);
       }
@@ -288,18 +342,23 @@ function WidgetContent() {
   if (!isOpen && mode === "popup") return null;
 
   // Aesthetic Styles
+  const primaryColor = config?.primary_color || "#4f46e5";
   const containerClasses = cn(
     "flex w-full flex-col bg-background text-foreground overflow-hidden font-sans",
     mode === "popup"
-      ? "fixed bottom-4 right-4 z-50 h-[600px] w-full max-w-[400px] border shadow-2xl rounded-2xl overflow-hidden flex flex-col bg-background"
+      ? cn(
+        "fixed z-50 overflow-hidden flex flex-col bg-background border shadow-2xl transition-all duration-300",
+        isMobile
+          ? "inset-0 h-[100dvh] w-full rounded-none"
+          : "bottom-4 right-4 h-[600px] w-full max-w-[400px] rounded-2xl"
+      )
       : "h-[100dvh] w-full"
   );
 
   const headerClasses = cn(
-    "flex items-center justify-between border-b px-4 py-3 backdrop-blur-md bg-background/80 sticky top-0 z-10",
-    mode === "embedded" ? "border-none bg-transparent" : ""
+    "flex items-center justify-between border-b px-4 py-3 backdrop-blur-md sticky top-0 z-10 shadow-sm transition-colors",
+    mode === "embedded" ? "border-none bg-transparent text-foreground" : "text-white"
   );
-
   // Auto-resize textarea
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -317,28 +376,31 @@ function WidgetContent() {
   }
 
   return (
-    <div className={containerClasses}>
-      <div className={headerClasses}>
+    <div
+      className={containerClasses}
+      style={{
+        ["--primary" as any]: primaryColor,
+        ["--primary-foreground" as any]: "#ffffff",
+      }}
+    >
+      <div className={headerClasses} style={{ backgroundColor: mode === "popup" ? primaryColor : "transparent" }}>
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-4 h-4"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.636-1.636L13.5 18.75l.97-.243a2.25 2.25 0 001.636-1.636l.394-1.183.394 1.183a2.25 2.25 0 001.636 1.636l.97.243-.97.243a2.25 2.25 0 00-1.636 1.636z" />
-            </svg>
-          </div>
+          {config?.logo_url ? (
+            <img src={config.logo_url} className="h-8 w-8 rounded-full bg-white object-contain border" alt="Bot Logo" />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
+              {config?.title?.[0] || "A"}
+            </div>
+          )}
           <div>
-            <h1 className="text-sm font-bold leading-tight">Assistant</h1>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">AI Powered</p>
+            <h1 className="text-sm font-bold leading-tight truncate max-w-[150px]">
+              {config?.title || "Assistant"}
+            </h1>
+            <p className="text-[10px] uppercase tracking-wider text-white/70 font-medium">AI Powered</p>
           </div>
         </div>
         {mode === "popup" && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted" onClick={() => setIsOpen(false)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/10 text-white" onClick={() => setIsOpen(false)}>
             <X className="h-4 w-4" />
           </Button>
         )}
@@ -351,13 +413,48 @@ function WidgetContent() {
         )}
         ref={scrollRef}
       >
-        {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground p-6 opacity-0 animate-in fade-in duration-500 fill-mode-forwards">
-            <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Send className="h-6 w-6 text-foreground/50" />
+        {configError && (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 mb-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-start gap-3">
+              <div className="h-5 w-5 rounded-full bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-destructive text-xs font-bold">!</span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-destructive">Failed to load chatbot</p>
+                <p className="text-xs text-destructive/80 mt-1">{configError}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="text-xs text-destructive underline mt-2 hover:no-underline"
+                >
+                  Refresh page
+                </button>
+              </div>
             </div>
-            <p className="font-medium text-foreground">How can I help you today?</p>
-            <p className="text-sm mt-1">Ask me anything about your project.</p>
+          </div>
+        )}
+        {messages.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground p-6 animate-in fade-in duration-700 fill-mode-forwards space-y-6">
+            <div className="flex flex-col items-center">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <Send className="h-6 w-6 text-primary" />
+              </div>
+              <p className="font-medium text-foreground text-lg">{config?.welcome_message || "How can I help you today?"}</p>
+              <p className="text-sm mt-1">Ask me anything about your project.</p>
+            </div>
+
+            {(config?.starter_questions?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300 fill-mode-forwards">
+                {config?.starter_questions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setInput(q); sendMessage(undefined, q); }}
+                    className="text-[11px] px-3 py-1.5 rounded-full border bg-background hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm text-foreground/80 font-medium active:scale-95 text-left"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           messages.map((msg, index) => (

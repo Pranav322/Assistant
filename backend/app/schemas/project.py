@@ -24,3 +24,13 @@ class ProjectResponse(BaseModel):
     settings: Dict[str, Any]
     usage: Dict[str, Any]
     is_active: bool
+
+
+class ProjectConfigResponse(BaseModel):
+    id: str
+    name: str
+    title: str
+    primary_color: str
+    welcome_message: str
+    starter_questions: List[str]
+    logo_url: Optional[str] = None

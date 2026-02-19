@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 import tiktoken
+from fastapi import HTTPException
 from openai import AsyncAzureOpenAI
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,7 +54,7 @@ class ChatService:
         )
 
         response_text, usage = await self._chat_completion(
-            retrieval.context.full_text, history
+            project_id, retrieval.context.full_text, history
         )
         await self._store_message(
             conversation.id,
@@ -126,11 +127,31 @@ class ChatService:
         return history
 
     async def _chat_completion(
-        self, prompt: str, history: list[dict[str, str]] | None = None
+        self,
+        project_id: uuid.UUID,
+        prompt: str,
+        history: list[dict[str, str]] | None = None,
     ) -> tuple[str, dict[str, Any] | None]:
-        system_prompt = (
-            "You are a helpful assistant. Use the provided documents to answer."
+        from sqlalchemy import and_
+
+        result = await self.db.execute(
+            select(Project).where(
+                and_(
+                    Project.id == project_id,
+                    Project.is_active == True,
+                    Project.deleted_at.is_(None),
+                )
+            )
         )
+        project = result.scalar_one_or_none()
+
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found or inactive")
+
+        system_prompt = (
+            project.settings.get("system_prompt") if project.settings else None
+        ) or "You are a helpful assistant. Use the provided documents to answer."
+
         messages = [{"role": "system", "content": system_prompt}]
 
         # Issue #1: Inject history with token budget
