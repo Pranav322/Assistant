@@ -23,11 +23,11 @@ export default function CopyBlock({ label, value, className }: CopyBlockProps) {
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
-      <div className="relative rounded-lg border bg-muted font-mono text-sm">
-        <pre className={`p-4 pr-12 ${className || "overflow-x-auto"}`}>
-          <code>{value}</code>
+      <div className="relative rounded-lg border bg-muted font-mono text-sm overflow-hidden">
+        <pre className={`p-4 pr-12 overflow-x-auto break-all whitespace-pre-wrap max-h-[200px] ${className || ""}`}>
+          <code className="break-all">{value}</code>
         </pre>
-        <div className="absolute right-1 top-1">
+        <div className="absolute right-1 top-1 bg-muted/80 backdrop-blur-sm rounded">
           <Button
             variant="ghost"
             size="icon"

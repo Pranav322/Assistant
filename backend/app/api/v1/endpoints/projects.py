@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +16,12 @@ from app.core.security import (
 from app.models import ApiKey, Project, User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse
 from app.schemas.ingestion import SourceResponse
-from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
+from app.schemas.project import (
+    ProjectConfigResponse,
+    ProjectCreate,
+    ProjectResponse,
+    ProjectUpdate,
+)
 from app.services.audit import log_audit_event
 from app.services.billing import get_effective_plan
 
@@ -46,6 +51,7 @@ async def list_sources(
             content_hash=source.content_hash,
             metadata=source.metadata_ or {},
             status=source.status,
+            progress=source.progress or {},
             created_at=source.created_at,
             updated_at=source.updated_at,
         )
@@ -212,6 +218,46 @@ async def get_project(
         settings=project.settings or {},
         usage=project.usage or {},
         is_active=project.is_active,
+    )
+
+
+@router.get("/projects/{project_id}/config", response_model=ProjectConfigResponse)
+async def get_project_config(
+    project_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(deps.get_db),
+):
+    """
+    Public endpoint to fetch widget configuration.
+    Protected by origin validation.
+    """
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
+    project = result.scalar_one_or_none()
+    if not project or not project.is_active:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Origin Validation
+    origin = request.headers.get("origin")
+    if project.allowed_origins:
+        # If allowed_origins is configured, origin header must be present
+        if not origin:
+            raise HTTPException(status_code=403, detail="Origin header required")
+        from app.core.security import validate_origin
+
+        if not validate_origin(origin, project.allowed_origins):
+            raise HTTPException(status_code=403, detail="Origin not allowed")
+
+    settings = project.settings or {}
+    return ProjectConfigResponse(
+        id=str(project.id),
+        name=project.name,
+        title=settings.get("title", "Assistant"),
+        primary_color=settings.get("primary_color", "#4f46e5"),
+        welcome_message=settings.get("welcome_message", "How can I help you today?"),
+        starter_questions=settings.get("starter_questions", []),
+        logo_url=settings.get("logo_url"),
     )
 
 
