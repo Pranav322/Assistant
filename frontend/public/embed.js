@@ -69,7 +69,6 @@
   if (mode === "embedded") {
     iframeSrc.searchParams.set("mode", "embedded");
   }
-
   const root = document.createElement("div");
   root.id = "contextly-widget-root";
 
@@ -167,6 +166,7 @@
 
     open = nextOpen;
     panel.style.display = open ? "block" : "none";
+
     if (shouldShowButton) {
       button.style.display = open ? "none" : "flex";
     }
@@ -324,6 +324,10 @@
     if (data.type === "chatbot:close") {
       console.log('[Embed] Received chatbot:close, calling setOpen(false)');
       setOpen(false);
+    }
+    if (data.type === "chatbot:open") {
+      console.log('[Embed] Received chatbot:open, calling setOpen(true)');
+      setOpen(true);
     }
     if (data.type === "chatbot:token_expired") {
       refreshToken();

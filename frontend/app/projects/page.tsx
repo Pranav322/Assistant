@@ -138,18 +138,20 @@ export default function ProjectsPage() {
             <Skeleton className="h-[140px] rounded-xl" />
           </div>
         ) : error ? (
-          <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
-            Failed to load projects: {error.message}
+          <div className="rounded-lg bg-destructive/10 p-4 text-destructive flex flex-col gap-3">
+            <p>Failed to load projects: {error.message}</p>
+            <Button variant="outline" size="sm" onClick={() => mutate()}>
+              Try again
+            </Button>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {projects?.map((project) => (
-              <Link
+              <div
                 key={project.id}
-                href={`/projects/${project.id}?title=${encodeURIComponent(project.name)}`}
                 className="group relative flex flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/20"
               >
-                <div className="space-y-3">
+                <Link href={`/projects/${project.id}?title=${encodeURIComponent(project.name)}`} className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="h-10 w-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
                       <Terminal className="h-5 w-5" />
@@ -166,13 +168,16 @@ export default function ProjectsPage() {
                       {project.allowed_origins?.[0] || "No origin set"}
                     </p>
                   </div>
-                </div>
-                <div className="mt-4 pt-4 border-t flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="flex items-center group-hover:text-primary transition-colors">
+                </Link>
+                <div className="mt-4 pt-4 border-t flex items-center justify-between text-xs">
+                  <Link
+                    href={`/projects/${project.id}/?tab=settings&title=${encodeURIComponent(project.name)}`}
+                    className="flex items-center text-muted-foreground group-hover:text-primary transition-colors"
+                  >
                     Configure <Settings2 className="ml-1 h-3 w-3" />
-                  </span>
+                  </Link>
                 </div>
-              </Link>
+              </div>
             ))}
             {projects?.length === 0 && (
               <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 text-center animate-fade-in">

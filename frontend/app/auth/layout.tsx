@@ -65,7 +65,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="flex-1 space-y-8">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-                O
+                C
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">

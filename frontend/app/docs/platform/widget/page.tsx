@@ -1,6 +1,177 @@
 import { Markdown } from "@/components/markdown";
 
-const content = "# Chat Widget\n\nEmbed an AI chatbot on any website — via a script tag or the **contextly** React library.\n\n## Before You Start\n\nMake sure you have:\n\n1. A **Project** with ingested content\n2. An **API Key** for your project\n3. Your website domain added to **Allowed Origins** in project settings\n\n## Getting a Widget Token\n\nGenerate a token by calling your backend:\n\n```bash\ncurl -X POST \"https://api.pranavbuilds.tech/api/v1/tokens/widget\" \\\n  -H \"X-API-Key: YOUR_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"project_id\": \"YOUR_PROJECT_ID\",\n    \"origin\": \"https://yourwebsite.com\"\n  }'\n```\n\nResponse:\n```json\n{\n  \"token\": \"eyJhbGciOiJIUzI1NiIs...\",\n  \"expires_in\": 86400\n}\n```\n\n---\n\n## Embedding\n\n### Script Tag (Any Website)\n\nPaste this before `</body>` on your website:\n\n```html\n<script\n  src=\"https://widget.contextly.live/embed.js\"\n  data-token=\"YOUR_WIDGET_TOKEN\"\n  data-project-id=\"YOUR_PROJECT_ID\"\n  data-origin=\"https://yourwebsite.com\"\n  async\n></script>\n```\n\n#### Full HTML Example\n\nIf you're starting from scratch or want to see how to trigger the widget from your own UI, here's a full example:\n\n```html\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Contextly Integration</title>\n\n  <style>\n    body {\n      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;\n      padding: 40px;\n      line-height: 1.5;\n    }\n    .help-btn {\n      padding: 12px 20px;\n      background: #c2410c;\n      color: #fff;\n      border: none;\n      border-radius: 9999px;\n      cursor: pointer;\n      font-weight: 600;\n      box-shadow: 0 4px 12px rgba(194, 65, 12, 0.2);\n    }\n  </style>\n</head>\n<body>\n\n  <h1>Welcome to My Awesome Site</h1>\n  <p>The chatbot should appear in the bottom right corner.</p>\n\n  <!-- Custom button to trigger the chat -->\n  <button class=\"help-btn\" onclick=\"openChat()\">Need Help?</button>\n\n  <!-- Contextly Script Tag -->\n  <script\n    src=\"https://widget.contextly.live/embed.js\"\n    data-token=\"YOUR_WIDGET_TOKEN\"\n    data-project-id=\"YOUR_PROJECT_ID\"\n    data-origin=\"https://yourwebsite.com\"\n    async\n  ></script>\n\n  <script>\n    function openChat() {\n      if (window.ChatbotWidget) {\n        window.ChatbotWidget.open();\n      } else {\n        console.warn(\"ChatbotWidget not loaded yet\");\n      }\n    }\n\n    window.addEventListener('load', () => {\n      console.log('Contextly Chatbot ready');\n    });\n  </script>\n\n</body>\n</html>\n```\n\n---\n\n### React Library (contextly)\n\nIf you're building with React, use the official **contextly** npm package. It gives you two options: a ready-made UI component or a headless hook for full control.\n\n```bash\nnpm install contextly\n# or\npnpm add contextly\n```\n\n#### Drop-in Component\n\nThe `Chat` component comes with styles included — zero config needed:\n\n```tsx\nimport { Chat } from \"contextly\";\n\nexport default function App() {\n  return (\n    <div className=\"fixed bottom-4 right-4 z-50\">\n      <Chat\n        projectId=\"YOUR_PROJECT_ID\"\n        token=\"YOUR_WIDGET_TOKEN\"\n        apiBaseUrl=\"https://api.pranavbuilds.tech/api/v1\"\n        title=\"Support Bot\"\n      />\n    </div>\n  );\n}\n```\n\n| Prop | Type | Description |\n|------|------|-------------|\n| `projectId` | `string` | **Required.** Your project UUID |\n| `token` | `string` | **Required.** Widget JWT token |\n| `apiBaseUrl` | `string` | API URL (defaults to production) |\n| `title` | `string` | Title in the chat header |\n| `className` | `string` | CSS class for the container |\n| `onClose` | `() => void` | Callback when close button is clicked |\n\n#### Headless Hook (useChat)\n\nFor complete control over the UI, use the `useChat` hook. It handles API calls, streaming, and state — you just render:\n\n```tsx\nimport { useChat } from \"contextly\";\n\nexport function CustomChatWidget() {\n  const {\n    messages,\n    input,\n    setInput,\n    sendMessage,\n    isLoading\n  } = useChat({\n    projectId: \"YOUR_PROJECT_ID\",\n    token: \"YOUR_WIDGET_TOKEN\",\n  });\n\n  return (\n    <div>\n      {messages.map(msg => (\n        <div key={msg.id} className={msg.role}>\n          {msg.content}\n        </div>\n      ))}\n      <input value={input} onChange={e => setInput(e.target.value)} />\n      <button onClick={() => sendMessage()} disabled={isLoading}>\n        Send\n      </button>\n    </div>\n  );\n}\n```\n\n| Option | Type | Description |\n|--------|------|-------------|\n| `projectId` | `string` | **Required.** Your project UUID |\n| `token` | `string` | **Required.** Widget JWT token |\n| `apiBaseUrl` | `string` | API URL (defaults to production) |\n| `onReady` | `() => void` | Called when chat is initialized |\n| `onError` | `(err: Error) => void` | Called when an error occurs |\n\n---\n\n## Script Tag Customization\n\nControl the widget's appearance with data attributes:\n\n| Attribute | Description | Default |\n|-----------|-------------|---------|\n| `data-position` | `bottom-right` or `bottom-left` | `bottom-right` |\n| `data-width` | Widget width | `360px` |\n| `data-height` | Widget height | `600px` |\n| `data-open` | Open by default | `false` |\n| `data-button-label` | Button text | `Chat` |\n| `data-mode` | `popup` or `embedded` | `popup` |\n| `data-primary-color` | Button color (hex) | `#c2410c` |\n| `data-greeting` | Initial message | `How can I help you?` |\n| `data-trigger-selector` | CSS selector for custom open buttons | `null` |\n| `data-hide-launcher` | Hide the default floating bubble | `false` |\n\n### Example: Custom Trigger Button\n\nIf you want to use your own button instead of our floating bubble:\n\n```html\n<!-- Your custom button -->\n<button id=\"support-btn\">Contact Support</button>\n\n<script\n  src=\"https://widget.contextly.live/embed.js\"\n  data-token=\"YOUR_TOKEN\"\n  data-project-id=\"YOUR_PROJECT_ID\"\n  data-trigger-selector=\"#support-btn\"\n  data-hide-launcher=\"true\"\n  async\n></script>\n```\n\n---\n\n### Example: Embedded Mode\n\n```html\n<script\n  src=\"https://widget.contextly.live/embed.js\"\n  data-token=\"YOUR_TOKEN\"\n  data-project-id=\"YOUR_PROJECT_ID\"\n  data-origin=\"https://yourwebsite.com\"\n  data-mode=\"embedded\"\n  data-height=\"500px\"\n  data-width=\"400px\"\n  async\n></script>\n```\n\n---\n\n## Programmatic Control\n\nThe script-tag widget exposes a global API:\n\n```javascript\n// Open / close / toggle\nwindow.ChatbotWidget.open();\nwindow.ChatbotWidget.close();\nwindow.ChatbotWidget.toggle();\n\n// Update token\nwindow.ChatbotWidget.setToken('new-token');\n\n// Destroy widget\nwindow.ChatbotWidget.destroy();\n```\n\n---\n\n## Token Refresh\n\nTokens expire after 24 hours. The widget tries to auto-refresh by default.\n\nFor manual refresh, listen for the expiry event:\n\n```javascript\nwindow.addEventListener('message', (event) => {\n  if (event.data.type === 'chatbot:token_expired') {\n    fetch('/api/refresh-token')\n      .then(res => res.json())\n      .then(data => {\n        window.ChatbotWidget.setToken(data.token);\n      });\n  }\n});\n```\n\n---\n\n## Troubleshooting\n\n- **Widget not showing?** Check the browser console for errors\n- **401 Errors?** Your domain may not be in Allowed Origins\n- **Token expired?** The widget should auto-refresh. If not, check your refresh endpoint\n- **CORS errors?** Make sure the API allows your widget origin\n";
+const content = `# Chat Widget
+
+Embed an AI chatbot on any website — via a script tag or the **contextly** React library.
+
+## Before You Start
+
+Make sure you have:
+
+1. A **Project** with ingested content
+2. A **Widget Token** from your project settings
+3. Your website domain added to **Allowed Origins** in project settings
+
+---
+
+## Script Tag (Any Website)
+
+### Quick Install
+
+Paste this before \`</body>\` on your website:
+
+\`\`\`html
+<script
+  src="https://widget.contextly.live/embed.js"
+  data-token="YOUR_WIDGET_TOKEN"
+  data-project-id="YOUR_PROJECT_ID"
+  data-origin="https://yourwebsite.com"
+  data-api-base-url="https://api.pranavbuilds.tech/api/v1"
+  data-mode="popup"
+  defer
+></script>
+\`\`\`
+
+### Full HTML Example
+
+Copy and paste this complete example to test:
+
+\`\`\`html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Site with Contextly Chatbot</title>
+  
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    /* Custom button to open/close the chatbot */
+    .chat-trigger-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to My Website</h1>
+  <p>This is my site with an AI chatbot assistant.</p>
+  
+  <button class="chat-trigger-btn" onclick="toggleChat()">
+    Chat with us
+  </button>
+
+  <script
+    src="https://widget.contextly.live/embed.js"
+    data-token="YOUR_WIDGET_TOKEN"
+    data-project-id="YOUR_PROJECT_ID"
+    data-origin="https://yourwebsite.com"
+    data-api-base-url="https://api.pranavbuilds.tech/api/v1"
+    data-mode="popup"
+    defer
+  ></script>
+
+  <script>
+    function toggleChat() {
+      if (window.ChatbotWidget) {
+        window.ChatbotWidget.toggle();
+      }
+    }
+  </script>
+</body>
+</html>
+\`\`\`
+
+### Configuration Options
+
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| \`data-token\` | Yes | Your widget token from Settings |
+| \`data-project-id\` | Yes | Your project ID |
+| \`data-origin\` | Yes | Your website domain |
+| \`data-api-base-url\` | No | API base URL (auto-detected) |
+| \`data-mode\` | No | \`popup\` or \`embedded\` |
+| \`data-width\` | No | Custom width (e.g., \`400px\`) |
+| \`data-height\` | No | Custom height (e.g., \`600px\`) |
+
+---
+
+## React SDK
+
+For React & Next.js projects:
+
+### 1. Install
+
+\`\`\`bash
+npm install contextly
+\`\`\`
+
+### 2. Usage
+
+\`\`\`tsx
+import { Chat } from "contextly";
+
+function App() {
+  return (
+    <Chat 
+      projectId="YOUR_PROJECT_ID" 
+      token="YOUR_WIDGET_TOKEN"
+    />
+  );
+}
+\`\`\`
+
+---
+
+## Headless Hooks
+
+For full control over UI:
+
+### 1. Install
+
+\`\`\`bash
+npm install contextly
+\`\`\`
+
+### 2. Usage
+
+\`\`\`tsx
+import { useChat } from "contextly";
+
+function CustomUI() {
+  const { messages, input, setInput, sendMessage, isLoading } = useChat({
+    projectId: "YOUR_PROJECT_ID",
+    token: "YOUR_WIDGET_TOKEN",
+  });
+
+  return (
+    <div>
+      {messages.map(m => (
+        <div key={m.id}>{m.content}</div>
+      ))}
+      <input value={input} onChange={(e) => setInput(e.target.value)} />
+      <button onClick={() => sendMessage()} disabled={isLoading}>Send</button>
+    </div>
+  );
+}
+\`\`\`
+`;
 
 export default function WidgetPage() {
   return <Markdown>{content}</Markdown>;

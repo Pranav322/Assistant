@@ -204,20 +204,28 @@ export default function ProjectDetailPage() {
   const [isSavingBranding, setIsSavingBranding] = useState(false);
   const [brandingError, setBrandingError] = useState("");
 
-  // Sync navbar instantly from URL params (no API wait)
+  // Set/reset navbar frame on mount/unmount.
   useEffect(() => {
-    const titleFromUrl = searchParams.get('title');
-    if (titleFromUrl) {
-      setTitle(titleFromUrl);
-      setProjectName("Projects");
-      setBackHref("/projects");
-    }
     return () => {
       setTitle("Dashboard");
       setBackHref(null);
       setProjectName(null);
     };
-  }, []); // empty deps = runs once on mount
+  }, [setBackHref, setProjectName, setTitle]);
+
+  // Sync title/tab from URL params.
+  useEffect(() => {
+    const titleFromUrl = searchParams.get('title');
+    const tabFromUrl = searchParams.get('tab');
+    if (titleFromUrl) {
+      setTitle(titleFromUrl);
+      setProjectName("Projects");
+      setBackHref("/projects");
+    }
+    if (tabFromUrl && ["knowledge-base", "embed", "customize", "settings"].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams, setBackHref, setProjectName, setTitle]);
 
   // Sync Navbar
   useEffect(() => {
@@ -326,13 +334,13 @@ export default function ProjectDetailPage() {
     };
   }, [sources, fileUploadStatus, urlIngestStatus, projectId]);
 
-  // Auto-redirect to "Try It" after first successful ingestion
+  // Auto-redirect to "Embed" after first successful ingestion
   useEffect(() => {
     if (hasRedirectedToTryIt.current) return;
     const completedCount = sources?.filter(s => s.status === "completed").length ?? 0;
     if (prevCompletedCount.current !== null && completedCount > prevCompletedCount.current && completedCount >= 1) {
       hasRedirectedToTryIt.current = true;
-      setActiveTab("try-it");
+      setActiveTab("embed");
       setShowReadyBanner(true);
       // Auto-hide banner after 5 seconds
       setTimeout(() => setShowReadyBanner(false), 5000);
@@ -808,59 +816,6 @@ export default function ProjectDetailPage() {
   defer
 ></script>`;
 
-  const htmlExample = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contextly Integration</title>
-
-  <style>
-    body {
-      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-      padding: 40px;
-      line-height: 1.5;
-    }
-    .help-btn {
-      padding: 12px 20px;
-      background: #c2410c;
-      color: #fff;
-      border: none;
-      border-radius: 9999px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(194, 65, 12, 0.2);
-    }
-  </style>
-</head>
-<body>
-
-  <h1>Welcome to My Awesome Site</h1>
-  <p>The chatbot should appear as a ${embedMode === "popup" ? "floating bubble" : "static window"} on this page.</p>
-
-  <!-- Custom button to trigger the chat -->
-  <button class="help-btn" onclick="openChat()">Need Help?</button>
-
-  <!-- Contextly Script Tag -->
-  ${embedSnippet}
-
-  <script>
-    function openChat() {
-      if (window.ChatbotWidget) {
-        window.ChatbotWidget.open();
-      } else {
-        console.warn("ChatbotWidget not loaded yet");
-      }
-    }
-
-    window.addEventListener('load', () => {
-      console.log('Contextly Chatbot ready');
-    });
-  </script>
-
-</body>
-</html>`;
-
   const previewOrigin = originToUse;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
   const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
@@ -874,8 +829,8 @@ export default function ProjectDetailPage() {
           <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 relative">
             <TabsList className="w-auto inline-flex justify-start h-auto p-1 bg-muted/50 rounded-lg">
               <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
-              <TabsTrigger value="embed">Embed</TabsTrigger>
               <TabsTrigger value="customize">Customize</TabsTrigger>
+              <TabsTrigger value="embed">Embed</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
             {/* Mobile scroll indicator */}
@@ -1180,102 +1135,193 @@ export default function ProjectDetailPage() {
           {/* ═══ EMBED — Pure Code, Zero Config ═══ */}
           <TabsContent value="embed" className="space-y-6">
             {/* Primary Embed Snippet */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
+            <Tabs defaultValue="script" className="w-full space-y-6">
+              <TabsList className="w-full grid grid-cols-3 h-auto p-1 bg-muted/30 rounded-lg mb-2">
+                <TabsTrigger value="script" className="text-sm py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all">
+                  Script
+                </TabsTrigger>
+                <TabsTrigger value="react-sdk" className="text-sm py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all">
+                  React SDK
+                </TabsTrigger>
+                <TabsTrigger value="headless" className="text-sm py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all">
+                  Headless
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="script" className="space-y-4">
+                {/* Quick Install */}
+                <Card>
+                  <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
-                      <Rocket className="h-4 w-4" /> Embed Script
+                      <Rocket className="h-4 w-4" /> Quick Install
                     </CardTitle>
                     <CardDescription>Paste this before the closing <code>&lt;/body&gt;</code> tag.</CardDescription>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tighter">Fastest Path</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert className="bg-amber-50 border-amber-200">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <AlertTitle className="text-amber-800">Important: Replace &lt;WIDGET_TOKEN&gt;</AlertTitle>
-                  <AlertDescription className="text-amber-700">
-                    Replace <code className="bg-amber-100 px-1 py-0.5 rounded">&lt;WIDGET_TOKEN&gt;</code> with your actual widget token from the{" "}
-                    <button className="underline font-medium" onClick={() => setActiveTab("settings")}>Settings tab</button>.
-                  </AlertDescription>
-                </Alert>
-                <Tabs defaultValue="script" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4 h-9">
-                    <TabsTrigger value="script" className="text-xs">Script Only</TabsTrigger>
-                    <TabsTrigger value="html" className="text-xs">Full HTML Example</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="script" className="mt-0">
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <CopyBlock value={embedSnippet} className="text-xs" />
-                  </TabsContent>
-                  <TabsContent value="html" className="mt-0">
-                    <CopyBlock value={htmlExample} className="text-xs" />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            {/* SDK Options */}
-            <Accordion type="multiple" className="w-full space-y-2">
-              <AccordionItem value="react-sdk" className="rounded-lg border">
-                <AccordionTrigger className="px-4 py-4 hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Box className="h-4 w-4 text-muted-foreground" />
-                    <div className="text-left">
-                      <p className="text-sm font-semibold">React SDK</p>
-                      <p className="text-xs text-muted-foreground">High-level component for React & Next.js.</p>
+                {/* Full HTML Example */}
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-base">Full HTML Example</CardTitle>
+                        <CardDescription>Complete example with custom button - copy & paste to test</CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tighter">For Beginners</Badge>
                     </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">1. Install</Label>
-                    <CopyBlock value="npm install @contextly/react" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">2. Usage</Label>
-                    <CopyBlock value={`import { Chatbot } from "@contextly/react";
-import "@contextly/react/dist/style.css";
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <CopyBlock value={`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Site with Contextly Chatbot</title>
+  
+  <!-- OPTIONAL: Add your own styles -->
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    /* Custom button to open chat */
+    .chat-trigger-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4f46e5; /* Change to your brand color */
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+      transition: transform 0.2s;
+    }
+    
+    .chat-trigger-btn:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to My Website</h1>
+  <p>This is my site with an AI chatbot assistant.</p>
+  
+  <!-- Custom button to open/close the chatbot -->
+  <button class="chat-trigger-btn" onclick="toggleChat()">
+    💬 Chat with us
+  </button>
+
+  <!-- 
+    ========================================
+    COPY THE SCRIPT BELOW AND REPLACE:
+    - <WIDGET_TOKEN> with your actual token from Settings tab
+    ========================================
+  -->
+${embedSnippet.replace('<WIDGET_TOKEN>', '<YOUR_WIDGET_TOKEN>')}
+
+  <!-- Control the chatbot -->
+  <script>
+    // Toggle chat open/close when button is clicked
+    function toggleChat() {
+      if (window.ChatbotWidget) {
+        window.ChatbotWidget.toggle();
+      } else {
+        console.log('Chatbot is loading...');
+      }
+    }
+    
+    // Or use these specific functions:
+    // window.ChatbotWidget.open();   // Open the chat
+    // window.ChatbotWidget.close();  // Close the chat
+  </script>
+</body>
+</html>`} className="text-xs" />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="react-sdk" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <Box className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <CardTitle className="text-base">React SDK</CardTitle>
+                        <CardDescription>High-level component for React & Next.js</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">1. Install</Label>
+                      <CopyBlock value="npm install contextly" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">2. Usage</Label>
+                      <CopyBlock value={`import { Chat } from "contextly";
 
 function App() {
   return (
-    <Chatbot 
+    <Chat
       projectId="${project.id}" 
-      mode="${embedMode}" 
+      token="YOUR_WIDGET_TOKEN"
     />
   );
 }`} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="headless-hooks" className="rounded-lg border">
-                <AccordionTrigger className="px-4 py-4 hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Puzzle className="h-4 w-4 text-muted-foreground" />
-                    <div className="text-left">
-                      <p className="text-sm font-semibold">Headless Hooks</p>
-                      <p className="text-xs text-muted-foreground">Your UI, our logic.</p>
                     </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-4">
-                  <CopyBlock value={`import { useChatbot } from "@contextly/react";
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="headless" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <Puzzle className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <CardTitle className="text-base">Headless Hooks</CardTitle>
+                        <CardDescription>Your UI, our logic</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">1. Install</Label>
+                      <CopyBlock value="npm install contextly" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">2. Usage</Label>
+                      <CopyBlock value={`import { useChat } from "contextly";
 
 function CustomUI() {
-  const { messages, sendMessage, isLoading } = useChatbot("${project.id}");
+  const { messages, input, setInput, sendMessage, isLoading } = useChat({
+    projectId: "${project.id}",
+    token: "YOUR_WIDGET_TOKEN",
+  });
 
   return (
     <div>
       {messages.map(m => <div key={m.id}>{m.content}</div>)}
-      <button onClick={() => sendMessage("Hello!")}>Send</button>
+      <input value={input} onChange={(e) => setInput(e.target.value)} />
+      <button onClick={() => sendMessage()} disabled={isLoading}>Send</button>
     </div>
   );
 }`} />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* ═══ CUSTOMIZE — Side-by-Side with Live Preview ═══ */}
@@ -1568,6 +1614,41 @@ function CustomUI() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-8">
+            {/* Token Usage Card */}
+            <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Key className="h-5 w-5" /> Token Usage
+                </CardTitle>
+                <CardDescription>
+                  Monitor your project&apos;s API usage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {usage ? (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="p-4 rounded-lg bg-background/50 border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Tokens Used</p>
+                      <p className="text-2xl font-bold mt-1">{usage.tokens?.toLocaleString() || 0}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-background/50 border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Requests</p>
+                      <p className="text-2xl font-bold mt-1">{usage.requests?.toLocaleString() || 0}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-background/50 border">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Token Limit</p>
+                      <p className="text-2xl font-bold mt-1">{usage.limit?.toLocaleString() || "Unlimited"}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading usage data...</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Top Row: Widget Token & Allowed Origins side by side */}
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Widget Token Section */}

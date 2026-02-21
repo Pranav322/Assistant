@@ -131,6 +131,9 @@ function WidgetContent() {
       if (data.type === "chatbot:close") {
         setIsOpen(false);
       }
+      if (data.type === "chatbot:open") {
+        setIsOpen(true);
+      }
     }
     window.addEventListener("message", onMessage);
 
@@ -412,10 +415,7 @@ function WidgetContent() {
               console.log('[Widget] Close button clicked, allowedOrigin:', allowedOrigin);
               setIsOpen(false);
               if (allowedOrigin) {
-                console.log('[Widget] Sending chatbot:close to parent');
                 window.parent?.postMessage({ type: "chatbot:close" }, allowedOrigin);
-              } else {
-                console.warn('[Widget] allowedOrigin is not set, message not sent');
               }
             }}
           >
