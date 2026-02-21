@@ -1,1 +1,0 @@
-"""Standalone RAG core service."""
