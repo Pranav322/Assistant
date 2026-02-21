@@ -141,6 +141,14 @@ export default function Home() {
                   )}
                 </div>
 
+                <div className="mt-6 pt-2">
+                  <Link href="/rag-chatbot-from-documents" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span>Build a RAG chatbot from your documents</span>
+                    <span aria-hidden="true">&rarr;</span>
+                  </Link>
+                </div>
+
                 <div className="mt-10 grid gap-3 text-sm text-muted-foreground grid-cols-1 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
