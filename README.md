@@ -13,7 +13,7 @@ Contextly allows you to create custom chatbots trained on your own data. It feat
 - **Widget Integration**: Easily embeddable chat widget for semantic search on your site.
 
 ---
-
+ 
 ## Project Structure
 
 The repository is organized into three main components:
