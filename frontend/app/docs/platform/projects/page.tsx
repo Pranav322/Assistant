@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Managing Projects",
+  description: "Create, configure, and maintain Contextly projects and their knowledge sources.",
+  path: "/docs/platform/projects",
+});
 
 const content = `# Managing Projects
 

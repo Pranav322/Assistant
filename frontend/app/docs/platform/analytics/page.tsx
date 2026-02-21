@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Analytics and Usage",
+  description: "Track token usage, conversations, and performance metrics across your Contextly projects.",
+  path: "/docs/platform/analytics",
+});
 
 const content = `# Analytics & Usage
 

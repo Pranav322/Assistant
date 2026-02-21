@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Self-Hosting Architecture",
+  description: "Review the core architecture of Contextly services in self-hosted deployments.",
+  path: "/docs/self-hosting/architecture",
+});
 
 const content = `# Architecture
 

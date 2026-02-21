@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Chat Widget",
+  description: "Embed and customize the Contextly chat widget in your website or web app.",
+  path: "/docs/platform/widget",
+});
 
 const content = `# Chat Widget
 

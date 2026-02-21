@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
+import { SITE_URL, absoluteUrl } from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,21 +35,18 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Contextly Team" }],
   creator: "Contextly",
-  metadataBase: new URL("https://contextly.live"),
-  alternates: {
-    canonical: "/",
-  },
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "Contextly | Ship Intelligent Assistants",
     description:
       "A complete toolkit for building retrieval-augmented generation apps. Drop our pre-built widget into your frontend or use the API for full control.",
-    url: "https://contextly.live",
+    url: SITE_URL,
     siteName: "Contextly",
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "/og-image.png", // We should create this or use a default if available, users often forget
+        url: absoluteUrl("/opengraph-image"),
         width: 1200,
         height: 630,
         alt: "Contextly Platform Preview",
@@ -60,8 +58,7 @@ export const metadata: Metadata = {
     title: "Contextly | Enterprise RAG Chatbots",
     description:
       "Build, embed, and monitor production RAG chatbots in minutes. Secure, scalable, and easy to integrate.",
-    creator: "@contextly_ai", // Placeholder or if user has one
-    images: ["/og-image.png"],
+    images: [absoluteUrl("/twitter-image")],
   },
   robots: {
     index: true,

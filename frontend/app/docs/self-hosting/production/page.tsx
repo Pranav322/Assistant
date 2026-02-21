@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Production Deployment",
+  description: "Best practices for secure, scalable, and reliable Contextly production deployments.",
+  path: "/docs/self-hosting/production",
+});
 
 const content = `# Production Deployment
 

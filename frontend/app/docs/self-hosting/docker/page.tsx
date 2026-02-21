@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Self-Hosting with Docker",
+  description: "Deploy Contextly self-hosted services with Docker and Docker Compose.",
+  path: "/docs/self-hosting/docker",
+});
 
 const content = `# Docker Deployment
 

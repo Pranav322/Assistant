@@ -1,12 +1,21 @@
 import { MetadataRoute } from "next";
+import { absoluteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
     return {
         rules: {
             userAgent: "*",
             allow: "/",
-            disallow: ["/api/", "/dashboard/", "/settings/"], // Protect internal routes if needed, though auth handles this
+            disallow: [
+                "/api/",
+                "/projects",
+                "/projects/",
+                "/billing",
+                "/billing/",
+                "/widget",
+                "/widget/",
+            ],
         },
-        sitemap: "https://contextly.live/sitemap.xml",
+        sitemap: absoluteUrl("/sitemap.xml"),
     };
 }

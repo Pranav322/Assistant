@@ -1,29 +1,30 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, FileText, Globe, Upload, Bot, Zap, Code, Shield, Database } from "lucide-react";
-import { isAuthenticated } from "@/lib/auth";
+import { FileText, Globe, Upload, Bot, Zap, Code, Shield, Database } from "lucide-react";
+import { HomeAuthNav, RagHeroAuthCTA } from "@/components/marketing-auth";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+    title: "Build a RAG Chatbot from Documents",
+    description:
+        "Upload PDFs, text files, or URLs and launch a production-ready RAG chatbot in minutes with Contextly.",
+    path: "/rag-chatbot-from-documents",
+});
 
 export default function RagChatbotFromDocuments() {
-    const [isAuth, setIsAuth] = useState<boolean | null>(null);
-
-    useEffect(() => {
-        setIsAuth(isAuthenticated());
-    }, []);
 
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebPage",
         "name": "Build a RAG Chatbot from Your Documents | Contextly",
         "description": "Upload PDFs, Markdown, and let Contextly index your data. Build and embed a high-performance RAG chatbot in minutes with no coding required.",
-        "url": "https://www.contextly.live/rag-chatbot-from-documents",
+        "url": "https://contextly.live/rag-chatbot-from-documents",
         "publisher": {
             "@type": "Organization",
             "name": "Contextly",
-            "url": "https://www.contextly.live"
+            "url": "https://contextly.live"
         }
     };
 
@@ -51,25 +52,7 @@ export default function RagChatbotFromDocuments() {
                         >
                             Pricing
                         </Link>
-                        {isAuth === null ? (
-                            <div className="w-20 h-9 bg-muted/20 animate-pulse rounded-md" />
-                        ) : isAuth ? (
-                            <Button asChild size="sm">
-                                <Link href="/projects">Go to Dashboard</Link>
-                            </Button>
-                        ) : (
-                            <>
-                                <Link
-                                    href="/auth/login"
-                                    className="hidden sm:inline-block text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                                >
-                                    Sign in
-                                </Link>
-                                <Button asChild size="sm">
-                                    <Link href="/auth/register">Get Started</Link>
-                                </Button>
-                            </>
-                        )}
+                        <HomeAuthNav />
                     </nav>
                 </div>
             </header>
@@ -97,19 +80,10 @@ export default function RagChatbotFromDocuments() {
                                 <span className="text-primary">from your Documents</span>
                             </h1>
                             <p className="mt-6 text-lg text-muted-foreground sm:text-xl leading-relaxed text-balance">
-                                Upload PDFs, TXTs, or paste your website URL. Contextly automatically splits, chunks, and indexes your document's knowledge to power an intelligent chatbot you can embed anywhere.
+                                Upload PDFs, TXTs, or paste your website URL. Contextly automatically splits, chunks, and indexes your document&apos;s knowledge to power an intelligent chatbot you can embed anywhere.
                             </p>
 
-                            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                                <Button size="lg" className="h-12 w-full sm:w-auto px-8 text-base shadow-sm" asChild>
-                                    <Link href={isAuth ? "/projects" : "/auth/register"}>
-                                        {isAuth ? "Go to Dashboard" : "Start Building for Free"}
-                                    </Link>
-                                </Button>
-                                <Button size="lg" variant="outline" className="h-12 w-full sm:w-auto px-8 text-base" asChild>
-                                    <Link href="/auth/login">Watch Demo</Link>
-                                </Button>
-                            </div>
+                            <RagHeroAuthCTA />
 
                             <p className="mt-6 text-sm text-muted-foreground flex items-center justify-center gap-2">
                                 <Shield className="h-4 w-4" /> 200,000 free tokens. No credit card required.
@@ -184,7 +158,7 @@ export default function RagChatbotFromDocuments() {
                                             <FileText className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-foreground">Multi-Format Support</h4>
+                                            <h3 className="font-semibold text-foreground">Multi-Format Support</h3>
                                             <p className="text-sm text-muted-foreground mt-1">Accepts unstructured PDF files, Word docs, Markdown files, or raw text. We handle the parsing logic behind the scenes.</p>
                                         </div>
                                     </div>
@@ -193,7 +167,7 @@ export default function RagChatbotFromDocuments() {
                                             <Globe className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-foreground">Website Scraping</h4>
+                                            <h3 className="font-semibold text-foreground">Website Scraping</h3>
                                             <p className="text-sm text-muted-foreground mt-1">Want to build a chatbot using your public blog or documentation? Just paste the sitemap or root URL.</p>
                                         </div>
                                     </div>
@@ -202,7 +176,7 @@ export default function RagChatbotFromDocuments() {
                                             <Bot className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-foreground">Highly Accurate Retrieval</h4>
+                                            <h3 className="font-semibold text-foreground">Highly Accurate Retrieval</h3>
                                             <p className="text-sm text-muted-foreground mt-1">Advanced hybrid search and reranking ensure the AI responds with pinpoint relevance and minimizes hallucination.</p>
                                         </div>
                                     </div>
@@ -211,7 +185,7 @@ export default function RagChatbotFromDocuments() {
                                             <Zap className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-foreground">Plug & Play UI</h4>
+                                            <h3 className="font-semibold text-foreground">Plug & Play UI</h3>
                                             <p className="text-sm text-muted-foreground mt-1">Includes a modern, responsive chat interface straight out of the box with zero CSS configuration needed.</p>
                                         </div>
                                     </div>

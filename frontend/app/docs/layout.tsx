@@ -1,4 +1,31 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { absoluteUrl } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Docs",
+    template: "%s | Contextly Docs",
+  },
+  description: "Documentation for Contextly's RAG chatbot platform, including setup, widget embedding, API keys, and self-hosting.",
+  alternates: {
+    canonical: absoluteUrl("/docs/getting-started"),
+  },
+  openGraph: {
+    title: "Contextly Documentation",
+    description: "Learn how to build, deploy, and manage RAG chatbots with Contextly.",
+    url: absoluteUrl("/docs/getting-started"),
+    siteName: "Contextly",
+    type: "website",
+    images: [absoluteUrl("/opengraph-image")],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contextly Documentation",
+    description: "Learn how to build, deploy, and manage RAG chatbots with Contextly.",
+    images: [absoluteUrl("/twitter-image")],
+  },
+};
 
 export default function DocsLayout({
   children,

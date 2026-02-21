@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "API Keys",
+  description: "Generate, rotate, and secure API keys for Contextly integrations.",
+  path: "/docs/platform/api-keys",
+});
 
 const content = `# API Keys
 

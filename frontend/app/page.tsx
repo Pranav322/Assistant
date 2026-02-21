@@ -1,34 +1,22 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CopyBlock from "@/components/CopyBlock";
-import { CheckCircle2, Layers, Search, Zap, Shield, BarChart3, Code, Package, Sparkles } from "lucide-react";
-import { isAuthenticated } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
+import { CheckCircle2, Layers, Search, Zap, Shield, Code, Package, Sparkles } from "lucide-react";
+import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
+import { PricingTiers } from "@/components/pricing-tiers";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Enterprise RAG Chatbots for Your Platform",
+  description:
+    "Build, embed, and monitor production RAG chatbots in minutes with Contextly. Ingest docs, power retrieval, and ship a secure AI assistant fast.",
+  path: "/",
+});
 
 export default function Home() {
-  const [isAuth, setIsAuth] = useState<boolean | null>(null);
-  const [plan, setPlan] = useState<string | null>(null);
-
-  useEffect(() => {
-    const auth = isAuthenticated();
-    setIsAuth(auth);
-
-    if (auth) {
-      const token = localStorage.getItem("rag_user_token");
-      if (token) {
-        apiRequest<{ plan: string }>("/billing/plan", { token })
-          .then((data) => setPlan(data.plan))
-          .catch(() => { });
-      }
-    }
-  }, []);
-
-  const isPro = plan === "pro";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -72,30 +60,7 @@ export default function Home() {
             >
               Pricing
             </Link>
-            {isAuth === null ? (
-              // Loading state or placeholder to prevent layout shift/flash
-              <div className="w-20 h-9 bg-muted/20 animate-pulse rounded-md" />
-            ) : isAuth ? (
-              <Button asChild size="sm">
-                <Link href="/projects">
-                  Go to Dashboard
-                </Link>
-              </Button>
-            ) : (
-              <>
-                <Link
-                  href="/auth/login"
-                  className="hidden sm:inline-block text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                >
-                  Sign in
-                </Link>
-                <Button asChild size="sm">
-                  <Link href="/auth/register">
-                    Get Started
-                  </Link>
-                </Button>
-              </>
-            )}
+            <HomeAuthNav />
           </nav>
         </div>
       </header>
@@ -120,25 +85,7 @@ export default function Home() {
                   Handles ingestion, retrieval, auth, and observability so you can focus on your users.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  {isAuth === null ? (
-                    <div className="flex gap-4">
-                      <div className="h-12 w-40 bg-muted/20 animate-pulse rounded-md" />
-                      <div className="h-12 w-32 bg-muted/20 animate-pulse rounded-md" />
-                    </div>
-                  ) : isAuth ? (
-                    <Button size="lg" className="h-12 w-full sm:w-auto px-8 text-base" asChild>
-                      <Link href="/projects">Go to Dashboard</Link>
-                    </Button>
-                  ) : (
-                    <>
-                      <Button size="lg" className="h-12 w-full sm:w-auto px-8 text-base" asChild>
-                        <Link href="/auth/register">Create Workspace</Link>
-                      </Button>
-                      <Button size="lg" variant="outline" className="h-12 w-full sm:w-auto px-8 text-base" asChild>
-                        <Link href="/auth/login">View Demo</Link>
-                      </Button>
-                    </>
-                  )}
+                  <HomeHeroAuthCTA />
                 </div>
 
                 <div className="mt-6 pt-2">
@@ -191,7 +138,7 @@ export default function Home() {
                       <TabsContent value="widget" className="space-y-4 flex-1 overflow-auto">
                         <div className="rounded-lg border bg-muted/50 p-3 sm:p-4">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                            <h4 className="text-sm font-medium">Embed with one line</h4>
+                            <h3 className="text-sm font-medium">Embed with one line</h3>
                             <Badge variant="outline" className="text-xs w-fit">HTML / Any Framework</Badge>
                           </div>
                           <div className="overflow-x-auto max-w-full">
@@ -219,7 +166,7 @@ export default function Home() {
                       <TabsContent value="package" className="space-y-4 flex-1 overflow-auto">
                         <div className="rounded-lg border bg-muted/50 p-3 sm:p-4">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                            <h4 className="text-sm font-medium">Full React Integration</h4>
+                            <h3 className="text-sm font-medium">Full React Integration</h3>
                             <Badge variant="outline" className="text-xs w-fit">npm / pnpm</Badge>
                           </div>
                           <div className="mb-4">
@@ -312,7 +259,7 @@ export default function App() {
                   </div>
                   <h3 className="text-lg font-semibold tracking-tight">Embeddable Widget & SDK</h3>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Use our pre-built widget or the <code className="text-xs bg-muted px-1 py-0.5 rounded">contextly</code> npm package for React apps. Full control, zero config.
+                    Use our pre-built widget or the <code className="text-xs bg-secondary text-secondary-foreground font-semibold border px-1 py-0.5 rounded">contextly</code> npm package for React apps. Full control, zero config.
                   </p>
                 </div>
                 <div className="rounded-xl border bg-background p-6 shadow-sm">
@@ -344,77 +291,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              {/* Free Tier */}
-              <div className="rounded-xl border bg-background p-8 shadow-sm hover:border-primary/50 transition-colors">
-                <h3 className="text-xl font-semibold tracking-tight">Free</h3>
-                <p className="text-sm text-muted-foreground mt-1">For getting started</p>
-                <div className="mt-6 mb-8">
-                  <span className="text-4xl font-extrabold">₹0</span>
-                  <span className="text-muted-foreground ml-2">forever</span>
-                </div>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    1 project
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    200K token cap
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    Community support
-                  </li>
-                </ul>
-                <div className="mt-8">
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/auth/register">Get Started</Link>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Pro Tier */}
-              <div className={`rounded-xl border-2 ${isPro ? "border-primary bg-primary/5" : "border-primary/30 bg-background"} p-8 shadow-md relative transition-colors`}>
-                <Badge className="absolute -top-2.5 left-6 text-[10px]">
-                  {isPro ? "Current Plan" : "Most Popular"}
-                </Badge>
-                <h3 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-                  Pro
-                  <Sparkles className="h-4 w-4 text-primary" />
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">For serious projects</p>
-                <div className="mt-6 mb-8">
-                  <span className="text-4xl font-extrabold">₹499</span>
-                  <span className="text-muted-foreground ml-2">/ 30 days</span>
-                </div>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    5 projects
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    2M token cap
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    Higher token limits
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    Priority support
-                  </li>
-                </ul>
-                <div className="mt-8">
-                  <Button className="w-full" variant={isPro ? "outline" : "default"} asChild>
-                    <Link href={isAuth ? "/billing" : "/auth/register"}>
-                      {isPro ? "Manage Subscription" : isAuth ? "Upgrade Now" : "Start Free, Upgrade Later"}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <PricingTiers />
           </div>
         </section>
 

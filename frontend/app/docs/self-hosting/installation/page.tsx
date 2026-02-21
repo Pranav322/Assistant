@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Self-Hosting Installation",
+  description: "Install Contextly self-hosted components and verify your environment step by step.",
+  path: "/docs/self-hosting/installation",
+});
 
 const content = `# Installation
 

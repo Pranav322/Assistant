@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { Markdown } from "@/components/markdown";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Platform Overview",
+  description: "Understand Contextly platform capabilities for projects, widgets, API keys, and analytics.",
+  path: "/docs/platform",
+});
 
 const content = `# Using the Platform
 
