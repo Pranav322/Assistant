@@ -23,15 +23,15 @@ if (apiOrigin.startsWith("https://")) {
 
 const cspHeader = `
     default-src 'self';
-    connect-src ${connectSrc.join(" ")} https://api.razorpay.com;
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://checkout.razorpay.com;
+    connect-src ${connectSrc.join(" ")} https://api.razorpay.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://checkout.razorpay.com https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https:;
     font-src 'self' data:;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
-    frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com;
+    frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://apis.google.com https://*.firebaseapp.com;
     frame-ancestors 'none';
     upgrade-insecure-requests;
 `;
