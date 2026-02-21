@@ -1,7 +1,7 @@
 # Contextly - RAG Chatbot Platform 
   
 Welcome to **Contextly**, a production-ready RAG (Retrieval-Augmented Generation) chatbot platform designed to be powerful, scalable, and easy to deploy.
-
+ 
 ## Overview
 
 Contextly allows you to create custom chatbots trained on your own data. It features a robust backend for processing and vector search, a modern dashboard for management, and a lightweight widget for embedding chats on any website. 
