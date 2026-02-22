@@ -10,7 +10,7 @@ Contextly allows you to create custom chatbots trained on your own data. It feat
 - **Hybrid Search**: Combines vector semantic search with keyword search for optimal retrieval.
 - **Semantic Chunking**: Intelligently splits documents to preserve context.
 - **Async Processing**: Heavy lifting (ingestion, embedding) is handled in the background by Dramatiq workers.
-- **Widget Integration**: Easily embeddable chat widget for semantic search on your site.
+- **Widget Integration**: Easily embeddable chat widget for semantic search on your site. 
 
 ---
  
