@@ -4,7 +4,7 @@ Welcome to **Contextly**, a production-ready RAG (Retrieval-Augmented Generation
  
 ## Overview
 
-Contextly allows you to create custom chatbots trained on your own data. It features a robust backend for processing and vector search, a modern dashboard for management, and a lightweight widget for embedding chats on any website. 
+Contextly allows you to create custom chatbots trained on your own data. It features a robust backend for processing and vector search, a modern dashboard for management, and a lightweight widget for embedding chats on any website.  
 
 ### Key Features
 - **Hybrid Search**: Combines vector semantic search with keyword search for optimal retrieval.
