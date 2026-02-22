@@ -393,11 +393,21 @@ export default function ProjectDetailPage() {
               return source;
             }
             foundSource = true;
+            const nextProgress = payload.progress
+              ? {
+                  stage: payload.progress.stage ?? source.progress?.stage ?? "processing",
+                  percent: payload.progress.percent ?? source.progress?.percent ?? 0,
+                  total_chunks:
+                    payload.progress.total_chunks ?? source.progress?.total_chunks,
+                  processed_chunks:
+                    payload.progress.processed_chunks ?? source.progress?.processed_chunks,
+                }
+              : source.progress;
             return {
               ...source,
               status,
               type: payload.type ?? source.type,
-              progress: payload.progress ?? source.progress,
+              progress: nextProgress,
               metadata: {
                 ...source.metadata,
                 ...(payload.filename !== undefined ? { filename: payload.filename } : {}),
