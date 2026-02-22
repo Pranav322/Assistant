@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 FRONTEND_DIR="$ROOT_DIR/../frontend"
+COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"
 
 # ── Colors ──────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -45,7 +46,7 @@ fi
 
 # ── 2. Start Redis via docker-compose ───────────────────────
 log "Starting Redis..."
-docker-compose -f "docker-compose.yml" up -d redis 2>&1 | grep -v "version.*obsolete" || true
+docker-compose -f "$COMPOSE_FILE" up -d redis 2>&1 | grep -v "version.*obsolete" || true
 
 # Wait until Redis is actually accepting connections
 printf "  Waiting for Redis"
@@ -58,7 +59,7 @@ log "Redis is ready on localhost:6379."
 
 # ── 3. Start worker via docker-compose ────────────────────────
 log "Starting worker..."
-docker-compose -f "docker-compose.yml" up -d worker 2>&1 | grep -v "version.*obsolete" || true
+docker-compose -f "$COMPOSE_FILE" up -d --build worker 2>&1 | grep -v "version.*obsolete" || true
 
 # Wait for worker to be healthy
 printf "  Waiting for worker"
@@ -78,7 +79,7 @@ cleanup() {
   echo ""
   log "Shutting down..."
   [[ -n "$BACKEND_PID" ]] && kill "$BACKEND_PID" 2>/dev/null || true
-  docker-compose -f "docker-compose.yml" stop 2>&1 | grep -v "version.*obsolete" || true
+  docker-compose -f "$COMPOSE_FILE" down --remove-orphans 2>&1 | grep -v "version.*obsolete" || true
   log "Done."
 }
 trap cleanup EXIT
@@ -100,4 +101,4 @@ echo -e "${CYAN}  Press Ctrl+C to stop everything.${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-cd "$FRONTEND_DIR" && pnpm run dev
+(cd "$FRONTEND_DIR" && pnpm run dev)

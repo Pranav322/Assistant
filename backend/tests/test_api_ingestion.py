@@ -144,6 +144,43 @@ async def test_get_source_status(client: AsyncClient, db: AsyncSession):
 
 
 @pytest.mark.asyncio
+async def test_ingestion_stream_endpoint_ready_event(
+    client: AsyncClient, db: AsyncSession
+):
+    user = User(email=f"stream_api_{uuid.uuid4()}@example.com")
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    project = Project(name="Stream API Project", owner_id=user.id)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+
+    api_key_value = generate_api_key()
+    api_key = ApiKey(project_id=project.id, key_hash=hash_api_key(api_key_value))
+    db.add(api_key)
+    await db.commit()
+
+    async with client.stream(
+        "GET",
+        f"/api/v1/ingestion/stream?project_id={project.id}",
+        headers={"X-API-Key": api_key_value},
+    ) as response:
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/event-stream")
+
+        first_payload = ""
+        async for chunk in response.aiter_text():
+            first_payload += chunk
+            if "event: ready" in first_payload:
+                break
+
+        assert "event: ready" in first_payload
+        assert str(project.id) in first_payload
+
+
+@pytest.mark.asyncio
 async def test_ingest_url_endpoint(client: AsyncClient, db: AsyncSession):
     user = User(email=f"url_api_{uuid.uuid4()}@example.com")
     db.add(user)

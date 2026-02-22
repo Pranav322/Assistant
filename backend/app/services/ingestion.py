@@ -5,6 +5,7 @@ import uuid
 from typing import Optional
 
 import pdfplumber
+import redis.asyncio as redis
 from markdownify import markdownify
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,14 +14,29 @@ from app.core.chunking import DocumentChunker
 from app.models import Chunk, Embedding, Source
 from app.schemas.chunk import ProcessedChunk
 from app.services.embedding import EmbeddingService
+from app.services.ingestion_events import publish_ingestion_event
 from app.services.ingestion_validation import validate_file_content
 
 
 class IngestionService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, redis_client: redis.Redis | None = None):
         self.db = db
+        self.redis = redis_client
         self.chunker = DocumentChunker()
         self.embedder = EmbeddingService()
+
+    async def _publish_source_update(self, source: Source) -> None:
+        metadata = source.metadata_ or {}
+        await publish_ingestion_event(
+            self.redis,
+            project_id=source.project_id,
+            source_id=source.id,
+            status=source.status,
+            progress=source.progress or {},
+            source_type=source.type,
+            filename=metadata.get("filename"),
+            error=metadata.get("error"),
+        )
 
     async def process_file(
         self,
@@ -92,6 +108,7 @@ class IngestionService:
                 "percent": 5,
             }
             await self.db.flush()
+            await self._publish_source_update(source)
             # 4. Extract Text
             # ... (rest of the logic remains same, but we'll use 'source' object)
             text_content = ""
@@ -150,6 +167,7 @@ class IngestionService:
                 "processed_chunks": 0,
             }
             await self.db.flush()
+            await self._publish_source_update(source)
             for idx, chunk in enumerate(chunks):
                 chunk.metadata["chunk_index"] = idx
                 chunk.metadata["total_chunks"] = len(chunks)
@@ -183,6 +201,7 @@ class IngestionService:
                     "processed_chunks": processed,
                 }
                 await self.db.flush()
+                await self._publish_source_update(source)
 
             # Issue #6: Verify embedding count matches chunk count
             if len(embeddings_list) != len(chunks):
@@ -225,6 +244,7 @@ class IngestionService:
                 "percent": 95,
             }
             await self.db.flush()
+            await self._publish_source_update(source)
 
             # 9. Update Source Status
             source.status = "completed"
@@ -233,6 +253,7 @@ class IngestionService:
                 "percent": 100,
             }
             await self.db.commit()
+            await self._publish_source_update(source)
 
             return source
 
@@ -255,6 +276,7 @@ class IngestionService:
                 "percent": 0,
             }
             await self.db.commit()
+            await self._publish_source_update(fail_source)
             raise e
 
     async def get_source_by_hash(

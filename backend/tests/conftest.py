@@ -29,6 +29,7 @@ with patch("dramatiq.brokers.redis.RedisBroker") as MockRedisBroker:
 class FakeRedis:
     def __init__(self) -> None:
         self.store: dict[str, str] = {}
+        self.subscribers: dict[str, list[asyncio.Queue[dict[str, str]]]] = {}
 
     async def mget(self, keys: list[str]) -> list[str | None]:
         return [self.store.get(key) for key in keys]
@@ -44,11 +45,80 @@ class FakeRedis:
     async def expire(self, _key: str, _ttl: int) -> None:
         return None
 
+    async def publish(self, channel: str, message: str) -> int:
+        payload = {
+            "type": "message",
+            "channel": channel,
+            "data": message,
+        }
+        subscribers = self.subscribers.get(channel, [])
+        for queue in subscribers:
+            await queue.put(payload)
+        return len(subscribers)
+
+    def pubsub(self) -> "FakePubSub":
+        return FakePubSub(self)
+
     async def close(self) -> None:
         return None
 
     async def aclose(self) -> None:
         return None
+
+
+class FakePubSub:
+    def __init__(self, redis_client: FakeRedis) -> None:
+        self.redis_client = redis_client
+        self.queues: dict[str, asyncio.Queue[dict[str, str]]] = {}
+
+    async def subscribe(self, *channels: str) -> None:
+        for channel in channels:
+            if channel in self.queues:
+                continue
+            queue: asyncio.Queue[dict[str, str]] = asyncio.Queue()
+            self.queues[channel] = queue
+            self.redis_client.subscribers.setdefault(channel, []).append(queue)
+
+    async def unsubscribe(self, *channels: str) -> None:
+        target_channels = channels or tuple(self.queues.keys())
+        for channel in target_channels:
+            queue = self.queues.pop(channel, None)
+            if queue is None:
+                continue
+            subscribers = self.redis_client.subscribers.get(channel, [])
+            if queue in subscribers:
+                subscribers.remove(queue)
+            if not subscribers:
+                self.redis_client.subscribers.pop(channel, None)
+
+    async def get_message(
+        self,
+        ignore_subscribe_messages: bool = True,
+        timeout: float = 0.0,
+    ) -> dict[str, str] | None:
+        del ignore_subscribe_messages  # kept for compatibility with redis-py API
+        if not self.queues:
+            if timeout > 0:
+                await asyncio.sleep(timeout)
+            return None
+
+        deadline = asyncio.get_running_loop().time() + max(timeout, 0.0)
+        while True:
+            for queue in self.queues.values():
+                if queue.empty():
+                    continue
+                return queue.get_nowait()
+            if timeout <= 0:
+                return None
+            if asyncio.get_running_loop().time() >= deadline:
+                return None
+            await asyncio.sleep(0.01)
+
+    async def close(self) -> None:
+        await self.unsubscribe()
+
+    async def aclose(self) -> None:
+        await self.unsubscribe()
 
 
 @pytest.fixture

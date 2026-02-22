@@ -1,13 +1,16 @@
 import asyncio
 import uuid
-from typing import Any, Optional
+from typing import Optional
 from urllib.parse import urlparse
 
 import dramatiq
+import redis.asyncio as redis
 import structlog
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.models import Source
+from app.services.ingestion_events import publish_ingestion_event
 from app.worker.db import WorkerAsyncSessionLocal
 from app.services.ingestion import IngestionService
 from app.services.ingestion_validation import derive_file_type
@@ -32,44 +35,70 @@ async def process_ingestion_async(
     # This factory creates a fresh engine without pool_pre_ping
     session_factory = WorkerAsyncSessionLocal()
     async with session_factory() as db:
-        ingestion_service = IngestionService(db)
+        redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        ingestion_service = IngestionService(db, redis_client=redis_client)
         storage_service = StorageService()
 
         source_uuid = uuid.UUID(source_id)
         project_uuid = uuid.UUID(project_id)
 
-        content = file_content
-        if content and isinstance(content, str):
-            content = base64.b64decode(content)
+        try:
+            content = file_content
+            if content and isinstance(content, str):
+                content = base64.b64decode(content)
 
-        resolved_url = None
-        content_type = None
-        if not content and source_url:
-            content, content_type, resolved_url = await fetch_url_content(source_url)
+            resolved_url = None
+            content_type = None
+            if not content and source_url:
+                content, content_type, resolved_url = await fetch_url_content(source_url)
 
-        if not content and storage_path:
-            content = await storage_service.get_file(storage_path)
+            if not content and storage_path:
+                content = await storage_service.get_file(storage_path)
+        except Exception:
+            close_method = getattr(redis_client, "aclose", None)
+            if close_method:
+                await close_method()
+            else:
+                await redis_client.close()
+            raise
 
         if not content:
-            logger.error(
-                "ingestion_task_failed",
-                error="No content found",
-                source_id=source_id,
-            )
-            # Issue #3: Update status to failed so user is not stuck in pending
-            result = await db.execute(
-                select(Source).where(
-                    Source.id == source_uuid, Source.project_id == project_uuid
+            try:
+                logger.error(
+                    "ingestion_task_failed",
+                    error="No content found",
+                    source_id=source_id,
                 )
-            )
-            source_record = result.scalar_one_or_none()
-            if source_record:
-                source_record.status = "failed"
-                source_record.metadata_ = {
-                    **(source_record.metadata_ or {}),
-                    "error": "Content not found or empty",
-                }
-                await db.commit()
+                # Issue #3: Update status to failed so user is not stuck in pending
+                result = await db.execute(
+                    select(Source).where(
+                        Source.id == source_uuid, Source.project_id == project_uuid
+                    )
+                )
+                source_record = result.scalar_one_or_none()
+                if source_record:
+                    source_record.status = "failed"
+                    source_record.metadata_ = {
+                        **(source_record.metadata_ or {}),
+                        "error": "Content not found or empty",
+                    }
+                    await db.commit()
+                    await publish_ingestion_event(
+                        redis_client,
+                        project_id=project_uuid,
+                        source_id=source_record.id,
+                        status=source_record.status,
+                        progress=source_record.progress or {},
+                        source_type=source_record.type,
+                        filename=(source_record.metadata_ or {}).get("filename"),
+                        error=(source_record.metadata_ or {}).get("error"),
+                    )
+            finally:
+                close_method = getattr(redis_client, "aclose", None)
+                if close_method:
+                    await close_method()
+                else:
+                    await redis_client.close()
             return
 
         try:
@@ -140,6 +169,16 @@ async def process_ingestion_async(
                     "error": str(e),
                 }
                 await db.commit()
+                await publish_ingestion_event(
+                    redis_client,
+                    project_id=project_uuid,
+                    source_id=source_record.id,
+                    status=source_record.status,
+                    progress=source_record.progress or {},
+                    source_type=source_record.type,
+                    filename=(source_record.metadata_ or {}).get("filename"),
+                    error=(source_record.metadata_ or {}).get("error"),
+                )
             return
         except Exception as e:
             logger.error("ingestion_task_failed", error=str(e), source_id=source_id)
@@ -173,6 +212,12 @@ async def process_ingestion_async(
                 pass  # Don't let DLQ failure hide original error
 
             raise e
+        finally:
+            close_method = getattr(redis_client, "aclose", None)
+            if close_method:
+                await close_method()
+            else:
+                await redis_client.close()
 
 
 @dramatiq.actor(

@@ -1,8 +1,13 @@
+import asyncio
 import hashlib
+import json
+import time
 import uuid
 from typing import cast
 
+import redis.asyncio as redis
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,12 +15,17 @@ from app.api import deps
 from app.models import Chunk, Embedding, Source
 from app.schemas.ingestion import SourceResponse, UrlIngestRequest
 from app.services.audit import log_audit_event
+from app.services.ingestion_events import ingestion_channel
 from app.services.ingestion_validation import derive_file_type, validate_file_content
 from app.services.storage import StorageService
 from app.services.url_fetcher import validate_url
 from app.worker.tasks import process_ingestion_task
 
 router = APIRouter()
+
+
+def _format_sse(event: str, data: str) -> str:
+    return f"event: {event}\ndata: {data}\n\n"
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
@@ -158,6 +168,70 @@ async def upload_document(
         "status": source.status,
         "message": "Ingestion started",
     }
+
+
+@router.get("/stream")
+async def stream_ingestion_status(
+    project_id: uuid.UUID,
+    request: Request,
+    redis_client: redis.Redis = Depends(deps.get_redis),
+    auth: deps.AuthContext = Depends(deps.project_access_required("ingestion")),
+):
+    channel = ingestion_channel(project_id)
+
+    async def event_stream():
+        pubsub = redis_client.pubsub()
+        last_heartbeat = time.monotonic()
+        heartbeat_interval_seconds = 15.0
+
+        try:
+            await pubsub.subscribe(channel)
+            yield _format_sse("ready", json.dumps({"project_id": str(project_id)}))
+
+            while True:
+                if await request.is_disconnected():
+                    break
+
+                message = await pubsub.get_message(
+                    ignore_subscribe_messages=True,
+                    timeout=1.0,
+                )
+                now = time.monotonic()
+
+                if message and message.get("type") == "message":
+                    data = message.get("data")
+                    if data:
+                        yield _format_sse("ingestion_status", str(data))
+                    last_heartbeat = now
+                    continue
+
+                if now - last_heartbeat >= heartbeat_interval_seconds:
+                    heartbeat = json.dumps({"ts": int(time.time())})
+                    yield _format_sse("heartbeat", heartbeat)
+                    last_heartbeat = now
+        except asyncio.CancelledError:
+            raise
+        finally:
+            try:
+                await pubsub.unsubscribe(channel)
+            except Exception:
+                pass
+            close_method = getattr(pubsub, "aclose", None)
+            if close_method:
+                await close_method()
+            else:
+                await pubsub.close()
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+    }
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers=headers,
+    )
 
 
 @router.get("/{source_id}", response_model=dict)

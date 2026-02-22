@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Upload, Link as LinkIcon, RefreshCw, Key, Code, AlertCircle, Trash2, FileText, Globe, Loader2, ChevronLeft, ChevronRight, CheckCircle2, XCircle, MessageSquare, Play, Terminal, ChevronDown, Plus, X, ExternalLink, Box, Puzzle, Settings2, Rocket, Info } from "lucide-react";
 import { apiRequest, API_BASE_URL, fetcher } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { clearToken, getToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import CopyBlock from "@/components/CopyBlock";
 import { toast } from "sonner";
@@ -94,6 +94,21 @@ type Source = {
   };
   created_at: string;
   updated_at: string;
+};
+
+type IngestionStreamEvent = {
+  project_id: string;
+  source_id: string;
+  status: string;
+  progress?: {
+    stage?: string;
+    percent?: number;
+    total_chunks?: number;
+    processed_chunks?: number;
+  };
+  type?: string;
+  filename?: string;
+  error?: string;
 };
 
 export default function ProjectDetailPage() {
@@ -184,8 +199,11 @@ export default function ProjectDetailPage() {
   const [embedHeight, setEmbedHeight] = useState("");
   const [customOrigin, setCustomOrigin] = useState("");
 
-  // Poll for status updates - now using SWR refreshInterval for pending sources
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
+  const streamReconnectRef = useRef<NodeJS.Timeout | null>(null);
+  const streamActiveRef = useRef(false);
+  const hasPendingRef = useRef(false);
+  const shouldReconnectRef = useRef(true);
   const hasRedirectedToTryIt = useRef(false);
   const prevCompletedCount = useRef<number | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -308,31 +326,214 @@ export default function ProjectDetailPage() {
     }
   }, [project, tokenLoading, tokenError, generateWidgetToken]);
 
-  // Polling logic - SWR handles background revalidation
+  const stopStatusStream = useCallback((disableReconnect = false) => {
+    if (disableReconnect) {
+      shouldReconnectRef.current = false;
+    }
+    if (streamReconnectRef.current) {
+      clearTimeout(streamReconnectRef.current);
+      streamReconnectRef.current = null;
+    }
+    if (streamAbortRef.current) {
+      streamAbortRef.current.abort();
+      streamAbortRef.current = null;
+    }
+    streamActiveRef.current = false;
+  }, []);
+
+  const handleStatusStreamEvent = useCallback(
+    async (rawEvent: string) => {
+      const lines = rawEvent.split("\n");
+      let eventType = "message";
+      const dataLines: string[] = [];
+
+      for (const line of lines) {
+        if (line.startsWith("event:")) {
+          eventType = line.slice(6).trim();
+          continue;
+        }
+        if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).trimStart());
+        }
+      }
+
+      if (eventType !== "ingestion_status") {
+        return;
+      }
+
+      const data = dataLines.join("\n");
+      if (!data) {
+        return;
+      }
+
+      let payload: IngestionStreamEvent;
+      try {
+        payload = JSON.parse(data) as IngestionStreamEvent;
+      } catch {
+        return;
+      }
+
+      if (!payload.source_id || !payload.status) {
+        return;
+      }
+
+      const sourceId = payload.source_id;
+      const status = payload.status;
+      const hasTerminalState = status === "completed" || status === "failed";
+      let foundSource = false;
+
+      await mutate(
+        `/projects/${projectId}/sources`,
+        (current?: Source[]) => {
+          if (!current) {
+            return current;
+          }
+          const next = current.map((source) => {
+            if (source.id !== sourceId) {
+              return source;
+            }
+            foundSource = true;
+            return {
+              ...source,
+              status,
+              type: payload.type ?? source.type,
+              progress: payload.progress ?? source.progress,
+              metadata: {
+                ...source.metadata,
+                ...(payload.filename !== undefined ? { filename: payload.filename } : {}),
+                ...(payload.error !== undefined ? { error: payload.error } : {}),
+              },
+            };
+          });
+          return next;
+        },
+        false
+      );
+
+      setFileUploadStatus((prev) =>
+        prev && prev.sourceId === sourceId ? { ...prev, status } : prev
+      );
+      setUrlIngestStatus((prev) =>
+        prev && prev.sourceId === sourceId ? { ...prev, status } : prev
+      );
+
+      if (!foundSource || hasTerminalState) {
+        void mutate(`/projects/${projectId}/sources`);
+      }
+    },
+    [projectId]
+  );
+
+  const startStatusStream = useCallback(async () => {
+    if (!projectId || streamActiveRef.current || streamAbortRef.current) {
+      return;
+    }
+
+    const token = getToken();
+    if (!token) {
+      return;
+    }
+
+    if (streamReconnectRef.current) {
+      clearTimeout(streamReconnectRef.current);
+      streamReconnectRef.current = null;
+    }
+
+    shouldReconnectRef.current = true;
+
+    const controller = new AbortController();
+    streamAbortRef.current = controller;
+    streamActiveRef.current = true;
+    let allowReconnect = true;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/ingestion/stream?project_id=${projectId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "text/event-stream",
+          },
+          cache: "no-store",
+          signal: controller.signal,
+        }
+      );
+
+      if (response.status === 401 || response.status === 403) {
+        allowReconnect = false;
+        clearToken();
+        window.location.href = "/auth/login";
+        return;
+      }
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Stream request failed (${response.status})`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+        let splitIndex = buffer.indexOf("\n\n");
+        while (splitIndex !== -1) {
+          const rawEvent = buffer.slice(0, splitIndex).trim();
+          buffer = buffer.slice(splitIndex + 2);
+          if (rawEvent) {
+            await handleStatusStreamEvent(rawEvent);
+          }
+          splitIndex = buffer.indexOf("\n\n");
+        }
+      }
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        console.error("Ingestion status stream disconnected", err);
+      }
+    } finally {
+      streamActiveRef.current = false;
+      streamAbortRef.current = null;
+
+      if (
+        allowReconnect &&
+        shouldReconnectRef.current &&
+        hasPendingRef.current &&
+        !streamReconnectRef.current
+      ) {
+        streamReconnectRef.current = setTimeout(() => {
+          streamReconnectRef.current = null;
+          void startStatusStream();
+        }, 2000);
+      }
+    }
+  }, [handleStatusStreamEvent, projectId]);
+
   useEffect(() => {
-    const hasPending = sources?.some(s => ["pending", "processing"].includes(s.status)) ||
+    const hasPending = sources?.some((s) => ["pending", "processing"].includes(s.status)) ||
       (fileUploadStatus && ["pending", "processing"].includes(fileUploadStatus.status)) ||
       (urlIngestStatus && ["pending", "processing"].includes(urlIngestStatus.status));
 
+    hasPendingRef.current = Boolean(hasPending);
+
     if (hasPending) {
-      if (!pollIntervalRef.current) {
-        pollIntervalRef.current = setInterval(() => {
-          mutate(`/projects/${projectId}/sources`);
-        }, 2000);
-      }
-    } else {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
+      void startStatusStream();
+      return;
     }
 
+    stopStatusStream();
+  }, [sources, fileUploadStatus, urlIngestStatus, startStatusStream, stopStatusStream]);
+
+  useEffect(() => {
     return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
+      stopStatusStream(true);
     };
-  }, [sources, fileUploadStatus, urlIngestStatus, projectId]);
+  }, [stopStatusStream]);
 
   // Auto-redirect to "Embed" after first successful ingestion
   useEffect(() => {
@@ -671,11 +872,7 @@ export default function ProjectDetailPage() {
     const token = getToken();
     if (!token) return;
 
-    // Stop polling before deletion
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
+    stopStatusStream(true);
 
     setDeletingProject(true);
     try {
