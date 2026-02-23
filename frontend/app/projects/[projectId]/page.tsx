@@ -152,7 +152,7 @@ export default function ProjectDetailPage() {
   const [tokenExpiresIn, setTokenExpiresIn] = useState<number | null>(null);
   const [tokenLoading, setTokenLoading] = useState(false);
   const [tokenError, setTokenError] = useState("");
-  
+
   // File Upload State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -395,13 +395,13 @@ export default function ProjectDetailPage() {
             foundSource = true;
             const nextProgress = payload.progress
               ? {
-                  stage: payload.progress.stage ?? source.progress?.stage ?? "processing",
-                  percent: payload.progress.percent ?? source.progress?.percent ?? 0,
-                  total_chunks:
-                    payload.progress.total_chunks ?? source.progress?.total_chunks,
-                  processed_chunks:
-                    payload.progress.processed_chunks ?? source.progress?.processed_chunks,
-                }
+                stage: payload.progress.stage ?? source.progress?.stage ?? "processing",
+                percent: payload.progress.percent ?? source.progress?.percent ?? 0,
+                total_chunks:
+                  payload.progress.total_chunks ?? source.progress?.total_chunks,
+                processed_chunks:
+                  payload.progress.processed_chunks ?? source.progress?.processed_chunks,
+              }
               : source.progress;
             return {
               ...source,
@@ -579,10 +579,10 @@ export default function ProjectDetailPage() {
   async function saveBrandingQuiet() {
     const token = getToken();
     if (!token) return;
-    
+
     setIsSavingBranding(true);
     setBrandingError("");
-    
+
     try {
       const updatedSettings = {
         ...(project?.settings || {}),
@@ -678,7 +678,7 @@ export default function ProjectDetailPage() {
   async function revokeKey(keyId: string) {
     const token = getToken();
     if (!token) return;
-    
+
     try {
       await apiRequest(`/projects/${projectId}/api-keys/${keyId}`, {
         method: "DELETE",
@@ -1057,7 +1057,7 @@ export default function ProjectDetailPage() {
                   <div className="space-y-4">
                     <Label>Select File</Label>
                     <div className="flex items-center gap-3">
-                      <div className="relative flex-1 group">
+                      <div className="relative flex-1 group min-w-0">
                         <Input
                           key={fileInputKey}
                           type="file"
@@ -1065,7 +1065,7 @@ export default function ProjectDetailPage() {
                           onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                           className="absolute inset-0 opacity-0 cursor-pointer z-10 h-11 w-full"
                         />
-                        <div className="flex items-center h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background group-hover:border-primary/50 transition-colors shadow-sm">
+                        <div className="flex items-center h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background group-hover:border-primary/50 transition-colors shadow-sm min-w-0">
                           <div className="bg-primary text-primary-foreground text-xs font-bold uppercase px-3 py-1.5 rounded-full mr-3 shrink-0">
                             Browse
                           </div>
@@ -1147,7 +1147,7 @@ export default function ProjectDetailPage() {
                     <p className="text-sm text-muted-foreground">Chat with your bot using {sources?.filter(s => s.status === "completed").length ?? 0} documents</p>
                   </div>
                 </div>
-                <Button 
+                <Button
                   size="lg"
                   className="gap-2 shrink-0"
                   disabled={tokenLoading || !!tokenError || !widgetToken}
@@ -1354,7 +1354,7 @@ export default function ProjectDetailPage() {
                   Headless
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="script" className="space-y-4">
                 {/* Quick Install */}
                 <Card>
@@ -1607,27 +1607,27 @@ function CustomUI() {
                       <div className="space-y-2">
                         <Label>Primary Color</Label>
                         <div className="flex gap-2 items-center">
-                          <Input 
-                            type="color" 
-                            value={botColor} 
-                            onChange={e => { 
+                          <Input
+                            type="color"
+                            value={botColor}
+                            onChange={e => {
                               const value = e.target.value;
                               if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-                                setBotColor(value); 
-                                triggerAutoSave(); 
+                                setBotColor(value);
+                                triggerAutoSave();
                               }
-                            }} 
-                            className="w-16 h-10 p-1" 
+                            }}
+                            className="w-16 h-10 p-1"
                           />
-                          <Input 
-                            value={botColor} 
-                            onChange={e => { 
+                          <Input
+                            value={botColor}
+                            onChange={e => {
                               const value = e.target.value;
                               setBotColor(value);
                               if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-                                triggerAutoSave(); 
+                                triggerAutoSave();
                               }
-                            }} 
+                            }}
                             placeholder="#4f46e5"
                             className={cn(
                               !/^#[0-9A-Fa-f]{6}$/.test(botColor) && botColor !== "" && "border-destructive focus-visible:ring-destructive"
@@ -1674,11 +1674,11 @@ function CustomUI() {
                           starterQuestions.length > 500 && "border-destructive focus-visible:ring-destructive"
                         )}
                         value={starterQuestions}
-                        onChange={e => { 
+                        onChange={e => {
                           const value = e.target.value;
                           if (value.length <= 500) {
-                            setStarterQuestions(value); 
-                            triggerAutoSave(); 
+                            setStarterQuestions(value);
+                            triggerAutoSave();
                           }
                         }}
                         placeholder={"What is your product?\nHow much does it cost?"}
@@ -1791,7 +1791,7 @@ function CustomUI() {
                   </CardContent>
                   {/* Test Button Footer */}
                   <div className="p-4 border-t bg-muted/30">
-                    <Button 
+                    <Button
                       className="w-full gap-2"
                       variant="default"
                       disabled={tokenLoading || !!tokenError || !widgetToken}
@@ -1875,7 +1875,7 @@ function CustomUI() {
                       <AlertDescription>{tokenError}</AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {widgetToken ? (
                     <div className="space-y-3">
                       <div className="rounded-lg border bg-muted/50 p-3 min-w-0">
@@ -1894,9 +1894,9 @@ function CustomUI() {
                             <span>Expires in {Math.floor(tokenExpiresIn / 60)}m</span>
                           )}
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={generateWidgetToken}
                           disabled={tokenLoading}
                         >
@@ -1909,7 +1909,7 @@ function CustomUI() {
                       <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground bg-muted/30">
                         No widget token generated yet.
                       </div>
-                      <Button 
+                      <Button
                         onClick={generateWidgetToken}
                         disabled={tokenLoading}
                         size="sm"
@@ -2115,98 +2115,98 @@ function CustomUI() {
             </Card>
           </TabsContent>
         </Tabs >
-    <Modal
-      isOpen={isDeleteModalOpen}
-      onClose={() => setIsDeleteModalOpen(false)}
-      title="Delete Source"
-    >
-      <div className="space-y-4">
-        <div className="rounded-md bg-destructive/10 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
-              <div className="mt-2 text-sm text-destructive/90">
-                <p>
-                  This action guarantees data loss. If you are sure, type <strong>{sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash}</strong> below.
-                </p>
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Delete Source"
+        >
+          <div className="space-y-4">
+            <div className="rounded-md bg-destructive/10 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
+                  <div className="mt-2 text-sm text-destructive/90">
+                    <p>
+                      This action guarantees data loss. If you are sure, type <strong>{sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash}</strong> below.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div>
-          <Label htmlFor="confirm-delete">Type the name/URL to confirm</Label>
-          <Input
-            id="confirm-delete"
-            value={deleteConfirmation}
-            onChange={(e) => setDeleteConfirmation(e.target.value)}
-            placeholder={sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash}
-            className="mt-1"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={confirmDeleteSource}
-            disabled={deleteConfirmation !== (sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash)}
-          >
-            {deletingSourceId === sourceToDelete?.id ? "Deleting..." : "Delete Source"}
-          </Button>
-        </div>
-      </div>
-    </Modal>
-
-    <Modal
-      isOpen={isBulkDeleteModalOpen}
-      onClose={() => setIsBulkDeleteModalOpen(false)}
-      title="Delete Selected Sources"
-    >
-      <div className="space-y-4">
-        <div className="rounded-md bg-destructive/10 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+            <div>
+              <Label htmlFor="confirm-delete">Type the name/URL to confirm</Label>
+              <Input
+                id="confirm-delete"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder={sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash}
+                className="mt-1"
+              />
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
-              <div className="mt-2 text-sm text-destructive/90">
-                <p>
-                  You are about to delete {selectedSources.length} data sources. This action cannot be undone.
-                </p>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmDeleteSource}
+                disabled={deleteConfirmation !== (sourceToDelete?.metadata.filename || sourceToDelete?.metadata.source_url || sourceToDelete?.content_hash)}
+              >
+                {deletingSourceId === sourceToDelete?.id ? "Deleting..." : "Delete Source"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={isBulkDeleteModalOpen}
+          onClose={() => setIsBulkDeleteModalOpen(false)}
+          title="Delete Selected Sources"
+        >
+          <div className="space-y-4">
+            <div className="rounded-md bg-destructive/10 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
+                  <div className="mt-2 text-sm text-destructive/90">
+                    <p>
+                      You are about to delete {selectedSources.length} data sources. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={() => setIsBulkDeleteModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={confirmBulkDelete}
-            disabled={isBulkDeleting}
-          >
-            {isBulkDeleting ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Deleting...
-              </span>
-            ) : (
-              `Delete ${selectedSources.length} Sources`
-            )}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsBulkDeleteModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmBulkDelete}
+                disabled={isBulkDeleting}
+              >
+                {isBulkDeleting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Deleting...
+                  </span>
+                ) : (
+                  `Delete ${selectedSources.length} Sources`
+                )}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </main >
     </div >
   );
