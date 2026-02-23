@@ -29,11 +29,15 @@ async def chat(
 ):
     # Issue #8: Check if project is deleted
     project_result = await db.execute(
-        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+        select(Project).where(
+            Project.id == project_id,
+            Project.is_active == True,
+            Project.deleted_at.is_(None),
+        )
     )
     project = project_result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="Project not found or inactive")
 
     owner_id = project.owner_id
     if owner_id:
@@ -70,7 +74,10 @@ async def chat(
     )
     try:
         result = await service.generate_response(
-            project_id, payload.query, conversation_id
+            project_id,
+            payload.query,
+            conversation_id,
+            project=project,
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

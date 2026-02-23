@@ -11,7 +11,7 @@ from typing import Any, Iterable, Sequence, cast
 import structlog
 import tiktoken
 from sqlalchemy import desc, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models import Chunk, Embedding, Project, RetrievalMetric, Source
 from app.services.embedding import EmbeddingService
@@ -340,7 +340,7 @@ class QueryProcessor:
     def process_query(
         self,
         query: str,
-        history: list[dict[str, str]] | None,
+        history: list[dict[str, Any]] | None,
         max_expansions: int,
     ) -> tuple[list[str], list[str]]:
         cleaned = query.strip()
@@ -525,15 +525,25 @@ class RetrievalPipeline:
         self.rrf = ReciprocalRankFusion()
         self.query_processor = QueryProcessor()
         self.context_assembler = ContextAssembler()
+        bind = db.bind
+        if bind is None:
+            raise ValueError("Database bind is required for retrieval pipeline")
+        self._session_factory = async_sessionmaker(
+            bind, class_=AsyncSession, expire_on_commit=False
+        )
+
+    def build_config(self, project: Project | None) -> dict[str, Any]:
+        return self._build_retrieval_config(project)
 
     async def retrieve(
         self,
         project_id: uuid.UUID,
         query: str,
-        conversation_history: list[dict[str, str]] | None = None,
+        conversation_history: list[dict[str, Any]] | None = None,
         query_id: uuid.UUID | None = None,
+        retrieval_config: dict[str, Any] | None = None,
     ) -> RetrievalOutput:
-        config = await self._load_retrieval_config(project_id)
+        config = retrieval_config or await self._load_retrieval_config(project_id)
 
         start = time.perf_counter()
 
@@ -582,19 +592,21 @@ class RetrievalPipeline:
             for idx, (q, embedding) in enumerate(zip(queries, cached_embeddings))
         ]
 
-        vector_start = time.perf_counter()
-        vector_results = await self._multi_vector_search(
-            query_embeddings,
-            project_id,
-            config["max_chunks_to_rerank"],
+        (
+            (vector_results, vector_time),
+            (keyword_results, keyword_time),
+        ) = await asyncio.gather(
+            self._timed_multi_vector_search(
+                query_embeddings,
+                project_id,
+                config["max_chunks_to_rerank"],
+            ),
+            self._timed_keyword_search(
+                key_terms,
+                project_id,
+                config["max_chunks_to_rerank"],
+            ),
         )
-        vector_time = time.perf_counter() - vector_start
-
-        keyword_start = time.perf_counter()
-        keyword_results = await self.keyword_search.search(
-            key_terms, project_id, limit=config["max_chunks_to_rerank"]
-        )
-        keyword_time = time.perf_counter() - keyword_start
 
         fusion_start = time.perf_counter()
         fused = self.rrf.fuse(
@@ -658,7 +670,12 @@ class RetrievalPipeline:
         )
 
     async def _load_retrieval_config(self, project_id: uuid.UUID) -> dict[str, Any]:
-        default = {
+        result = await self.db.execute(select(Project).where(Project.id == project_id))
+        project = result.scalar_one_or_none()
+        return self._build_retrieval_config(project)
+
+    def _build_retrieval_config(self, project: Project | None) -> dict[str, Any]:
+        default: dict[str, Any] = {
             "vector_weight": 1.0,
             "keyword_weight": 1.0,
             "rrf_k": 60,
@@ -676,9 +693,6 @@ class RetrievalPipeline:
                 "dimension": 1536,
             },
         }
-
-        result = await self.db.execute(select(Project).where(Project.id == project_id))
-        project = result.scalar_one_or_none()
         if not project or not project.settings:
             return default
 
@@ -694,6 +708,29 @@ class RetrievalPipeline:
 
         return default
 
+    async def _timed_multi_vector_search(
+        self,
+        embeddings: list[QueryEmbedding],
+        project_id: uuid.UUID,
+        limit: int,
+    ) -> tuple[list[SearchResult], float]:
+        start = time.perf_counter()
+        results = await self._multi_vector_search(embeddings, project_id, limit)
+        return results, time.perf_counter() - start
+
+    async def _timed_keyword_search(
+        self,
+        terms: Iterable[str],
+        project_id: uuid.UUID,
+        limit: int,
+    ) -> tuple[list[SearchResult], float]:
+        start = time.perf_counter()
+        async with self._session_factory() as session:
+            results = await KeywordSearch(session).search(
+                terms, project_id, limit=limit
+            )
+        return results, time.perf_counter() - start
+
     async def _multi_vector_search(
         self,
         embeddings: list[QueryEmbedding],
@@ -701,12 +738,23 @@ class RetrievalPipeline:
         limit: int,
     ) -> list[SearchResult]:
         scored: dict[uuid.UUID, SearchResult] = {}
-        for embedding in embeddings:
-            results = await self.vector_search.search(
-                embedding.embedding,
-                project_id,
-                limit=limit,
-            )
+        concurrency = min(4, max(1, len(embeddings)))
+        semaphore = asyncio.Semaphore(concurrency)
+
+        async def _search_embedding(
+            embedding: QueryEmbedding,
+        ) -> tuple[QueryEmbedding, list[SearchResult]]:
+            async with semaphore:
+                async with self._session_factory() as session:
+                    results = await VectorSearch(session).search(
+                        embedding.embedding,
+                        project_id,
+                        limit=limit,
+                    )
+                    return embedding, results
+
+        tasks = [_search_embedding(embedding) for embedding in embeddings]
+        for embedding, results in await asyncio.gather(*tasks):
             for result in results:
                 if result.vector_score is None:
                     continue

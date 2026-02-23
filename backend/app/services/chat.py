@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 import tiktoken
 from fastapi import HTTPException
 from openai import AsyncAzureOpenAI
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -32,45 +31,80 @@ class ChatService:
         project_id: uuid.UUID,
         query: str,
         conversation_id: uuid.UUID | None,
+        project: Project | None = None,
     ) -> dict[str, Any]:
+        if project is None:
+            project = await self._get_active_project(project_id)
+        elif (
+            project.id != project_id
+            or not project.is_active
+            or project.deleted_at is not None
+        ):
+            raise HTTPException(status_code=404, detail="Project not found or inactive")
+
         conversation = await self._get_or_create_conversation(
             project_id, conversation_id
         )
+        query_tokens = len(self.tokenizer.encode(query))
         await self._store_message(
             conversation.id,
             "user",
             query,
-            token_count=len(self.tokenizer.encode(query)),
+            token_count=query_tokens,
         )
 
         history = await self._get_conversation_history(
             conversation.id, limit=20
         )  # Increase fetch limit for budgeting
+        retrieval_config = self.retrieval.build_config(project)
         retrieval = await self.retrieval.retrieve(
             project_id,
             query,
             conversation_history=history,
             query_id=conversation.id,
+            retrieval_config=retrieval_config,
         )
 
         response_text, usage = await self._chat_completion(
-            project_id, retrieval.context.full_text, history
+            project, retrieval.context.full_text, history
         )
+        assistant_tokens = self._completion_tokens(response_text, usage)
         await self._store_message(
             conversation.id,
             "assistant",
             response_text,
             metadata={"citations": retrieval.citations},
-            token_count=self._completion_tokens(response_text, usage),
+            token_count=assistant_tokens,
         )
 
-        await self._update_usage(conversation, project_id, query, response_text, usage)
+        await self._update_usage(
+            conversation,
+            project_id,
+            prompt_tokens=query_tokens,
+            completion_tokens=assistant_tokens,
+            usage=usage,
+        )
 
         return {
             "response": response_text,
             "citations": retrieval.citations,
             "conversation_id": str(conversation.id),
         }
+
+    async def _get_active_project(self, project_id: uuid.UUID) -> Project:
+        result = await self.db.execute(
+            select(Project).where(
+                and_(
+                    Project.id == project_id,
+                    Project.is_active == True,
+                    Project.deleted_at.is_(None),
+                )
+            )
+        )
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found or inactive")
+        return project
 
     async def _get_or_create_conversation(
         self, project_id: uuid.UUID, conversation_id: uuid.UUID | None
@@ -112,7 +146,7 @@ class ChatService:
 
     async def _get_conversation_history(
         self, conversation_id: uuid.UUID, limit: int
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, Any]]:
         result = await self.db.execute(
             select(Message)
             .where(Message.conversation_id == conversation_id)
@@ -120,34 +154,24 @@ class ChatService:
             .limit(limit)
         )
         messages = list(reversed(result.scalars().all()))
-        history: list[dict[str, str]] = []
+        history: list[dict[str, Any]] = []
         for message in messages:
             if message.content:
-                history.append({"role": message.role, "content": message.content})
+                history.append(
+                    {
+                        "role": message.role,
+                        "content": message.content,
+                        "token_count": message.token_count,
+                    }
+                )
         return history
 
     async def _chat_completion(
         self,
-        project_id: uuid.UUID,
+        project: Project,
         prompt: str,
-        history: list[dict[str, str]] | None = None,
+        history: list[dict[str, Any]] | None = None,
     ) -> tuple[str, dict[str, Any] | None]:
-        from sqlalchemy import and_
-
-        result = await self.db.execute(
-            select(Project).where(
-                and_(
-                    Project.id == project_id,
-                    Project.is_active == True,
-                    Project.deleted_at.is_(None),
-                )
-            )
-        )
-        project = result.scalar_one_or_none()
-
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found or inactive")
-
         system_prompt = (
             project.settings.get("system_prompt") if project.settings else None
         ) or "You are a helpful assistant. Use the provided documents to answer."
@@ -167,10 +191,12 @@ class ChatService:
             # We want to keep recent messages, so iterate backwards
             for msg in reversed(history):
                 content = msg.get("content") or ""
-                token_count = len(self.tokenizer.encode(content))
+                token_count = msg.get("token_count")
+                if not isinstance(token_count, int):
+                    token_count = len(self.tokenizer.encode(content))
                 if used_tokens + token_count > budget:
                     break
-                selected_history.append(msg)
+                selected_history.append({"role": msg.get("role"), "content": content})
                 used_tokens += token_count
 
             # Restore chronological order
@@ -204,12 +230,10 @@ class ChatService:
         self,
         conversation: Conversation,
         project_id: uuid.UUID,
-        query: str,
-        response_text: str,
+        prompt_tokens: int,
+        completion_tokens: int,
         usage: dict[str, Any] | None,
     ) -> None:
-        prompt_tokens = len(self.tokenizer.encode(query))
-        completion_tokens = len(self.tokenizer.encode(response_text))
         total_tokens = prompt_tokens + completion_tokens
 
         if usage:

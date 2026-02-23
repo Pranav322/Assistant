@@ -191,3 +191,44 @@ async def test_chat_enforces_user_token_cap(client: AsyncClient, db: AsyncSessio
         assert "Upgrade" in response.json()["detail"]
     finally:
         settings.USER_TOKEN_CAP = original_cap
+
+
+@pytest.mark.asyncio
+async def test_chat_completion_uses_stored_history_token_counts(db: AsyncSession):
+    from app.services.chat import ChatService
+
+    with patch("app.services.chat.AsyncAzureOpenAI", return_value=MagicMock()):
+        service = ChatService(db)
+
+    response = MagicMock()
+    response.choices = [MagicMock(message=MagicMock(content="Answer"))]
+    response.usage = None
+    service.client.chat.completions.create = AsyncMock(return_value=response)
+
+    tokenizer = MagicMock()
+    tokenizer.encode = MagicMock(side_effect=AssertionError("Tokenizer should not run"))
+    service.tokenizer = tokenizer
+
+    project = Project(name="Token Budget Project", settings={"system_prompt": "System"})
+    history = [
+        {"role": "user", "content": "old user", "token_count": 2},
+        {"role": "assistant", "content": "recent assistant", "token_count": 2},
+    ]
+
+    original_budget = settings.CHAT_HISTORY_TOKEN_BUDGET
+    settings.CHAT_HISTORY_TOKEN_BUDGET = 3
+    try:
+        text, usage = await service._chat_completion(project, "question", history)
+    finally:
+        settings.CHAT_HISTORY_TOKEN_BUDGET = original_budget
+
+    assert text == "Answer"
+    assert usage is None
+    tokenizer.encode.assert_not_called()
+
+    kwargs = service.client.chat.completions.create.await_args.kwargs
+    assert kwargs["messages"] == [
+        {"role": "system", "content": "System"},
+        {"role": "assistant", "content": "recent assistant"},
+        {"role": "user", "content": "question"},
+    ]
