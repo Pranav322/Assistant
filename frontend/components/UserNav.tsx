@@ -3,7 +3,6 @@
 import {
     Avatar,
     AvatarFallback,
-    AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +39,7 @@ export function UserNav() {
     useEffect(() => {
         const userEmail = getUserEmail();
         if (userEmail) {
-            setEmail(userEmail);
+            Promise.resolve().then(() => setEmail(userEmail));
         }
     }, []);
 

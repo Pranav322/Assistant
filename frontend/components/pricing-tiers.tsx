@@ -14,7 +14,7 @@ export function PricingTiers() {
 
     useEffect(() => {
         const auth = isAuthenticated();
-        setIsAuth(auth);
+        Promise.resolve().then(() => setIsAuth(auth));
 
         if (auth) {
             const token = localStorage.getItem("rag_user_token");

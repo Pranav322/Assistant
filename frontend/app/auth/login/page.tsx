@@ -44,10 +44,10 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const provider = providerName === "google" 
-        ? new GoogleAuthProvider() 
+      const provider = providerName === "google"
+        ? new GoogleAuthProvider()
         : new GithubAuthProvider();
-      
+
       const userCredential = await signInWithPopup(auth, provider);
       const idToken = await userCredential.user.getIdToken();
 
@@ -60,15 +60,16 @@ export default function LoginPage() {
       setToken(data.access_token);
       setUserEmail(userCredential.user.email || "");
       router.push("/projects");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const firebaseError = err as { code?: string; message?: string };
       let msg = "Login failed";
-      if (err.code === 'auth/account-exists-with-different-credential') {
+      if (firebaseError.code === 'auth/account-exists-with-different-credential') {
         msg = "Account exists with different provider";
-      } else if (err.code === 'auth/popup-closed-by-user') {
+      } else if (firebaseError.code === 'auth/popup-closed-by-user') {
         msg = "Login cancelled";
-      } else if (err.message) {
-        msg = err.message;
+      } else if (firebaseError.message) {
+        msg = firebaseError.message;
       }
       setError(msg);
     } finally {
@@ -94,13 +95,14 @@ export default function LoginPage() {
       setToken(data.access_token);
       setUserEmail(email);
       router.push("/projects");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const firebaseError = err as { code?: string; message?: string };
       let msg = "Login failed";
-      if (err.code === 'auth/invalid-credential') {
-          msg = "Invalid email or password";
-      } else if (err.message) {
-          msg = err.message;
+      if (firebaseError.code === 'auth/invalid-credential') {
+        msg = "Invalid email or password";
+      } else if (firebaseError.message) {
+        msg = firebaseError.message;
       }
       setError(msg);
     } finally {

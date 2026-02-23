@@ -9,7 +9,8 @@ export function HomeAuthNav() {
     const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
     useEffect(() => {
-        setIsAuth(isAuthenticated());
+        const auth = isAuthenticated();
+        Promise.resolve().then(() => setIsAuth(auth));
     }, []);
 
     if (isAuth === null) {
@@ -43,7 +44,8 @@ export function HomeHeroAuthCTA() {
     const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
     useEffect(() => {
-        setIsAuth(isAuthenticated());
+        const auth = isAuthenticated();
+        Promise.resolve().then(() => setIsAuth(auth));
     }, []);
 
     if (isAuth === null) {
@@ -79,7 +81,8 @@ export function RagHeroAuthCTA() {
     const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
     useEffect(() => {
-        setIsAuth(isAuthenticated());
+        const auth = isAuthenticated();
+        Promise.resolve().then(() => setIsAuth(auth));
     }, []);
 
     if (isAuth === null) {

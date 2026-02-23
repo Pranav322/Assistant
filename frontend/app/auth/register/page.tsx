@@ -20,7 +20,7 @@ import {
 
 type AuthResponse = { access_token: string };
 
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, sendEmailVerification, User } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 export default function RegisterPage() {
@@ -81,8 +81,9 @@ export default function RegisterPage() {
       try {
         await sendEmailVerification(auth.currentUser);
         setResendCooldown(60);
-      } catch (err: any) {
-        setError(err.message || "Failed to resend email");
+      } catch (err: unknown) {
+        const firebaseError = err as { message?: string };
+        setError(firebaseError.message || "Failed to resend email");
       }
     }
   };
@@ -107,15 +108,16 @@ export default function RegisterPage() {
       setToken(data.access_token);
       setUserEmail(userCredential.user.email || "");
       router.push("/projects");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const firebaseError = err as { code?: string; message?: string };
       let msg = "Social registration failed";
-      if (err.code === 'auth/account-exists-with-different-credential') {
+      if (firebaseError.code === 'auth/account-exists-with-different-credential') {
         msg = "Account exists with different provider";
-      } else if (err.code === 'auth/popup-closed-by-user') {
+      } else if (firebaseError.code === 'auth/popup-closed-by-user') {
         msg = "Registration cancelled";
-      } else if (err.message) {
-        msg = err.message;
+      } else if (firebaseError.message) {
+        msg = firebaseError.message;
       }
       setError(msg);
     } finally {
@@ -137,15 +139,16 @@ export default function RegisterPage() {
 
       // Note: We do NOT exchange token yet. We wait for verification.
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const firebaseError = err as { code?: string; message?: string };
       let msg = "Registration failed";
-      if (err.code === 'auth/email-already-in-use') {
+      if (firebaseError.code === 'auth/email-already-in-use') {
         msg = "Email already in use";
-      } else if (err.code === 'auth/weak-password') {
+      } else if (firebaseError.code === 'auth/weak-password') {
         msg = "Password is too weak";
-      } else if (err.message) {
-        msg = err.message;
+      } else if (firebaseError.message) {
+        msg = firebaseError.message;
       }
       setError(msg);
     } finally {
@@ -169,8 +172,8 @@ export default function RegisterPage() {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Please click the link in the email to verify your account.
-            If you don't see it, check your spam folder.
-            This page will automatically refresh once you're verified.
+            If you don&apos;t see it, check your spam folder.
+            This page will automatically refresh once you&apos;re verified.
           </p>
           {error && (
             <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">

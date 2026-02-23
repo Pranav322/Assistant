@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useNavbar } from "@/components/NavbarContext";
 import { UserNav } from "@/components/UserNav";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export function GlobalNavbar() {

@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Send, Square, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
@@ -152,7 +151,7 @@ function WidgetContent() {
     }
   }, [messages]);
 
-  async function refreshToken(): Promise<string | null> {
+  const refreshToken = useCallback(async (): Promise<string | null> => {
     if (!token || isRefreshingRef.current) return null;
     isRefreshingRef.current = true;
     try {
@@ -179,7 +178,7 @@ function WidgetContent() {
       isRefreshingRef.current = false;
     }
     return null;
-  }
+  }, [token, allowedOrigin]);
 
   useEffect(() => {
     if (!token || !allowedOrigin) return;
@@ -205,7 +204,7 @@ function WidgetContent() {
         clearTimeout(refreshTimerRef.current);
       }
     };
-  }, [token, allowedOrigin]);
+  }, [token, allowedOrigin, refreshToken]);
 
   function updateMessage(id: string, updates: Partial<Message>) {
     setMessages((prev) =>
@@ -386,14 +385,19 @@ function WidgetContent() {
       className={cn(containerClasses, !showContent && "hidden")}
       aria-hidden={!showContent}
       style={{
-        ["--primary" as any]: primaryColor,
-        ["--primary-foreground" as any]: "#ffffff",
-      }}
+        "--primary": primaryColor,
+        "--primary-foreground": "#ffffff",
+      } as React.CSSProperties}
     >
       <div className={headerClasses} style={{ backgroundColor: mode === "popup" ? primaryColor : "transparent" }}>
         <div className="flex items-center gap-3">
           {config?.logo_url ? (
-            <img src={config.logo_url} className="h-8 w-8 rounded-full bg-white object-contain border" alt="Bot Logo" />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={config.logo_url}
+              className="h-8 w-8 rounded-full bg-white object-contain border"
+              alt="Bot Logo"
+            />
           ) : (
             <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
               {config?.title?.[0] || "A"}
@@ -440,7 +444,7 @@ function WidgetContent() {
               <div>
                 <p className="text-sm font-medium text-destructive">Failed to load chatbot</p>
                 <p className="text-xs text-destructive/80 mt-1">{configError}</p>
-                <button 
+                <button
                   onClick={() => window.location.reload()}
                   className="text-xs text-destructive underline mt-2 hover:no-underline"
                 >
