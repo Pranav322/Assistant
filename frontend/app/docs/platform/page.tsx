@@ -4,7 +4,8 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Platform Overview",
-  description: "Understand Contextly platform capabilities for projects, widgets, API keys, and analytics.",
+  description:
+    "Understand Contextly platform capabilities for projects, widgets, API keys, and analytics.",
   path: "/docs/platform",
 });
 
@@ -23,5 +24,5 @@ Everything you need to know about managing your chatbots.
 `;
 
 export default function PlatformPage() {
-    return <Markdown>{content}</Markdown>;
+  return <Markdown>{content}</Markdown>;
 }

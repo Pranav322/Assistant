@@ -7,7 +7,8 @@ export const metadata: Metadata = {
     default: "Docs",
     template: "%s | Contextly Docs",
   },
-  description: "Documentation for Contextly's RAG chatbot platform, including setup, widget embedding, API keys, and self-hosting.",
+  description:
+    "Documentation for Contextly's RAG chatbot platform, including setup, widget embedding, API keys, and self-hosting.",
   alternates: {
     canonical: absoluteUrl("/docs/getting-started"),
   },
@@ -27,11 +28,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DocsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DocsLayout({ children }: { children: React.ReactNode }) {
   const navItems = {
     "Getting Started": [
       { href: "/docs/getting-started/", label: "Overview" },
@@ -55,18 +52,21 @@ export default function DocsLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="bg-background flex min-h-screen flex-col">
       {/* Top header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-6 flex h-16 items-center">
+      <header className="bg-background/95 sticky top-0 z-50 w-full border-b backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center px-6">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+            <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold">
               C
             </div>
             <span className="text-sm font-semibold tracking-tight">Contextly</span>
           </Link>
           <nav className="ml-auto flex items-center gap-8 text-sm font-medium">
-            <Link href="/projects" className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors">
+            <Link
+              href="/projects"
+              className="text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
               Dashboard
             </Link>
             <Link href="/docs" className="text-zinc-900 dark:text-zinc-100">
@@ -76,7 +76,7 @@ export default function DocsLayout({
               href="https://github.com"
               target="_blank"
               rel="noreferrer"
-              className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
+              className="text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               GitHub
             </a>
@@ -86,22 +86,19 @@ export default function DocsLayout({
 
       <div className="flex-1">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-10 py-10">
-
+          <div className="grid grid-cols-1 gap-10 py-10 lg:grid-cols-[240px_1fr]">
             {/* Sidebar - with more space from left */}
-            <aside className="hidden lg:block sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
+            <aside className="sticky top-20 hidden h-[calc(100vh-6rem)] overflow-y-auto lg:block">
               <nav className="flex flex-col gap-8 text-sm">
                 {Object.entries(navItems).map(([category, items]) => (
                   <div key={category} className="flex flex-col gap-2">
-                    <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                      {category}
-                    </h4>
-                    <div className="flex flex-col gap-0.5 border-l border-zinc-200 dark:border-zinc-800 pl-4">
+                    <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">{category}</h4>
+                    <div className="flex flex-col gap-0.5 border-l border-zinc-200 pl-4 dark:border-zinc-800">
                       {items.map((item) => (
                         <Link
                           key={item.href}
                           href={item.href}
-                          className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 py-1.5 transition-colors -ml-[17px] pl-4 border-l-2 border-transparent hover:border-zinc-900 dark:hover:border-zinc-100"
+                          className="-ml-[17px] border-l-2 border-transparent py-1.5 pl-4 text-zinc-500 transition-colors hover:border-zinc-900 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-100 dark:hover:text-zinc-100"
                         >
                           {item.label}
                         </Link>
@@ -114,9 +111,7 @@ export default function DocsLayout({
 
             {/* Main Content - Centered */}
             <main className="min-w-0 lg:py-2">
-              <div className="mx-auto max-w-3xl">
-                {children}
-              </div>
+              <div className="mx-auto max-w-3xl">{children}</div>
             </main>
           </div>
         </div>

@@ -1,12 +1,8 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8001/api/v1";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8001/api/v1";
 
 type ApiOptions = RequestInit & { token?: string };
 
-export async function apiRequest<T>(
-  path: string,
-  options: ApiOptions = {}
-): Promise<T> {
+export async function apiRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   if (options.token) {
     headers.set("Authorization", `Bearer ${options.token}`);
@@ -39,8 +35,7 @@ export async function apiRequest<T>(
 }
 
 export const fetcher = <T>(url: string, options: RequestInit = {}): Promise<T> => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("rag_user_token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("rag_user_token") : null;
   return apiRequest<T>(url, { ...options, token: token ?? undefined });
 };
 

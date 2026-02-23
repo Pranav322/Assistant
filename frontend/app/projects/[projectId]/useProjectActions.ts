@@ -138,7 +138,10 @@ export function useProjectActions(params: Params) {
         title: botTitle,
         primary_color: botColor,
         welcome_message: welcomeMessage,
-        starter_questions: starterQuestions.split("\n").map((q) => q.trim()).filter(Boolean),
+        starter_questions: starterQuestions
+          .split("\n")
+          .map((q) => q.trim())
+          .filter(Boolean),
         system_prompt: systemPrompt,
         logo_url: logoUrl,
         embed_mode: embedMode,
@@ -215,21 +218,24 @@ export function useProjectActions(params: Params) {
     [newKeyName, projectId, setCreatingKey, setError, setFreshKey, setNewKeyName]
   );
 
-  const revokeKey = useCallback(async (keyId: string) => {
-    const token = getToken();
-    if (!token) return;
+  const revokeKey = useCallback(
+    async (keyId: string) => {
+      const token = getToken();
+      if (!token) return;
 
-    try {
-      await apiRequest(`/projects/${projectId}/api-keys/${keyId}`, {
-        method: "DELETE",
-        token,
-      });
-      mutate(`/projects/${projectId}/api-keys`);
-      toast.success("API key revoked successfully");
-    } catch (err) {
-      toast.error("Failed to revoke API key", { description: (err as Error).message });
-    }
-  }, [projectId]);
+      try {
+        await apiRequest(`/projects/${projectId}/api-keys/${keyId}`, {
+          method: "DELETE",
+          token,
+        });
+        mutate(`/projects/${projectId}/api-keys`);
+        toast.success("API key revoked successfully");
+      } catch (err) {
+        toast.error("Failed to revoke API key", { description: (err as Error).message });
+      }
+    },
+    [projectId]
+  );
 
   const uploadFile = useCallback(
     async (e?: FormEvent) => {
@@ -349,11 +355,14 @@ export function useProjectActions(params: Params) {
     [ingestUrl, projectId, setIngestUrl, setUrlIngestError, setUrlIngestStatus, setUrlIngesting]
   );
 
-  const handleSelectSource = useCallback((sourceId: string) => {
-    setSelectedSources((prev) =>
-      prev.includes(sourceId) ? prev.filter((id) => id !== sourceId) : [...prev, sourceId]
-    );
-  }, [setSelectedSources]);
+  const handleSelectSource = useCallback(
+    (sourceId: string) => {
+      setSelectedSources((prev) =>
+        prev.includes(sourceId) ? prev.filter((id) => id !== sourceId) : [...prev, sourceId]
+      );
+    },
+    [setSelectedSources]
+  );
 
   const handleSelectAll = useCallback(() => {
     if (!sources) return;
@@ -404,11 +413,14 @@ export function useProjectActions(params: Params) {
     setSelectedSources,
   ]);
 
-  const openDeleteModal = useCallback((source: Source) => {
-    setSourceToDelete(source);
-    setDeleteConfirmation("");
-    setIsDeleteModalOpen(true);
-  }, [setDeleteConfirmation, setIsDeleteModalOpen, setSourceToDelete]);
+  const openDeleteModal = useCallback(
+    (source: Source) => {
+      setSourceToDelete(source);
+      setDeleteConfirmation("");
+      setIsDeleteModalOpen(true);
+    },
+    [setDeleteConfirmation, setIsDeleteModalOpen, setSourceToDelete]
+  );
 
   const confirmDeleteSource = useCallback(async () => {
     if (!sourceToDelete) return;
@@ -425,7 +437,7 @@ export function useProjectActions(params: Params) {
       setIsDeleteModalOpen(false);
       setSourceToDelete(null);
       const shouldGoToPrevPage =
-        currentPage > 1 && ((sources?.length ?? 0) - 1) <= (currentPage - 1) * 10;
+        currentPage > 1 && (sources?.length ?? 0) - 1 <= (currentPage - 1) * 10;
       await mutate(`/projects/${projectId}/sources`);
       if (shouldGoToPrevPage) {
         setCurrentPage(currentPage - 1);
@@ -501,43 +513,39 @@ export function useProjectActions(params: Params) {
         setIsUpdatingOrigins(false);
       }
     },
-    [
-      newOriginInput,
-      project,
-      projectId,
-      setIsUpdatingOrigins,
-      setNewOriginInput,
-      setOriginError,
-    ]
+    [newOriginInput, project, projectId, setIsUpdatingOrigins, setNewOriginInput, setOriginError]
   );
 
-  const handleRemoveOrigin = useCallback(async (originToRemove: string) => {
-    if (!project) return;
-    const token = getToken();
-    if (!token) return;
+  const handleRemoveOrigin = useCallback(
+    async (originToRemove: string) => {
+      if (!project) return;
+      const token = getToken();
+      if (!token) return;
 
-    const updatedList = project.allowed_origins.filter((o) => o !== originToRemove);
-    if (updatedList.length === 0) {
-      setOriginError("You must have at least one allowed origin.");
-      return;
-    }
+      const updatedList = project.allowed_origins.filter((o) => o !== originToRemove);
+      if (updatedList.length === 0) {
+        setOriginError("You must have at least one allowed origin.");
+        return;
+      }
 
-    setIsUpdatingOrigins(true);
-    try {
-      await apiRequest(`/projects/${projectId}`, {
-        method: "PATCH",
-        token,
-        body: JSON.stringify({ allowed_origins: updatedList }),
-      });
-      toast.success("Origin removed successfully");
-      await mutate(`/projects/${projectId}`);
-    } catch (err) {
-      setOriginError((err as Error).message);
-      toast.error("Failed to remove origin", { description: (err as Error).message });
-    } finally {
-      setIsUpdatingOrigins(false);
-    }
-  }, [project, projectId, setIsUpdatingOrigins, setOriginError]);
+      setIsUpdatingOrigins(true);
+      try {
+        await apiRequest(`/projects/${projectId}`, {
+          method: "PATCH",
+          token,
+          body: JSON.stringify({ allowed_origins: updatedList }),
+        });
+        toast.success("Origin removed successfully");
+        await mutate(`/projects/${projectId}`);
+      } catch (err) {
+        setOriginError((err as Error).message);
+        toast.error("Failed to remove origin", { description: (err as Error).message });
+      } finally {
+        setIsUpdatingOrigins(false);
+      }
+    },
+    [project, projectId, setIsUpdatingOrigins, setOriginError]
+  );
 
   return {
     triggerAutoSave,

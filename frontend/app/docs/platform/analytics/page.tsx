@@ -4,7 +4,8 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Analytics and Usage",
-  description: "Track token usage, conversations, and performance metrics across your Contextly projects.",
+  description:
+    "Track token usage, conversations, and performance metrics across your Contextly projects.",
   path: "/docs/platform/analytics",
 });
 
@@ -32,5 +33,5 @@ Navigate to the **Analytics** tab in your project to see:
 `;
 
 export default function AnalyticsPage() {
-    return <Markdown>{content}</Markdown>;
+  return <Markdown>{content}</Markdown>;
 }

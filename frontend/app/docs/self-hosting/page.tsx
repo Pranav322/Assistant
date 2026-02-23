@@ -4,7 +4,8 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Self-Hosting Overview",
-  description: "Run Contextly on your own infrastructure with full control over data and deployment.",
+  description:
+    "Run Contextly on your own infrastructure with full control over data and deployment.",
   path: "/docs/self-hosting",
 });
 
@@ -33,5 +34,5 @@ This section is for developers who want to run the Contextly platform on their o
 `;
 
 export default function SelfHostingPage() {
-    return <Markdown>{content}</Markdown>;
+  return <Markdown>{content}</Markdown>;
 }

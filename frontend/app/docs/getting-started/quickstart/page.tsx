@@ -4,7 +4,8 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Quickstart",
-  description: "Set up your first Contextly project, ingest content, and embed the chat widget in under five minutes.",
+  description:
+    "Set up your first Contextly project, ingest content, and embed the chat widget in under five minutes.",
   path: "/docs/getting-started/quickstart",
 });
 

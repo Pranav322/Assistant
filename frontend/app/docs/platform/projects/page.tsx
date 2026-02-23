@@ -57,5 +57,5 @@ In your project settings you can:
 `;
 
 export default function ProjectsPage() {
-    return <Markdown>{content}</Markdown>;
+  return <Markdown>{content}</Markdown>;
 }

@@ -86,5 +86,5 @@ curl -X DELETE "https://api.pranavbuilds.tech/api/v1/api-keys/key_abc123" \\
 `;
 
 export default function APIKeysPage() {
-    return <Markdown>{content}</Markdown>;
+  return <Markdown>{content}</Markdown>;
 }

@@ -23,6 +23,7 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000).
 
 ## Routes
+
 - `/` marketing landing
 - `/auth/register`, `/auth/login`
 - `/projects` dashboard
@@ -30,4 +31,5 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/widget` iframe widget UI
 
 ## Notes
+
 - Use `frontend_flow.md` for API calls and auth headers.

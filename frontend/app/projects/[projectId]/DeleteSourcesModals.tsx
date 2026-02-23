@@ -46,16 +46,19 @@ export function DeleteSourcesModals({
     <>
       <Modal isOpen={isDeleteModalOpen} onClose={onCloseDeleteModal} title="Delete Source">
         <div className="space-y-4">
-          <div className="rounded-md bg-destructive/10 p-4">
+          <div className="bg-destructive/10 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                <AlertCircle className="text-destructive h-5 w-5" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
-                <div className="mt-2 text-sm text-destructive/90">
+                <h3 className="text-destructive text-sm font-medium">
+                  Warning: Permanent Deletion
+                </h3>
+                <div className="text-destructive/90 mt-2 text-sm">
                   <p>
-                    This action guarantees data loss. If you are sure, type <strong>{sourceLabel}</strong> below.
+                    This action guarantees data loss. If you are sure, type{" "}
+                    <strong>{sourceLabel}</strong> below.
                   </p>
                 </div>
               </div>
@@ -95,16 +98,19 @@ export function DeleteSourcesModals({
         title="Delete Selected Sources"
       >
         <div className="space-y-4">
-          <div className="rounded-md bg-destructive/10 p-4">
+          <div className="bg-destructive/10 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <AlertCircle className="h-5 w-5 text-destructive" aria-hidden="true" />
+                <AlertCircle className="text-destructive h-5 w-5" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-destructive">Warning: Permanent Deletion</h3>
-                <div className="mt-2 text-sm text-destructive/90">
+                <h3 className="text-destructive text-sm font-medium">
+                  Warning: Permanent Deletion
+                </h3>
+                <div className="text-destructive/90 mt-2 text-sm">
                   <p>
-                    You are about to delete {selectedSourcesCount} data sources. This action cannot be undone.
+                    You are about to delete {selectedSourcesCount} data sources. This action cannot
+                    be undone.
                   </p>
                 </div>
               </div>
@@ -115,7 +121,12 @@ export function DeleteSourcesModals({
             <Button type="button" variant="outline" onClick={onCloseBulkDeleteModal}>
               Cancel
             </Button>
-            <Button type="button" variant="destructive" onClick={confirmBulkDelete} disabled={isBulkDeleting}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmBulkDelete}
+              disabled={isBulkDeleting}
+            >
               {isBulkDeleting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> Deleting...

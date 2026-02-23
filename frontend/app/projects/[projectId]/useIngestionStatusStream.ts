@@ -100,8 +100,7 @@ export function useIngestionStatusStream({
               ? {
                   stage: payload.progress.stage ?? source.progress?.stage ?? "processing",
                   percent: payload.progress.percent ?? source.progress?.percent ?? 0,
-                  total_chunks:
-                    payload.progress.total_chunks ?? source.progress?.total_chunks,
+                  total_chunks: payload.progress.total_chunks ?? source.progress?.total_chunks,
                   processed_chunks:
                     payload.progress.processed_chunks ?? source.progress?.processed_chunks,
                 }
@@ -160,18 +159,15 @@ export function useIngestionStatusStream({
     let allowReconnect = true;
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/ingestion/stream?project_id=${projectId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "text/event-stream",
-          },
-          cache: "no-store",
-          signal: controller.signal,
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/ingestion/stream?project_id=${projectId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "text/event-stream",
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
 
       if (response.status === 401 || response.status === 403) {
         allowReconnect = false;

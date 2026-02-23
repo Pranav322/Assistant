@@ -24,10 +24,7 @@ export default function ProjectDetailPage() {
   const searchParams = useSearchParams();
   const projectId = params?.projectId as string;
 
-  const { data: project } = useSWR<Project>(
-    projectId ? `/projects/${projectId}` : null,
-    fetcher
-  );
+  const { data: project } = useSWR<Project>(projectId ? `/projects/${projectId}` : null, fetcher);
   const { data: keys } = useSWR<ApiKey[]>(
     projectId ? `/projects/${projectId}/api-keys` : null,
     fetcher
@@ -122,8 +119,8 @@ export default function ProjectDetailPage() {
 
   // Sync title/tab from URL params.
   useEffect(() => {
-    const titleFromUrl = searchParams.get('title');
-    const tabFromUrl = searchParams.get('tab');
+    const titleFromUrl = searchParams.get("title");
+    const tabFromUrl = searchParams.get("tab");
     if (titleFromUrl) {
       setTitle(titleFromUrl);
       setProjectName("Projects");
@@ -147,7 +144,9 @@ export default function ProjectDetailPage() {
       setBotColor(s.primary_color || "#4f46e5");
       setWelcomeMessage(s.welcome_message || "How can I help you today?");
       setStarterQuestions((s.starter_questions || []).join("\n"));
-      setSystemPrompt(s.system_prompt || "You are a helpful assistant. Use the provided documents to answer.");
+      setSystemPrompt(
+        s.system_prompt || "You are a helpful assistant. Use the provided documents to answer."
+      );
       setLogoUrl(s.logo_url || "");
       setEmbedMode(s.embed_mode || "popup");
       setEmbedWidth(s.width || "");
@@ -188,17 +187,14 @@ export default function ProjectDetailPage() {
 
     setTokenLoading(true);
     try {
-      const data = await apiRequest<{ token: string; expires_in: number }>(
-        "/tokens/widget/user",
-        {
-          method: "POST",
-          token,
-          body: JSON.stringify({
-            origin: originValue,
-            project_id: projectId,
-          }),
-        }
-      );
+      const data = await apiRequest<{ token: string; expires_in: number }>("/tokens/widget/user", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          origin: originValue,
+          project_id: projectId,
+        }),
+      });
       setWidgetToken(data.token);
       setTokenExpiresIn(data.expires_in);
     } catch (err) {
@@ -218,8 +214,12 @@ export default function ProjectDetailPage() {
   // Auto-redirect to "Embed" after first successful ingestion
   useEffect(() => {
     if (hasRedirectedToTryIt.current) return;
-    const completedCount = sources?.filter(s => s.status === "completed").length ?? 0;
-    if (prevCompletedCount.current !== null && completedCount > prevCompletedCount.current && completedCount >= 1) {
+    const completedCount = sources?.filter((s) => s.status === "completed").length ?? 0;
+    if (
+      prevCompletedCount.current !== null &&
+      completedCount > prevCompletedCount.current &&
+      completedCount >= 1
+    ) {
       hasRedirectedToTryIt.current = true;
       setActiveTab("embed");
     }
@@ -294,7 +294,7 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="mx-auto w-full max-w-[1400px] px-6 py-10 space-y-6 sm:px-8 lg:px-12">
+      <div className="mx-auto w-full max-w-[1400px] space-y-6 px-6 py-10 sm:px-8 lg:px-12">
         <div className="space-y-2">
           <Skeleton className="h-8 w-1/3" />
           <Skeleton className="h-4 w-1/4" />
@@ -333,7 +333,10 @@ export default function ProjectDetailPage() {
 
   const ITEMS_PER_PAGE = 10;
   const totalPages = Math.ceil((sources?.length ?? 0) / ITEMS_PER_PAGE);
-  const paginatedSources = (sources ?? []).slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const paginatedSources = (sources ?? []).slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -346,13 +349,15 @@ export default function ProjectDetailPage() {
   data-origin="${originToUse}"
   data-project-id="${project.id}"
   data-api-base-url="${apiBaseUrl}"
-  data-mode="${embedMode}"${embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth)
+  data-mode="${embedMode}"${
+    embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth)
       ? `\n  data-width="${embedWidth}"`
       : ""
-    }${embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight)
+  }${
+    embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight)
       ? `\n  data-height="${embedHeight}"`
       : ""
-    }
+  }
   defer
 ></script>`;
 
@@ -363,18 +368,18 @@ export default function ProjectDetailPage() {
   const isNewProject = (sources?.length ?? 0) === 0;
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-20 w-full max-w-[100vw] overflow-x-hidden">
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-8 lg:px-12 relative overflow-hidden">
+    <div className="bg-muted/30 min-h-screen w-full max-w-[100vw] overflow-x-hidden pb-20">
+      <main className="relative mx-auto w-full max-w-[1400px] overflow-hidden px-4 py-8 sm:px-8 lg:px-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 relative">
-            <TabsList className="w-auto inline-flex justify-start h-auto p-1 bg-muted/50 rounded-lg">
+          <div className="relative -mx-4 w-full overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+            <TabsList className="bg-muted/50 inline-flex h-auto w-auto justify-start rounded-lg p-1">
               <TabsTrigger value="knowledge-base">Knowledge Base</TabsTrigger>
               <TabsTrigger value="customize">Customize</TabsTrigger>
               <TabsTrigger value="embed">Embed</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
             {/* Mobile scroll indicator */}
-            <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none sm:hidden" />
+            <div className="from-background pointer-events-none absolute top-0 right-0 bottom-2 w-8 bg-gradient-to-l to-transparent sm:hidden" />
           </div>
 
           <KnowledgeBaseTab

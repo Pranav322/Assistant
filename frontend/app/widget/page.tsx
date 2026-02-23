@@ -9,7 +9,7 @@ import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 type Message = {
   id: string;
@@ -29,7 +29,7 @@ type ProjectConfig = {
 
 function LoadingDots() {
   return (
-    <span className="inline-flex items-center gap-1 text-muted-foreground">
+    <span className="text-muted-foreground inline-flex items-center gap-1">
       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:0ms]" />
       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:120ms]" />
       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:240ms]" />
@@ -167,7 +167,10 @@ function WidgetContent() {
         if (data.token) {
           setToken(data.token);
           if (allowedOrigin) {
-            window.parent?.postMessage({ type: "chatbot:set_token", token: data.token }, allowedOrigin);
+            window.parent?.postMessage(
+              { type: "chatbot:set_token", token: data.token },
+              allowedOrigin
+            );
           }
           return data.token;
         }
@@ -207,9 +210,7 @@ function WidgetContent() {
   }, [token, allowedOrigin, refreshToken]);
 
   function updateMessage(id: string, updates: Partial<Message>) {
-    setMessages((prev) =>
-      prev.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg))
-    );
+    setMessages((prev) => prev.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)));
   }
 
   function stopAll() {
@@ -256,7 +257,7 @@ function WidgetContent() {
         },
         body: JSON.stringify({
           query: question,
-          conversation_id: conversationId
+          conversation_id: conversationId,
         }),
         signal: controller.signal,
       });
@@ -276,7 +277,7 @@ function WidgetContent() {
             },
             body: JSON.stringify({
               query: question,
-              conversation_id: conversationId
+              conversation_id: conversationId,
             }),
             signal: controller.signal,
           });
@@ -352,11 +353,11 @@ function WidgetContent() {
     "flex w-full flex-col bg-background text-foreground overflow-hidden font-sans",
     mode === "popup"
       ? cn(
-        "fixed z-50 overflow-hidden flex flex-col bg-background border shadow-2xl transition-all duration-300",
-        isMobile
-          ? "inset-0 h-[100dvh] w-full rounded-none"
-          : "bottom-4 right-4 h-[600px] w-full max-w-[400px] rounded-2xl"
-      )
+          "fixed z-50 overflow-hidden flex flex-col bg-background border shadow-2xl transition-all duration-300",
+          isMobile
+            ? "inset-0 h-[100dvh] w-full rounded-none"
+            : "bottom-4 right-4 h-[600px] w-full max-w-[400px] rounded-2xl"
+        )
       : "h-[100dvh] w-full"
   );
 
@@ -384,39 +385,46 @@ function WidgetContent() {
     <div
       className={cn(containerClasses, !showContent && "hidden")}
       aria-hidden={!showContent}
-      style={{
-        "--primary": primaryColor,
-        "--primary-foreground": "#ffffff",
-      } as React.CSSProperties}
+      style={
+        {
+          "--primary": primaryColor,
+          "--primary-foreground": "#ffffff",
+        } as React.CSSProperties
+      }
     >
-      <div className={headerClasses} style={{ backgroundColor: mode === "popup" ? primaryColor : "transparent" }}>
+      <div
+        className={headerClasses}
+        style={{ backgroundColor: mode === "popup" ? primaryColor : "transparent" }}
+      >
         <div className="flex items-center gap-3">
           {config?.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={config.logo_url}
-              className="h-8 w-8 rounded-full bg-white object-contain border"
+              className="h-8 w-8 rounded-full border bg-white object-contain"
               alt="Bot Logo"
             />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-white shadow-inner">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 font-bold text-white shadow-inner">
               {config?.title?.[0] || "A"}
             </div>
           )}
           <div>
-            <h1 className="text-sm font-bold leading-tight truncate max-w-[150px]">
+            <h1 className="max-w-[150px] truncate text-sm leading-tight font-bold">
               {config?.title || "Assistant"}
             </h1>
-            <p className="text-[10px] uppercase tracking-wider text-white/70 font-medium">AI Powered</p>
+            <p className="text-[10px] font-medium tracking-wider text-white/70 uppercase">
+              AI Powered
+            </p>
           </div>
         </div>
         {mode === "popup" && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full hover:bg-black/10 text-white"
+            className="h-8 w-8 rounded-full text-white hover:bg-black/10"
             onClick={() => {
-              console.log('[Widget] Close button clicked, allowedOrigin:', allowedOrigin);
+              console.log("[Widget] Close button clicked, allowedOrigin:", allowedOrigin);
               setIsOpen(false);
               if (allowedOrigin) {
                 window.parent?.postMessage({ type: "chatbot:close" }, allowedOrigin);
@@ -430,23 +438,23 @@ function WidgetContent() {
 
       <div
         className={cn(
-          "flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth",
-          mode === "embedded" ? "max-w-4xl mx-auto w-full pb-32" : ""
+          "flex-1 space-y-6 overflow-y-auto scroll-smooth px-4 py-6",
+          mode === "embedded" ? "mx-auto w-full max-w-4xl pb-32" : ""
         )}
         ref={scrollRef}
       >
         {configError && (
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 mb-4 animate-in fade-in slide-in-from-top-2">
+          <div className="border-destructive/20 bg-destructive/5 animate-in fade-in slide-in-from-top-2 mb-4 rounded-lg border p-4">
             <div className="flex items-start gap-3">
-              <div className="h-5 w-5 rounded-full bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="bg-destructive/10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full">
                 <span className="text-destructive text-xs font-bold">!</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-destructive">Failed to load chatbot</p>
-                <p className="text-xs text-destructive/80 mt-1">{configError}</p>
+                <p className="text-destructive text-sm font-medium">Failed to load chatbot</p>
+                <p className="text-destructive/80 mt-1 text-xs">{configError}</p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="text-xs text-destructive underline mt-2 hover:no-underline"
+                  className="text-destructive mt-2 text-xs underline hover:no-underline"
                 >
                   Refresh page
                 </button>
@@ -455,22 +463,27 @@ function WidgetContent() {
           </div>
         )}
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground p-6 animate-in fade-in duration-700 fill-mode-forwards space-y-6">
+          <div className="text-muted-foreground animate-in fade-in fill-mode-forwards flex h-full flex-col items-center justify-center space-y-6 p-6 text-center duration-700">
             <div className="flex flex-col items-center">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                <Send className="h-6 w-6 text-primary" />
+              <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-2xl">
+                <Send className="text-primary h-6 w-6" />
               </div>
-              <p className="font-medium text-foreground text-lg">{config?.welcome_message || "How can I help you today?"}</p>
-              <p className="text-sm mt-1">Ask me anything about your project.</p>
+              <p className="text-foreground text-lg font-medium">
+                {config?.welcome_message || "How can I help you today?"}
+              </p>
+              <p className="mt-1 text-sm">Ask me anything about your project.</p>
             </div>
 
             {(config?.starter_questions?.length ?? 0) > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300 fill-mode-forwards">
+              <div className="animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards flex flex-wrap justify-center gap-2 delay-300 duration-700">
                 {config?.starter_questions.map((q, i) => (
                   <button
                     key={i}
-                    onClick={() => { setInput(q); sendMessage(undefined, q); }}
-                    className="text-[11px] px-3 py-1.5 rounded-full border bg-background hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm text-foreground/80 font-medium active:scale-95 text-left"
+                    onClick={() => {
+                      setInput(q);
+                      sendMessage(undefined, q);
+                    }}
+                    className="bg-background hover:bg-primary/5 hover:border-primary/50 text-foreground/80 rounded-full border px-3 py-1.5 text-left text-[11px] font-medium shadow-sm transition-all active:scale-95"
                   >
                     {q}
                   </button>
@@ -483,16 +496,16 @@ function WidgetContent() {
             <div
               key={index}
               className={cn(
-                "flex flex-col gap-1 max-w-[85%] animate-in slide-in-from-bottom-2 fade-in duration-300",
+                "animate-in slide-in-from-bottom-2 fade-in flex max-w-[85%] flex-col gap-1 duration-300",
                 msg.role === "user" ? "ml-auto items-end" : "items-start"
               )}
             >
               <div
                 className={cn(
-                  "px-4 py-2.5 rounded-2xl text-sm shadow-sm",
+                  "rounded-2xl px-4 py-2.5 text-sm shadow-sm",
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-none"
-                    : "bg-muted/80 backdrop-blur-sm dark:bg-muted/50 rounded-bl-none border"
+                    : "bg-muted/80 dark:bg-muted/50 rounded-bl-none border backdrop-blur-sm"
                 )}
               >
                 {msg.status === "pending" ? (
@@ -502,27 +515,25 @@ function WidgetContent() {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       p: ({ children }) => (
-                        <p className="whitespace-pre-wrap leading-relaxed">{children}</p>
+                        <p className="leading-relaxed whitespace-pre-wrap">{children}</p>
                       ),
                       ul: ({ children }) => (
-                        <ul className="list-disc pl-5 space-y-1">{children}</ul>
+                        <ul className="list-disc space-y-1 pl-5">{children}</ul>
                       ),
                       ol: ({ children }) => (
-                        <ol className="list-decimal pl-5 space-y-1">{children}</ol>
+                        <ol className="list-decimal space-y-1 pl-5">{children}</ol>
                       ),
-                      li: ({ children }) => (
-                        <li className="leading-relaxed">{children}</li>
-                      ),
+                      li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                       strong: ({ children }) => (
                         <strong className="font-semibold">{children}</strong>
                       ),
                       code: ({ children }) => (
-                        <code className="rounded bg-background/60 px-1 py-0.5 text-[0.85em] font-mono border">
+                        <code className="bg-background/60 rounded border px-1 py-0.5 font-mono text-[0.85em]">
                           {children}
                         </code>
                       ),
                       pre: ({ children }) => (
-                        <pre className="overflow-x-auto rounded-lg bg-background/50 p-3 text-xs border mt-2">
+                        <pre className="bg-background/50 mt-2 overflow-x-auto rounded-lg border p-3 text-xs">
                           {children}
                         </pre>
                       ),
@@ -539,17 +550,21 @@ function WidgetContent() {
         )}
       </div>
 
-      <div className={cn(
-        "p-4 z-10 transition-all duration-300 ease-in-out",
-        mode === "embedded"
-          ? "sticky bottom-0 bg-background/80 backdrop-blur-md w-full max-w-3xl px-4 mx-auto pb-4"
-          : "sticky bottom-0 bg-background/80 backdrop-blur-md"
-      )}>
+      <div
+        className={cn(
+          "z-10 p-4 transition-all duration-300 ease-in-out",
+          mode === "embedded"
+            ? "bg-background/80 sticky bottom-0 mx-auto w-full max-w-3xl px-4 pb-4 backdrop-blur-md"
+            : "bg-background/80 sticky bottom-0 backdrop-blur-md"
+        )}
+      >
         <form
           onSubmit={sendMessage}
           className={cn(
-            "relative flex items-end bg-background rounded-2xl border shadow-lg ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all p-1.5",
-            mode === "embedded" ? "shadow-2xl border-muted/40 bg-background/90 backdrop-blur-xl" : ""
+            "bg-background ring-offset-background focus-within:ring-ring relative flex items-end rounded-2xl border p-1.5 shadow-lg transition-all focus-within:ring-2 focus-within:ring-offset-2",
+            mode === "embedded"
+              ? "border-muted/40 bg-background/90 shadow-2xl backdrop-blur-xl"
+              : ""
           )}
         >
           <textarea
@@ -559,15 +574,15 @@ function WidgetContent() {
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             rows={1}
-            className="flex-1 border-none shadow-none focus:outline-none focus:ring-0 px-4 bg-transparent py-3 text-sm resize-none max-h-[120px] min-h-[44px]"
+            className="max-h-[120px] min-h-[44px] flex-1 resize-none border-none bg-transparent px-4 py-3 text-sm shadow-none focus:ring-0 focus:outline-none"
           />
-          <div className="flex items-center gap-1.5 pb-2 px-1.5">
+          <div className="flex items-center gap-1.5 px-1.5 pb-2">
             {messages.some((msg) => msg.status === "pending") ? (
               <Button
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                className="hover:bg-destructive/10 hover:text-destructive h-8 w-8 rounded-full"
                 onClick={stopAll}
               >
                 <Square className="h-4 w-4 fill-current" />
@@ -578,15 +593,19 @@ function WidgetContent() {
               type="submit"
               size="icon"
               disabled={!input.trim()}
-              className="h-8 w-8 rounded-full shrink-0 transition-all active:scale-95"
+              className="h-8 w-8 shrink-0 rounded-full transition-all active:scale-95"
             >
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
           </div>
         </form>
-        <div className="text-center mt-2">
-          <a href="https://contextly.ai" target="_blank" className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+        <div className="mt-2 text-center">
+          <a
+            href="https://contextly.ai"
+            target="_blank"
+            className="text-muted-foreground/60 hover:text-muted-foreground text-[10px] transition-colors"
+          >
             Powered by Contextly AI
           </a>
         </div>

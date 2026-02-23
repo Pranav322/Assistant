@@ -4,7 +4,8 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Production Deployment",
-  description: "Best practices for secure, scalable, and reliable Contextly production deployments.",
+  description:
+    "Best practices for secure, scalable, and reliable Contextly production deployments.",
   path: "/docs/self-hosting/production",
 });
 

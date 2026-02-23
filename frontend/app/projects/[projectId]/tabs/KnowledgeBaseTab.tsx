@@ -1,4 +1,19 @@
-import { Upload, Link as LinkIcon, Loader2, AlertCircle, Play, ExternalLink, Trash2, FileText, Globe, CheckCircle2, XCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Upload,
+  Link as LinkIcon,
+  Loader2,
+  AlertCircle,
+  Play,
+  ExternalLink,
+  Trash2,
+  FileText,
+  Globe,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -9,7 +24,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
 
 import type { Source } from "../types";
@@ -80,27 +102,31 @@ export function KnowledgeBaseTab({
   return (
     <TabsContent value="knowledge-base" className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-2">
-        <Card className={cn("transition-colors", uploading ? "border-primary/50 bg-primary/5" : "")}> 
+        <Card
+          className={cn("transition-colors", uploading ? "border-primary/50 bg-primary/5" : "")}
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5" /> File Upload
             </CardTitle>
-            <CardDescription>Upload documents (PDF, TXT, MD) to your knowledge base.</CardDescription>
+            <CardDescription>
+              Upload documents (PDF, TXT, MD) to your knowledge base.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <Label>Select File</Label>
               <div className="flex items-center gap-3">
-                <div className="relative flex-1 group min-w-0">
+                <div className="group relative min-w-0 flex-1">
                   <Input
                     key={fileInputKey}
                     type="file"
                     accept=".pdf,.txt,.md,.markdown"
                     onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    className="absolute inset-0 opacity-0 cursor-pointer z-10 h-11 w-full"
+                    className="absolute inset-0 z-10 h-11 w-full cursor-pointer opacity-0"
                   />
-                  <div className="flex items-center h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background group-hover:border-primary/50 transition-colors shadow-sm min-w-0">
-                    <div className="bg-primary text-primary-foreground text-xs font-bold uppercase px-3 py-1.5 rounded-full mr-3 shrink-0">
+                  <div className="border-input bg-background ring-offset-background group-hover:border-primary/50 flex h-11 w-full min-w-0 items-center rounded-md border px-4 py-2 text-sm shadow-sm transition-colors">
+                    <div className="bg-primary text-primary-foreground mr-3 shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase">
                       Browse
                     </div>
                     <span className="text-muted-foreground truncate font-medium">
@@ -108,16 +134,22 @@ export function KnowledgeBaseTab({
                     </span>
                   </div>
                 </div>
-                <Button onClick={uploadFile} disabled={uploading} className="h-11 px-6 font-semibold">
+                <Button
+                  onClick={uploadFile}
+                  disabled={uploading}
+                  className="h-11 px-6 font-semibold"
+                >
                   {uploading ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" /> Uploading
                     </span>
-                  ) : "Upload"}
+                  ) : (
+                    "Upload"
+                  )}
                 </Button>
               </div>
               {uploading && (
-                <div className="w-full bg-secondary rounded-full h-1.5 mt-2 overflow-hidden">
+                <div className="bg-secondary mt-2 h-1.5 w-full overflow-hidden rounded-full">
                   <div
                     className="bg-primary h-1.5 rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${uploadProgress}%` }}
@@ -134,7 +166,9 @@ export function KnowledgeBaseTab({
           </CardContent>
         </Card>
 
-        <Card className={cn("transition-colors", urlIngesting ? "border-primary/50 bg-primary/5" : "")}> 
+        <Card
+          className={cn("transition-colors", urlIngesting ? "border-primary/50 bg-primary/5" : "")}
+        >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <LinkIcon className="h-5 w-5" /> URL Ingestion
@@ -155,7 +189,9 @@ export function KnowledgeBaseTab({
                     <span className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" /> Ingesting
                     </span>
-                  ) : "Ingest"}
+                  ) : (
+                    "Ingest"
+                  )}
                 </Button>
               </div>
               {urlIngestError && (
@@ -170,19 +206,22 @@ export function KnowledgeBaseTab({
       </div>
 
       {!isNewProject && (
-        <div className="rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20 p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="from-primary/5 via-primary/10 to-primary/5 border-primary/20 flex flex-col items-center justify-between gap-4 rounded-2xl border bg-gradient-to-br p-6 sm:flex-row md:p-8">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Play className="h-6 w-6 text-primary" />
+            <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
+              <Play className="text-primary h-6 w-6" />
             </div>
             <div>
               <h3 className="font-semibold">Ready to test your chatbot?</h3>
-              <p className="text-sm text-muted-foreground">Chat with your bot using {sources?.filter((s) => s.status === "completed").length ?? 0} documents</p>
+              <p className="text-muted-foreground text-sm">
+                Chat with your bot using{" "}
+                {sources?.filter((s) => s.status === "completed").length ?? 0} documents
+              </p>
             </div>
           </div>
           <Button
             size="lg"
-            className="gap-2 shrink-0"
+            className="shrink-0 gap-2"
             disabled={tokenLoading || !!tokenError || !widgetToken}
             onClick={() => {
               if (!widgetToken) return;
@@ -198,9 +237,13 @@ export function KnowledgeBaseTab({
             }}
           >
             {tokenLoading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Loading...</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+              </>
             ) : (
-              <><ExternalLink className="h-4 w-4" /> Test Chatbot</>
+              <>
+                <ExternalLink className="h-4 w-4" /> Test Chatbot
+              </>
             )}
           </Button>
         </div>
@@ -214,7 +257,7 @@ export function KnowledgeBaseTab({
           </div>
           {selectedSources.length > 0 && (
             <Button variant="destructive" size="sm" onClick={openBulkDeleteModal}>
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete {selectedSources.length} selected
             </Button>
           )}
@@ -225,7 +268,10 @@ export function KnowledgeBaseTab({
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={(sources?.length ?? 0) > 0 && selectedSources.length === (sources?.length ?? 0)}
+                    checked={
+                      (sources?.length ?? 0) > 0 &&
+                      selectedSources.length === (sources?.length ?? 0)
+                    }
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
@@ -241,15 +287,16 @@ export function KnowledgeBaseTab({
             <TableBody>
               {(sources?.length ?? 0) === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
+                  <TableCell colSpan={8} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center space-y-4">
-                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                        <FileText className="h-8 w-8 text-muted-foreground" />
+                      <div className="bg-muted flex h-16 w-16 items-center justify-center rounded-full">
+                        <FileText className="text-muted-foreground h-8 w-8" />
                       </div>
                       <div className="space-y-2">
                         <p className="text-lg font-medium">No data sources yet</p>
-                        <p className="text-sm text-muted-foreground max-w-sm">
-                          Upload documents or add URLs to build your knowledge base. Your chatbot will use these to answer questions.
+                        <p className="text-muted-foreground max-w-sm text-sm">
+                          Upload documents or add URLs to build your knowledge base. Your chatbot
+                          will use these to answer questions.
                         </p>
                       </div>
                       <div className="flex gap-3 pt-2">
@@ -258,12 +305,12 @@ export function KnowledgeBaseTab({
                           onClick={() => {
                             const element = document.querySelector('[value="knowledge-base"]');
                             if (element) {
-                              const fileInput = document.querySelector("input[type=\"file\"]");
+                              const fileInput = document.querySelector('input[type="file"]');
                               fileInput?.scrollIntoView({ behavior: "smooth", block: "center" });
                             }
                           }}
                         >
-                          <Upload className="h-4 w-4 mr-2" />
+                          <Upload className="mr-2 h-4 w-4" />
                           Upload File
                         </Button>
                       </div>
@@ -287,11 +334,17 @@ export function KnowledgeBaseTab({
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {source.metadata.filename || source.metadata.source_url || source.content_hash.slice(0, 8)}
+                      {source.metadata.filename ||
+                        source.metadata.source_url ||
+                        source.content_hash.slice(0, 8)}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
                       {source.metadata.size_bytes
-                        ? new Intl.NumberFormat("en-US", { style: "unit", unit: "byte", unitDisplay: "narrow" }).format(source.metadata.size_bytes)
+                        ? new Intl.NumberFormat("en-US", {
+                            style: "unit",
+                            unit: "byte",
+                            unitDisplay: "narrow",
+                          }).format(source.metadata.size_bytes)
                         : "-"}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
@@ -306,7 +359,7 @@ export function KnowledgeBaseTab({
                               ? "destructive"
                               : "secondary"
                         }
-                        className="gap-1.5 px-2.5 py-0.5 min-w-[90px] justify-center"
+                        className="min-w-[90px] justify-center gap-1.5 px-2.5 py-0.5"
                       >
                         {source.status === "completed" && <CheckCircle2 className="h-3 w-3" />}
                         {source.status === "failed" && <XCircle className="h-3 w-3" />}
@@ -314,7 +367,8 @@ export function KnowledgeBaseTab({
                           <RefreshCw className="h-3 w-3 animate-spin" />
                         )}
                         <span className="capitalize">
-                          {["pending", "processing"].includes(source.status) && source.progress?.percent !== undefined
+                          {["pending", "processing"].includes(source.status) &&
+                          source.progress?.percent !== undefined
                             ? `${source.progress.percent}%`
                             : source.status}
                         </span>
@@ -333,7 +387,7 @@ export function KnowledgeBaseTab({
                         {deletingSourceId === source.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="text-destructive h-4 w-4" />
                         )}
                       </Button>
                     </TableCell>
@@ -343,7 +397,7 @@ export function KnowledgeBaseTab({
             </TableBody>
           </Table>
           {(sources?.length ?? 0) > itemsPerPage && (
-            <div className="flex items-center justify-end px-4 py-4 border-t gap-2">
+            <div className="flex items-center justify-end gap-2 border-t px-4 py-4">
               <Button
                 variant="outline"
                 size="sm"
@@ -352,7 +406,7 @@ export function KnowledgeBaseTab({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-muted-foreground min-w-[4rem] text-center">
+              <span className="text-muted-foreground min-w-[4rem] text-center text-sm">
                 Page {currentPage} of {totalPages}
               </span>
               <Button

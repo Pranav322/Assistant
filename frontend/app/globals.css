@@ -162,7 +162,9 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/10 select-none;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground selection:bg-primary/10 antialiased select-none;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }

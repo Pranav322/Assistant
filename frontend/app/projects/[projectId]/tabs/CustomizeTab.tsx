@@ -62,21 +62,23 @@ export function CustomizeTab({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Customize</h2>
-          <p className="text-sm text-muted-foreground">Changes auto-save and sync to your live widget.</p>
+          <p className="text-muted-foreground text-sm">
+            Changes auto-save and sync to your live widget.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {hasUnsavedChanges && (
-            <span className="text-xs text-amber-600 font-medium flex items-center gap-1.5 animate-in fade-in">
+            <span className="animate-in fade-in flex items-center gap-1.5 text-xs font-medium text-amber-600">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Unsaved changes
             </span>
           )}
           {isSavingBranding && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
               <Loader2 className="h-3 w-3 animate-spin" /> Saving...
             </span>
           )}
           {!hasUnsavedChanges && !isSavingBranding && (
-            <span className="text-xs text-green-600 font-medium flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
               <CheckCircle2 className="h-3 w-3" /> Saved
             </span>
           )}
@@ -87,14 +89,14 @@ export function CustomizeTab({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Settings2 className="h-4 w-4" /> Layout
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Display Mode</Label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+                <div className="bg-muted grid grid-cols-2 gap-2 rounded-lg p-1">
                   <Button
                     variant={embedMode === "popup" ? "default" : "ghost"}
                     onClick={() => {
@@ -140,7 +142,7 @@ export function CustomizeTab({
                 </div>
                 <div className="space-y-2">
                   <Label>Primary Color</Label>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex items-center gap-2">
                     <Input
                       type="color"
                       value={botColor}
@@ -151,7 +153,7 @@ export function CustomizeTab({
                           triggerAutoSave();
                         }
                       }}
-                      className="w-16 h-10 p-1"
+                      className="h-10 w-16 p-1"
                     />
                     <Input
                       value={botColor}
@@ -165,13 +167,15 @@ export function CustomizeTab({
                       placeholder="#4f46e5"
                       className={cn(
                         !/^#[0-9A-Fa-f]{6}$/.test(botColor) &&
-                        botColor !== "" &&
-                        "border-destructive focus-visible:ring-destructive"
+                          botColor !== "" &&
+                          "border-destructive focus-visible:ring-destructive"
                       )}
                     />
                   </div>
                   {!/^#[0-9A-Fa-f]{6}$/.test(botColor) && botColor !== "" && (
-                    <p className="text-xs text-destructive">Please enter a valid hex color (e.g., #4f46e5)</p>
+                    <p className="text-destructive text-xs">
+                      Please enter a valid hex color (e.g., #4f46e5)
+                    </p>
                   )}
                 </div>
               </div>
@@ -203,7 +207,9 @@ export function CustomizeTab({
           <Card>
             <CardHeader>
               <CardTitle className="text-base">AI Behavior</CardTitle>
-              <CardDescription>Control what the bot says and how it starts conversations.</CardDescription>
+              <CardDescription>
+                Control what the bot says and how it starts conversations.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -221,8 +227,9 @@ export function CustomizeTab({
                 </div>
                 <textarea
                   className={cn(
-                    "flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                    starterQuestions.length > 500 && "border-destructive focus-visible:ring-destructive"
+                    "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[100px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                    starterQuestions.length > 500 &&
+                      "border-destructive focus-visible:ring-destructive"
                   )}
                   value={starterQuestions}
                   onChange={(e) => {
@@ -236,13 +243,13 @@ export function CustomizeTab({
                   maxLength={500}
                 />
                 {starterQuestions.length > 500 && (
-                  <p className="text-xs text-destructive">Maximum 500 characters allowed</p>
+                  <p className="text-destructive text-xs">Maximum 500 characters allowed</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label>System Prompt (Instructions)</Label>
                 <textarea
-                  className="flex min-h-[140px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-mono text-xs"
+                  className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[140px] w-full rounded-md border px-3 py-2 font-mono text-sm text-xs focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                   value={systemPrompt}
                   onChange={(e) => {
                     setSystemPrompt(e.target.value);
@@ -250,12 +257,14 @@ export function CustomizeTab({
                   }}
                   placeholder="You are a helpful assistant..."
                 />
-                <p className="text-[10px] text-muted-foreground">This guides the AI&apos;s tone and behavior.</p>
+                <p className="text-muted-foreground text-[10px]">
+                  This guides the AI&apos;s tone and behavior.
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          {brandingError && <p className="text-sm text-destructive">{brandingError}</p>}
+          {brandingError && <p className="text-destructive text-sm">{brandingError}</p>}
         </div>
 
         <div className="lg:sticky lg:top-6 lg:self-start">
@@ -263,7 +272,12 @@ export function CustomizeTab({
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Live Preview</CardTitle>
-                <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">{embedMode}</Badge>
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] font-bold tracking-wider uppercase"
+                >
+                  {embedMode}
+                </Badge>
               </div>
               <CardDescription>See changes instantly as you customize</CardDescription>
             </CardHeader>
@@ -271,15 +285,15 @@ export function CustomizeTab({
               <div
                 className={cn(
                   "relative w-full transition-all duration-500 ease-in-out",
-                  embedMode === "popup" ? "p-3 bg-muted/30" : "p-0 bg-white"
+                  embedMode === "popup" ? "bg-muted/30 p-3" : "bg-white p-0"
                 )}
               >
                 <div
                   className={cn(
-                    "flex flex-col bg-white transition-all duration-500 mx-auto",
+                    "mx-auto flex flex-col bg-white transition-all duration-500",
                     embedMode === "popup"
-                      ? "rounded-2xl shadow-2xl border h-[450px] max-w-[320px]"
-                      : "rounded-lg border shadow-sm h-[450px]"
+                      ? "h-[450px] max-w-[320px] rounded-2xl border shadow-2xl"
+                      : "h-[450px] rounded-lg border shadow-sm"
                   )}
                 >
                   <div
@@ -291,21 +305,25 @@ export function CustomizeTab({
                   >
                     {logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logoUrl} alt="logo" className="h-7 w-7 rounded-full object-cover bg-white/20" />
+                      <img
+                        src={logoUrl}
+                        alt="logo"
+                        className="h-7 w-7 rounded-full bg-white/20 object-cover"
+                      />
                     ) : (
-                      <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
                         {botTitle?.charAt(0) || "A"}
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{botTitle || "Assistant"}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{botTitle || "Assistant"}</p>
                       <p className="text-[10px] opacity-80">Online</p>
                     </div>
                   </div>
 
-                  <div className="flex-1 p-3 bg-muted/10 space-y-3 overflow-y-auto">
-                    <div className="flex flex-col gap-1.5 max-w-[85%]">
-                      <div className="bg-white p-2.5 rounded-2xl rounded-tl-sm shadow-sm text-xs border">
+                  <div className="bg-muted/10 flex-1 space-y-3 overflow-y-auto p-3">
+                    <div className="flex max-w-[85%] flex-col gap-1.5">
+                      <div className="rounded-2xl rounded-tl-sm border bg-white p-2.5 text-xs shadow-sm">
                         {welcomeMessage || "How can I help you today?"}
                       </div>
                     </div>
@@ -317,7 +335,7 @@ export function CustomizeTab({
                         .map((q, i) => (
                           <div
                             key={i}
-                            className="text-[10px] px-2.5 py-1 rounded-full border bg-white shadow-sm cursor-default hover:border-primary/50 transition-colors font-medium text-foreground/80"
+                            className="hover:border-primary/50 text-foreground/80 cursor-default rounded-full border bg-white px-2.5 py-1 text-[10px] font-medium shadow-sm transition-colors"
                           >
                             {q}
                           </div>
@@ -325,13 +343,13 @@ export function CustomizeTab({
                     </div>
                   </div>
 
-                  <div className="p-3 border-t bg-white">
+                  <div className="border-t bg-white p-3">
                     <div className="relative">
-                      <div className="h-9 w-full rounded-full bg-muted/40 border-none px-3 flex items-center text-[11px] text-muted-foreground">
+                      <div className="bg-muted/40 text-muted-foreground flex h-9 w-full items-center rounded-full border-none px-3 text-[11px]">
                         Enter message...
                       </div>
                       <div
-                        className="absolute right-1 top-0.5 h-7 w-7 rounded-full flex items-center justify-center"
+                        className="absolute top-0.5 right-1 flex h-7 w-7 items-center justify-center rounded-full"
                         style={{ backgroundColor: botColor }}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5 text-white opacity-40" />
@@ -342,7 +360,7 @@ export function CustomizeTab({
 
                 {embedMode === "popup" && (
                   <div
-                    className="absolute bottom-5 right-5 h-10 w-10 rounded-full shadow-lg flex items-center justify-center text-white"
+                    className="absolute right-5 bottom-5 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg"
                     style={{ backgroundColor: botColor }}
                   >
                     <MessageSquare className="h-5 w-5" />
@@ -350,7 +368,7 @@ export function CustomizeTab({
                 )}
               </div>
             </CardContent>
-            <div className="p-4 border-t bg-muted/30">
+            <div className="bg-muted/30 border-t p-4">
               <Button
                 className="w-full gap-2"
                 variant="default"
@@ -369,9 +387,13 @@ export function CustomizeTab({
                 }}
               >
                 {tokenLoading ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Loading...</>
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+                  </>
                 ) : (
-                  <><Play className="h-4 w-4" /> Test Your Chatbot</>
+                  <>
+                    <Play className="h-4 w-4" /> Test Your Chatbot
+                  </>
                 )}
               </Button>
             </div>

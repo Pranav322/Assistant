@@ -4,7 +4,8 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Getting Started",
-  description: "Learn the Contextly basics and how to launch your first retrieval-augmented chatbot.",
+  description:
+    "Learn the Contextly basics and how to launch your first retrieval-augmented chatbot.",
   path: "/docs/getting-started",
 });
 

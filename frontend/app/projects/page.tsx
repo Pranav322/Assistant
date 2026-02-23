@@ -89,14 +89,12 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background selection:bg-primary/10">
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-8 animate-fade-in sm:px-8 lg:px-12">
+    <div className="bg-background selection:bg-primary/10 min-h-screen">
+      <main className="animate-fade-in mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-8 lg:px-12">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-            <p className="text-muted-foreground">
-              Manage your assistants and integrations.
-            </p>
+            <p className="text-muted-foreground">Manage your assistants and integrations.</p>
           </div>
           <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
@@ -105,14 +103,14 @@ export default function ProjectsPage() {
         </div>
 
         {plan === "free" && !bannerDismissed && (
-          <div className="mb-6 flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="border-primary/20 bg-primary/5 mb-6 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Sparkles className="h-4 w-4 text-primary" />
+              <div className="bg-primary/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                <Sparkles className="text-primary h-4 w-4" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium">Unlock more with Pro</p>
-                <p className="text-xs text-muted-foreground text-pretty">
+                <p className="text-muted-foreground text-xs text-pretty">
                   Get 5 projects, 2M tokens, and priority support — ₹499/month
                 </p>
               </div>
@@ -123,7 +121,7 @@ export default function ProjectsPage() {
               </Button>
               <button
                 onClick={() => setBannerDismissed(true)}
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md p-1 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -138,7 +136,7 @@ export default function ProjectsPage() {
             <Skeleton className="h-[140px] rounded-xl" />
           </div>
         ) : error ? (
-          <div className="rounded-lg bg-destructive/10 p-4 text-destructive flex flex-col gap-3">
+          <div className="bg-destructive/10 text-destructive flex flex-col gap-3 rounded-lg p-4">
             <p>Failed to load projects: {error.message}</p>
             <Button variant="outline" size="sm" onClick={() => mutate()}>
               Try again
@@ -149,30 +147,34 @@ export default function ProjectsPage() {
             {projects?.map((project) => (
               <div
                 key={project.id}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/20"
+                className="group bg-card hover:border-primary/20 relative flex flex-col justify-between overflow-hidden rounded-xl border p-5 shadow-sm transition-all hover:shadow-md"
               >
-                <Link href={`/projects/${project.id}?title=${encodeURIComponent(project.name)}`} className="space-y-3">
+                <Link
+                  href={`/projects/${project.id}?title=${encodeURIComponent(project.name)}`}
+                  className="space-y-3"
+                >
                   <div className="flex items-start justify-between">
-                    <div className="h-10 w-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                    <div className="bg-primary/5 text-primary flex h-10 w-10 items-center justify-center rounded-lg">
                       <Terminal className="h-5 w-5" />
                     </div>
-                    <Badge variant="secondary" className="font-mono text-[10px] tracking-wider uppercase opacity-70">
+                    <Badge
+                      variant="secondary"
+                      className="font-mono text-[10px] tracking-wider uppercase opacity-70"
+                    >
                       {project.id.slice(0, 8)}
                     </Badge>
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold tracking-tight truncate">
-                      {project.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <h3 className="truncate font-semibold tracking-tight">{project.name}</h3>
+                    <p className="text-muted-foreground truncate text-sm">
                       {project.allowed_origins?.[0] || "No origin set"}
                     </p>
                   </div>
                 </Link>
-                <div className="mt-4 pt-4 border-t flex items-center justify-between text-xs">
+                <div className="mt-4 flex items-center justify-between border-t pt-4 text-xs">
                   <Link
                     href={`/projects/${project.id}/?tab=settings&title=${encodeURIComponent(project.name)}`}
-                    className="flex items-center text-muted-foreground group-hover:text-primary transition-colors"
+                    className="text-muted-foreground group-hover:text-primary flex items-center transition-colors"
                   >
                     Configure <Settings2 className="ml-1 h-3 w-3" />
                   </Link>
@@ -180,12 +182,12 @@ export default function ProjectsPage() {
               </div>
             ))}
             {projects?.length === 0 && (
-              <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 text-center animate-fade-in">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/30 mb-4">
-                  <Plus className="h-8 w-8 text-muted-foreground" />
+              <div className="bg-muted/10 animate-fade-in col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed text-center">
+                <div className="bg-muted/30 mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                  <Plus className="text-muted-foreground h-8 w-8" />
                 </div>
                 <h3 className="text-lg font-semibold">No projects yet</h3>
-                <p className="text-muted-foreground max-w-sm mt-2 mb-6">
+                <p className="text-muted-foreground mt-2 mb-6 max-w-sm">
                   Create your first RAG assistant to get started.
                 </p>
                 <Button onClick={() => setIsModalOpen(true)}>Create Project</Button>
@@ -223,13 +225,23 @@ export default function ProjectsPage() {
                 disabled={creatingProject}
                 className="col-span-3"
               />
-              <p className="text-[0.8rem] text-muted-foreground">
-                The domain where you&apos;ll embed the chat widget. You can change this or add more domains later in Project Settings.
+              <p className="text-muted-foreground text-[0.8rem]">
+                The domain where you&apos;ll embed the chat widget. You can change this or add more
+                domains later in Project Settings.
               </p>
             </div>
-            {createError && <p className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">{createError}</p>}
-            <div className="flex justify-end gap-3 mt-2">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={creatingProject}>
+            {createError && (
+              <p className="text-destructive bg-destructive/10 rounded-md p-2 text-sm">
+                {createError}
+              </p>
+            )}
+            <div className="mt-2 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={creatingProject}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={creatingProject}>

@@ -23,22 +23,20 @@ export default function CopyBlock({ label, value, className }: CopyBlockProps) {
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
-      <div className="relative rounded-lg border bg-muted font-mono text-sm overflow-hidden">
-        <pre className={`p-4 pr-12 overflow-x-auto break-all whitespace-pre-wrap ${className || ""}`}>
+      <div className="bg-muted relative overflow-hidden rounded-lg border font-mono text-sm">
+        <pre
+          className={`overflow-x-auto p-4 pr-12 break-all whitespace-pre-wrap ${className || ""}`}
+        >
           <code className="break-all">{value}</code>
         </pre>
-        <div className="absolute right-1 top-1 bg-muted/80 backdrop-blur-sm rounded">
+        <div className="bg-muted/80 absolute top-1 right-1 rounded backdrop-blur-sm">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-8 w-8"
             onClick={onCopy}
           >
-            {copied ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             <span className="sr-only">Copy</span>
           </Button>
         </div>

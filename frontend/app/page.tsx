@@ -17,46 +17,44 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default function Home() {
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Contextly",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web",
-    "offers": {
+    name: "Contextly",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    offers: {
       "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "INR"
+      price: "0",
+      priceCurrency: "INR",
     },
-    "description": "Build, embed, and monitor production RAG chatbots in minutes. Contextly handles ingestion, retrieval, auth, and observability.",
-    "aggregateRating": {
+    description:
+      "Build, embed, and monitor production RAG chatbots in minutes. Contextly handles ingestion, retrieval, auth, and observability.",
+    aggregateRating: {
       "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "120"
-    }
+      ratingValue: "4.8",
+      ratingCount: "120",
+    },
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background selection:bg-primary/10 overflow-x-hidden">
+    <div className="bg-background selection:bg-primary/10 flex min-h-screen flex-col overflow-x-hidden">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+      <header className="bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur-md">
         <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+            <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold">
               C
             </div>
-            <span className="text-sm font-semibold tracking-tight">
-              Contextly
-            </span>
+            <span className="text-sm font-semibold tracking-tight">Contextly</span>
           </div>
           <nav className="flex items-center gap-2 sm:gap-4">
             <Link
               href="#pricing"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              className="text-muted-foreground hover:text-primary text-sm font-medium transition-colors"
             >
               Pricing
             </Link>
@@ -67,60 +65,64 @@ export default function Home() {
 
       <main className="flex-1">
         <section className="relative overflow-hidden">
-          <div className="absolute inset-y-0 right-0 -z-10 w-full lg:w-1/2 bg-muted/30" />
-          <div className="absolute right-0 top-0 -z-10 h-64 w-64 sm:h-96 sm:w-96 rounded-full bg-primary/10 blur-3xl opacity-50 sm:opacity-100" />
+          <div className="bg-muted/30 absolute inset-y-0 right-0 -z-10 w-full lg:w-1/2" />
+          <div className="bg-primary/10 absolute top-0 right-0 -z-10 h-64 w-64 rounded-full opacity-50 blur-3xl sm:h-96 sm:w-96 sm:opacity-100" />
           <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
             <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
-              <div className="text-left animate-slide-in-from-bottom lg:mt-12">
+              <div className="animate-slide-in-from-bottom text-left lg:mt-12">
                 <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
                   The RAG Chatbot Platform for Developers
                 </Badge>
-                <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:leading-[1.1] text-balance">
+                <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-balance sm:text-5xl md:text-6xl lg:leading-[1.1]">
                   Ship intelligent <span className="text-primary">RAG chatbots</span>{" "}
                   <span className="block sm:inline">in minutes.</span>
                 </h1>
-                <p className="mt-6 max-w-xl text-lg text-muted-foreground sm:text-xl leading-relaxed text-balance">
+                <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed text-balance sm:text-xl">
                   A complete toolkit for building retrieval-augmented generation apps.
-                  <span className="font-medium text-foreground"> Embed custom chatbots</span> directly in your existing app.
-                  Handles ingestion, retrieval, auth, and observability so you can focus on your users.
+                  <span className="text-foreground font-medium"> Embed custom chatbots</span>{" "}
+                  directly in your existing app. Handles ingestion, retrieval, auth, and
+                  observability so you can focus on your users.
                 </p>
-                <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                   <HomeHeroAuthCTA />
                 </div>
 
                 <div className="mt-6 pt-2">
-                  <Link href="/rag-chatbot-from-documents" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                  <Link
+                    href="/rag-chatbot-from-documents"
+                    className="text-muted-foreground hover:text-primary inline-flex items-center gap-2 text-sm font-medium transition-colors"
+                  >
+                    <Sparkles className="text-primary h-4 w-4" />
                     <span>Build a RAG chatbot from your documents</span>
                     <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </div>
 
-                <div className="mt-10 grid gap-3 text-sm text-muted-foreground grid-cols-1 sm:grid-cols-2">
+                <div className="text-muted-foreground mt-10 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
                     <span>Instant Chatbot Knowledge</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
                     <span>Embed Chatbot anywhere</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
                     <span>Production Scale RAG</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
                     <span>Secure by Default</span>
                   </div>
                 </div>
               </div>
 
-              <div className="relative animate-slide-in-from-top mt-8 lg:mt-0 w-full min-w-0">
-                <div className="rounded-3xl border bg-muted/40 p-4 sm:p-6 shadow-sm overflow-hidden">
-                  <div className="rounded-2xl border bg-background p-4 sm:p-6 shadow-lg h-[500px] sm:h-[550px] flex flex-col w-full">
-                    <Tabs defaultValue="widget" className="w-full flex-1 flex flex-col">
-                      <div className="flex items-center justify-between mb-4">
+              <div className="animate-slide-in-from-top relative mt-8 w-full min-w-0 lg:mt-0">
+                <div className="bg-muted/40 overflow-hidden rounded-3xl border p-4 shadow-sm sm:p-6">
+                  <div className="bg-background flex h-[500px] w-full flex-col rounded-2xl border p-4 shadow-lg sm:h-[550px] sm:p-6">
+                    <Tabs defaultValue="widget" className="flex w-full flex-1 flex-col">
+                      <div className="mb-4 flex items-center justify-between">
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="widget">
                             <Code className="mr-2 h-4 w-4" />
@@ -135,45 +137,52 @@ export default function Home() {
                         </TabsList>
                       </div>
 
-                      <TabsContent value="widget" className="space-y-4 flex-1 overflow-auto">
-                        <div className="rounded-lg border bg-muted/50 p-3 sm:p-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                      <TabsContent value="widget" className="flex-1 space-y-4 overflow-auto">
+                        <div className="bg-muted/50 rounded-lg border p-3 sm:p-4">
+                          <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                             <h3 className="text-sm font-medium">Embed with one line</h3>
-                            <Badge variant="outline" className="text-xs w-fit">HTML / Any Framework</Badge>
+                            <Badge variant="outline" className="w-fit text-xs">
+                              HTML / Any Framework
+                            </Badge>
                           </div>
-                          <div className="overflow-x-auto max-w-full">
-                            <CopyBlock value={`<script 
+                          <div className="max-w-full overflow-x-auto">
+                            <CopyBlock
+                              value={`<script 
   src="https://www.contextly.live/embed.js"
   data-token="YOUR_WIDGET_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
   data-api-base-url="https://api.contextly.live/api/v1"
   defer
-></script>`} />
+></script>`}
+                            />
                           </div>
                         </div>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
+                        <ul className="text-muted-foreground space-y-2 text-sm">
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <CheckCircle2 className="text-primary h-4 w-4" />
                             <span>Auto-updates with new features</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <CheckCircle2 className="text-primary h-4 w-4" />
                             <span>Zero configuration required</span>
                           </li>
                         </ul>
                       </TabsContent>
 
-                      <TabsContent value="package" className="space-y-4 flex-1 overflow-auto">
-                        <div className="rounded-lg border bg-muted/50 p-3 sm:p-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                      <TabsContent value="package" className="flex-1 space-y-4 overflow-auto">
+                        <div className="bg-muted/50 rounded-lg border p-3 sm:p-4">
+                          <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                             <h3 className="text-sm font-medium">Full React Integration</h3>
-                            <Badge variant="outline" className="text-xs w-fit">npm / pnpm</Badge>
+                            <Badge variant="outline" className="w-fit text-xs">
+                              npm / pnpm
+                            </Badge>
                           </div>
                           <div className="mb-4">
                             <CopyBlock value="npm install contextly" />
                           </div>
-                          <div className="overflow-x-auto max-w-full">
-                            <CopyBlock value={`import { Chat } from "contextly";
+                          <div className="max-w-full overflow-x-auto">
+                            <CopyBlock
+                              value={`import { Chat } from "contextly";
 
 export default function App() {
   return (
@@ -182,16 +191,17 @@ export default function App() {
       token="YOUR_WIDGET_TOKEN"
     />
   );
-}`} />
+}`}
+                            />
                           </div>
                         </div>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
+                        <ul className="text-muted-foreground space-y-2 text-sm">
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <CheckCircle2 className="text-primary h-4 w-4" />
                             <span>Headless hooks for custom UI</span>
                           </li>
                           <li className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <CheckCircle2 className="text-primary h-4 w-4" />
                             <span>TypeScript support included</span>
                           </li>
                         </ul>
@@ -200,17 +210,17 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-muted-foreground sm:grid-cols-3">
-                  <div className="rounded-lg border bg-background/80 p-3">
-                    <p className="text-lg font-semibold text-foreground">99.9%</p>
+                <div className="text-muted-foreground mt-6 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
+                  <div className="bg-background/80 rounded-lg border p-3">
+                    <p className="text-foreground text-lg font-semibold">99.9%</p>
                     <p>uptime</p>
                   </div>
-                  <div className="rounded-lg border bg-background/80 p-3">
-                    <p className="text-lg font-semibold text-foreground">30+ GB</p>
+                  <div className="bg-background/80 rounded-lg border p-3">
+                    <p className="text-foreground text-lg font-semibold">30+ GB</p>
                     <p>chatbot knowledge indexed daily</p>
                   </div>
-                  <div className="rounded-lg border bg-background/80 p-3 col-span-2 sm:col-span-1">
-                    <p className="text-lg font-semibold text-foreground">3 min</p>
+                  <div className="bg-background/80 col-span-2 rounded-lg border p-3 sm:col-span-1">
+                    <p className="text-foreground text-lg font-semibold">3 min</p>
                     <p>to first answer</p>
                   </div>
                 </div>
@@ -219,56 +229,63 @@ export default function App() {
           </div>
         </section>
 
-        <section className="border-t bg-muted/20">
+        <section className="bg-muted/20 border-t">
           <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-[0.35fr_0.65fr]">
               <div className="space-y-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">
                   Integration
                 </p>
                 <h2 className="text-3xl font-semibold tracking-tight">
                   Seamlessly integrate AI chat into your product
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Drop our pre-built widget into your frontend or use the API for full control.
-                  We handle the complexity of RAG so you can focus on your users.
+                  Drop our pre-built widget into your frontend or use the API for full control. We
+                  handle the complexity of RAG so you can focus on your users.
                 </p>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
-                <div className="rounded-xl border bg-background p-6 shadow-sm">
-                  <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
+                <div className="bg-background rounded-xl border p-6 shadow-sm">
+                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
                     <Layers className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold tracking-tight">Document Ingestion</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Upload PDFs, Markdown, or simply paste your website URL to instantly train the chatbot on your specific knowledge base.
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                    Upload PDFs, Markdown, or simply paste your website URL to instantly train the
+                    chatbot on your specific knowledge base.
                   </p>
                 </div>
-                <div className="rounded-xl border bg-background p-6 shadow-sm">
-                  <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
+                <div className="bg-background rounded-xl border p-6 shadow-sm">
+                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
                     <Search className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold tracking-tight">Semantic Search</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    High-performance vector retrieval tuned for accuracy, relevance, and context window limits.
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                    High-performance vector retrieval tuned for accuracy, relevance, and context
+                    window limits.
                   </p>
                 </div>
-                <div className="rounded-xl border bg-background p-6 shadow-sm">
-                  <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
+                <div className="bg-background rounded-xl border p-6 shadow-sm">
+                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
                     <Zap className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold tracking-tight">Embeddable Widget & SDK</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Use our pre-built widget or the <code className="text-xs bg-secondary text-secondary-foreground font-semibold border px-1 py-0.5 rounded">contextly</code> npm package for React apps. Full control, zero config.
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                    Use our pre-built widget or the{" "}
+                    <code className="bg-secondary text-secondary-foreground rounded border px-1 py-0.5 text-xs font-semibold">
+                      contextly
+                    </code>{" "}
+                    npm package for React apps. Full control, zero config.
                   </p>
                 </div>
-                <div className="rounded-xl border bg-background p-6 shadow-sm">
-                  <div className="mb-4 w-fit rounded-lg bg-primary/10 p-3 text-primary">
+                <div className="bg-background rounded-xl border p-6 shadow-sm">
+                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
                     <Shield className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold tracking-tight">Secure by Default</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Enterprise-grade auth with API keys, rate limiting, and tenant isolation built in.
+                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                    Enterprise-grade auth with API keys, rate limiting, and tenant isolation built
+                    in.
                   </p>
                 </div>
               </div>
@@ -279,15 +296,16 @@ export default function App() {
         {/* Pricing Section */}
         <section id="pricing" className="border-t">
           <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="text-center mb-12">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-4">
+            <div className="mb-12 text-center">
+              <p className="text-muted-foreground mb-4 text-xs tracking-[0.3em] uppercase">
                 Pricing
               </p>
               <h2 className="text-3xl font-semibold tracking-tight">
                 Start free, scale when ready
               </h2>
-              <p className="mt-4 text-muted-foreground max-w-lg mx-auto">
-                Get started with a generous free tier. Upgrade to Pro when you need more projects and higher limits.
+              <p className="text-muted-foreground mx-auto mt-4 max-w-lg">
+                Get started with a generous free tier. Upgrade to Pro when you need more projects
+                and higher limits.
               </p>
             </div>
 
@@ -297,10 +315,10 @@ export default function App() {
 
         <section className="border-t">
           <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="rounded-2xl border bg-background p-8 sm:p-10 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="bg-background flex flex-col gap-6 rounded-2xl border p-8 shadow-sm sm:p-10 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">Ready to build?</h3>
-                <p className="mt-4 max-w-[520px] text-muted-foreground">
+                <h3 className="text-2xl font-bold tracking-tight sm:text-3xl">Ready to build?</h3>
+                <p className="text-muted-foreground mt-4 max-w-[520px]">
                   Join developers building the next generation of AI assistants with Contextly.
                 </p>
               </div>
@@ -315,12 +333,12 @@ export default function App() {
       </main>
 
       <footer className="border-t py-12">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col items-center justify-between gap-6 px-4 text-sm text-muted-foreground sm:px-6 lg:px-8 md:flex-row">
+        <div className="text-muted-foreground mx-auto flex w-full max-w-[1400px] flex-col items-center justify-between gap-6 px-4 text-sm sm:px-6 md:flex-row lg:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary text-[10px] text-primary-foreground font-bold">
+            <div className="bg-primary text-primary-foreground flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold">
               O
             </div>
-            <span className="font-semibold text-foreground">Contextly</span>
+            <span className="text-foreground font-semibold">Contextly</span>
           </div>
           <div className="flex gap-6">
             <p>&copy; {new Date().getFullYear()} Contextly Inc.</p>

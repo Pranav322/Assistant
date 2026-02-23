@@ -15,14 +15,23 @@ export function EmbedTab({ projectId, embedSnippet }: Props) {
   return (
     <TabsContent value="embed" className="space-y-6">
       <Tabs defaultValue="script" className="w-full space-y-6">
-        <TabsList className="w-full grid grid-cols-3 h-auto p-1 bg-muted/30 rounded-lg mb-2">
-          <TabsTrigger value="script" className="text-sm py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all">
+        <TabsList className="bg-muted/30 mb-2 grid h-auto w-full grid-cols-3 rounded-lg p-1">
+          <TabsTrigger
+            value="script"
+            className="data-[state=active]:bg-background py-2 text-sm transition-all data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+          >
             Script
           </TabsTrigger>
-          <TabsTrigger value="react-sdk" className="text-sm py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all">
+          <TabsTrigger
+            value="react-sdk"
+            className="data-[state=active]:bg-background py-2 text-sm transition-all data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+          >
             React SDK
           </TabsTrigger>
-          <TabsTrigger value="headless" className="text-sm py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all">
+          <TabsTrigger
+            value="headless"
+            className="data-[state=active]:bg-background py-2 text-sm transition-all data-[state=active]:rounded-md data-[state=active]:shadow-sm"
+          >
             Headless
           </TabsTrigger>
         </TabsList>
@@ -30,10 +39,12 @@ export function EmbedTab({ projectId, embedSnippet }: Props) {
         <TabsContent value="script" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Rocket className="h-4 w-4" /> Quick Install
               </CardTitle>
-              <CardDescription>Paste this before the closing <code>&lt;/body&gt;</code> tag.</CardDescription>
+              <CardDescription>
+                Paste this before the closing <code>&lt;/body&gt;</code> tag.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <CopyBlock value={embedSnippet} className="text-xs" />
@@ -45,13 +56,21 @@ export function EmbedTab({ projectId, embedSnippet }: Props) {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <CardTitle className="text-base">Full HTML Example</CardTitle>
-                  <CardDescription>Complete example with custom button - copy & paste to test</CardDescription>
+                  <CardDescription>
+                    Complete example with custom button - copy & paste to test
+                  </CardDescription>
                 </div>
-                <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tighter">For Beginners</Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-bold tracking-tighter uppercase"
+                >
+                  For Beginners
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <CopyBlock value={`<!DOCTYPE html>
+              <CopyBlock
+                value={`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -122,7 +141,9 @@ ${embedSnippet.replace("<WIDGET_TOKEN>", "<YOUR_WIDGET_TOKEN>")}
     // window.ChatbotWidget.close();  // Close the chat
   </script>
 </body>
-</html>`} className="text-xs" />
+</html>`}
+                className="text-xs"
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -131,7 +152,7 @@ ${embedSnippet.replace("<WIDGET_TOKEN>", "<YOUR_WIDGET_TOKEN>")}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Box className="h-5 w-5 text-muted-foreground" />
+                <Box className="text-muted-foreground h-5 w-5" />
                 <div>
                   <CardTitle className="text-base">React SDK</CardTitle>
                   <CardDescription>High-level component for React & Next.js</CardDescription>
@@ -145,7 +166,8 @@ ${embedSnippet.replace("<WIDGET_TOKEN>", "<YOUR_WIDGET_TOKEN>")}
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">2. Usage</Label>
-                <CopyBlock value={`import { Chat } from "contextly";
+                <CopyBlock
+                  value={`import { Chat } from "contextly";
 
 function App() {
   return (
@@ -154,7 +176,8 @@ function App() {
       token="YOUR_WIDGET_TOKEN"
     />
   );
-}`} />
+}`}
+                />
               </div>
             </CardContent>
           </Card>
@@ -164,7 +187,7 @@ function App() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Puzzle className="h-5 w-5 text-muted-foreground" />
+                <Puzzle className="text-muted-foreground h-5 w-5" />
                 <div>
                   <CardTitle className="text-base">Headless Hooks</CardTitle>
                   <CardDescription>Your UI, our logic</CardDescription>
@@ -178,7 +201,8 @@ function App() {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">2. Usage</Label>
-                <CopyBlock value={`import { useChat } from "contextly";
+                <CopyBlock
+                  value={`import { useChat } from "contextly";
 
 function CustomUI() {
   const { messages, input, setInput, sendMessage, isLoading } = useChat({
@@ -193,7 +217,8 @@ function CustomUI() {
       <button onClick={() => sendMessage()} disabled={isLoading}>Send</button>
     </div>
   );
-}`} />
+}`}
+                />
               </div>
             </CardContent>
           </Card>
