@@ -21,7 +21,7 @@ The repository is organized into three main components:
 - **Backend** (`/backend`): The core logic, API, and background workers. Built with **FastAPI**, **PostgreSQL** (`pgvector`), and **Redis**.
 - **Frontend** (`/frontend`): The user dashboard and widget UI. Built with **Next.js**, **React**, and **TailwindCSS**.
 - **Contextly Widget** (`/contextly-widget`): A framework-agnostic NPM package for embedding the chatbot.
-
+ 
 ---
 
 ## Quick Start
