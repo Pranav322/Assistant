@@ -1,7 +1,9 @@
+import re
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +28,47 @@ from app.services.audit import log_audit_event
 from app.services.billing import get_effective_plan
 
 router = APIRouter()
+
+
+# ---------- Slug helpers ----------
+
+SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$")
+
+
+def _slugify(name: str) -> str:
+    slug = name.lower()
+    slug = re.sub(r"[^a-z0-9\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug)
+    slug = slug.strip("-")
+    return slug[:50] or "chatbot"
+
+
+async def _generate_unique_slug(name: str, db: AsyncSession, exclude_id: uuid.UUID | None = None) -> str:
+    base = _slugify(name)
+    candidate = base
+    counter = 2
+    while True:
+        stmt = select(Project).where(Project.public_slug == candidate)
+        if exclude_id:
+            stmt = stmt.where(Project.id != exclude_id)
+        existing = (await db.execute(stmt)).scalar_one_or_none()
+        if not existing:
+            return candidate
+        candidate = f"{base}-{counter}"
+        counter += 1
+
+
+class SlugUpdateRequest(BaseModel):
+    slug: str | None = None
+    public_chat_enabled: bool | None = None
+
+
+class SlugResponse(BaseModel):
+    slug: str | None
+    public_chat_enabled: bool
+    public_url: str | None
+
 
 
 @router.get("/projects/{project_id}/sources", response_model=list[SourceResponse])
@@ -173,6 +216,11 @@ async def create_project(
         usage={},
     )
     db.add(project)
+    await db.flush()  # get the id before generating slug
+
+    # Auto-generate unique slug from project name
+    project.public_slug = await _generate_unique_slug(payload.name, db, exclude_id=project.id)
+
     await db.commit()
     await db.refresh(project)
 
@@ -431,3 +479,79 @@ async def revoke_api_key(
         expires_at=api_key.expires_at.isoformat() if api_key.expires_at else None,
         revoked_at=api_key.revoked_at.isoformat() if api_key.revoked_at else None,
     )
+
+
+@router.get("/projects/{project_id}/slug", response_model=SlugResponse)
+async def get_project_slug(
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.project_access_required("projects")),
+):
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    base_url = (
+        "http://localhost:3000"
+        if settings.ENVIRONMENT == "development"
+        else "https://contextly.live"
+    )
+    public_url = f"{base_url}/chat/{project.public_slug}" if project.public_slug else None
+    return SlugResponse(
+        slug=project.public_slug,
+        public_chat_enabled=project.public_chat_enabled,
+        public_url=public_url,
+    )
+
+
+@router.patch("/projects/{project_id}/slug", response_model=SlugResponse)
+async def update_project_slug(
+    project_id: uuid.UUID,
+    payload: SlugUpdateRequest,
+    db: AsyncSession = Depends(deps.get_db),
+    auth: deps.AuthContext = Depends(deps.project_access_required("projects")),
+):
+    result = await db.execute(
+        select(Project).where(Project.id == project_id, Project.deleted_at.is_(None))
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if payload.slug is not None:
+        new_slug = payload.slug.strip().lower()
+        # Validate format: 3-50 chars, lowercase letters/numbers/hyphens, no leading/trailing hyphen
+        if not SLUG_PATTERN.match(new_slug):
+            raise HTTPException(
+                status_code=400,
+                detail="Slug must be 3-50 characters: lowercase letters, numbers and hyphens only (no leading/trailing hyphens).",
+            )
+        # Check uniqueness
+        existing = (await db.execute(
+            select(Project).where(Project.public_slug == new_slug, Project.id != project_id)
+        )).scalar_one_or_none()
+        if existing:
+            raise HTTPException(status_code=409, detail="This slug is already taken. Please choose a different one.")
+        project.public_slug = new_slug
+
+    if payload.public_chat_enabled is not None:
+        project.public_chat_enabled = payload.public_chat_enabled
+
+    await db.commit()
+    await db.refresh(project)
+
+    base_url = (
+        "http://localhost:3000"
+        if settings.ENVIRONMENT == "development"
+        else "https://contextly.live"
+    )
+    public_url = f"{base_url}/chat/{project.public_slug}" if project.public_slug else None
+    return SlugResponse(
+        slug=project.public_slug,
+        public_chat_enabled=project.public_chat_enabled,
+        public_url=public_url,
+    )
+

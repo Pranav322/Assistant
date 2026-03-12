@@ -1,229 +1,371 @@
-import { Box, Puzzle, Rocket } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Box, ExternalLink, Globe, Puzzle, Rocket } from "lucide-react";
 
 import CopyBlock from "@/components/CopyBlock";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiRequest } from "@/lib/api";
+import { getToken } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 type Props = {
   projectId: string;
   embedSnippet: string;
 };
 
+type SlugData = {
+  slug: string | null;
+  public_chat_enabled: boolean;
+  public_url: string | null;
+};
+
 export function EmbedTab({ projectId, embedSnippet }: Props) {
+  const [slugData, setSlugData] = useState<SlugData | null>(null);
+  const [slugInput, setSlugInput] = useState("");
+  const [slugError, setSlugError] = useState("");
+  const [isSavingSlug, setIsSavingSlug] = useState(false);
+  const [isTogglingEnabled, setIsTogglingEnabled] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const data = await apiRequest<SlugData>(`/projects/${projectId}/slug`, {
+          method: "GET",
+          token,
+        });
+        setSlugData(data);
+        setSlugInput(data.slug ?? "");
+      } catch {
+        // non-critical
+      }
+    }
+    void load();
+  }, [projectId]);
+
+  async function saveSlug() {
+    setSlugError("");
+    const token = getToken();
+    if (!token) return;
+    const trimmed = slugInput.trim().toLowerCase();
+    if (!trimmed) { setSlugError("Slug cannot be empty."); return; }
+    setIsSavingSlug(true);
+    try {
+      const data = await apiRequest<SlugData>(`/projects/${projectId}/slug`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ slug: trimmed }),
+      });
+      setSlugData(data);
+      setSlugInput(data.slug ?? "");
+      setSlugError("");
+    } catch (err) {
+      setSlugError((err as Error).message.replace(/^Error:\s*/i, ""));
+    } finally {
+      setIsSavingSlug(false);
+    }
+  }
+
+  async function toggleEnabled(enabled: boolean) {
+    const token = getToken();
+    if (!token) return;
+    setIsTogglingEnabled(true);
+    try {
+      const data = await apiRequest<SlugData>(`/projects/${projectId}/slug`, {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ public_chat_enabled: enabled }),
+      });
+      setSlugData(data);
+    } catch {
+      // noop
+    } finally {
+      setIsTogglingEnabled(false);
+    }
+  }
+
+  const publicUrl = slugData?.public_url ?? null;
+
   return (
-    <TabsContent value="embed" className="space-y-6">
-      <Tabs defaultValue="script" className="w-full space-y-6">
-        <TabsList className="bg-muted/30 mb-2 grid h-auto w-full grid-cols-3 rounded-lg p-1">
-          <TabsTrigger
-            value="script"
-            className="data-[state=active]:bg-background py-2 text-sm transition-all data-[state=active]:rounded-md data-[state=active]:shadow-sm"
-          >
-            Script
-          </TabsTrigger>
-          <TabsTrigger
-            value="react-sdk"
-            className="data-[state=active]:bg-background py-2 text-sm transition-all data-[state=active]:rounded-md data-[state=active]:shadow-sm"
-          >
-            React SDK
-          </TabsTrigger>
-          <TabsTrigger
-            value="headless"
-            className="data-[state=active]:bg-background py-2 text-sm transition-all data-[state=active]:rounded-md data-[state=active]:shadow-sm"
-          >
-            Headless
-          </TabsTrigger>
-        </TabsList>
+    <TabsContent value="embed">
+      {/*
+       * Side-by-side layout:
+       *   Left  (flex-1) — primary embed code tabs
+       *   Right (w-64)   — secondary "share a link" card
+       *
+       * On small screens they stack vertically.
+       */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 
-        <TabsContent value="script" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Rocket className="h-4 w-4" /> Quick Install
-              </CardTitle>
-              <CardDescription>
-                Paste this before the closing <code>&lt;/body&gt;</code> tag.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <CopyBlock value={embedSnippet} className="text-xs" />
-            </CardContent>
-          </Card>
+        {/* ══════════════════════════════════════
+            LEFT — Primary: embed your chatbot
+            ══════════════════════════════════════ */}
+        <div className="min-w-0 flex-1 space-y-4">
+          <div>
+            <p className="mb-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Add to your website
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Paste a snippet into your site — the main way to use Contextly.
+            </p>
+          </div>
 
-          <Card className="bg-primary/5 border-primary/20">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-base">Full HTML Example</CardTitle>
+          <Tabs defaultValue="script" className="w-full space-y-4">
+            <TabsList className="bg-muted/30 grid h-auto w-full grid-cols-3 rounded-lg p-1">
+              <TabsTrigger value="script"
+                className="data-[state=active]:bg-background py-2 text-sm data-[state=active]:rounded-md data-[state=active]:shadow-sm">
+                Script
+              </TabsTrigger>
+              <TabsTrigger value="react-sdk"
+                className="data-[state=active]:bg-background py-2 text-sm data-[state=active]:rounded-md data-[state=active]:shadow-sm">
+                React SDK
+              </TabsTrigger>
+              <TabsTrigger value="headless"
+                className="data-[state=active]:bg-background py-2 text-sm data-[state=active]:rounded-md data-[state=active]:shadow-sm">
+                Headless
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="script" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Rocket className="h-4 w-4" /> Quick Install
+                  </CardTitle>
                   <CardDescription>
-                    Complete example with custom button - copy & paste to test
+                    Paste this before the closing <code>&lt;/body&gt;</code> tag.
                   </CardDescription>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-bold tracking-tighter uppercase"
-                >
-                  For Beginners
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <CopyBlock
-                value={`<!DOCTYPE html>
+                </CardHeader>
+                <CardContent>
+                  <CopyBlock value={embedSnippet} className="text-xs" />
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base">Full HTML Example</CardTitle>
+                      <CardDescription>Complete example with a custom trigger button</CardDescription>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-tighter">
+                      For Beginners
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CopyBlock
+                    value={`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Site with Contextly Chatbot</title>
-  
-  <!-- OPTIONAL: Add your own styles -->
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      padding: 40px;
-      max-width: 800px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-    
-    /* Custom button to open chat */
     .chat-trigger-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #4f46e5; /* Change to your brand color */
-      color: white;
-      border: none;
-      padding: 14px 24px;
-      border-radius: 50px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
-      transition: transform 0.2s;
-    }
-    
-    .chat-trigger-btn:hover {
-      transform: scale(1.05);
+      position: fixed; bottom: 20px; right: 20px;
+      background: #4f46e5; color: white; border: none;
+      padding: 14px 24px; border-radius: 50px; cursor: pointer;
+      font-weight: 600; box-shadow: 0 4px 20px rgba(79,70,229,.4);
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to My Website</h1>
-  <p>This is my site with an AI chatbot assistant.</p>
-  
-  <!-- Custom button to open/close the chatbot -->
-  <button class="chat-trigger-btn" onclick="toggleChat()">
-    💬 Chat with us
-  </button>
+  <h1>Welcome</h1>
+  <button class="chat-trigger-btn" onclick="ChatbotWidget?.toggle()">💬 Chat with us</button>
 
-  <!-- 
-    ========================================
-    COPY THE SCRIPT BELOW AND REPLACE:
-    - <WIDGET_TOKEN> with your actual token from Settings tab
-    ========================================
-  -->
 ${embedSnippet.replace("<WIDGET_TOKEN>", "<YOUR_WIDGET_TOKEN>")}
-
-  <!-- Control the chatbot -->
-  <script>
-    // Toggle chat open/close when button is clicked
-    function toggleChat() {
-      if (window.ChatbotWidget) {
-        window.ChatbotWidget.toggle();
-      } else {
-        console.log('Chatbot is loading...');
-      }
-    }
-    
-    // Or use these specific functions:
-    // window.ChatbotWidget.open();   // Open the chat
-    // window.ChatbotWidget.close();  // Close the chat
-  </script>
 </body>
 </html>`}
-                className="text-xs"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    className="text-xs"
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-        <TabsContent value="react-sdk" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Box className="text-muted-foreground h-5 w-5" />
-                <div>
-                  <CardTitle className="text-base">React SDK</CardTitle>
-                  <CardDescription>High-level component for React & Next.js</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">1. Install</Label>
-                <CopyBlock value="npm install contextly" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">2. Usage</Label>
-                <CopyBlock
-                  value={`import { Chat } from "contextly";
+            <TabsContent value="react-sdk" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Box className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <CardTitle className="text-base">React SDK</CardTitle>
+                      <CardDescription>High-level component for React &amp; Next.js</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">1. Install</Label>
+                    <CopyBlock value="npm install contextly" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">2. Usage</Label>
+                    <CopyBlock value={`import { Chat } from "contextly";
 
 function App() {
-  return (
-    <Chat
-      projectId="${projectId}" 
-      token="YOUR_WIDGET_TOKEN"
-    />
-  );
-}`}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+  return <Chat projectId="${projectId}" token="YOUR_WIDGET_TOKEN" />;
+}`} />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-        <TabsContent value="headless" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Puzzle className="text-muted-foreground h-5 w-5" />
-                <div>
-                  <CardTitle className="text-base">Headless Hooks</CardTitle>
-                  <CardDescription>Your UI, our logic</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">1. Install</Label>
-                <CopyBlock value="npm install contextly" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">2. Usage</Label>
-                <CopyBlock
-                  value={`import { useChat } from "contextly";
+            <TabsContent value="headless" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Puzzle className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <CardTitle className="text-base">Headless Hooks</CardTitle>
+                      <CardDescription>Your UI, our logic</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">1. Install</Label>
+                    <CopyBlock value="npm install contextly" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">2. Usage</Label>
+                    <CopyBlock value={`import { useChat } from "contextly";
 
 function CustomUI() {
   const { messages, input, setInput, sendMessage, isLoading } = useChat({
     projectId: "${projectId}",
     token: "YOUR_WIDGET_TOKEN",
   });
-
   return (
     <div>
       {messages.map(m => <div key={m.id}>{m.content}</div>)}
-      <input value={input} onChange={(e) => setInput(e.target.value)} />
+      <input value={input} onChange={e => setInput(e.target.value)} />
       <button onClick={() => sendMessage()} disabled={isLoading}>Send</button>
     </div>
   );
-}`}
+}`} />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* ══════════════════════════════════════
+            RIGHT — Secondary: share a direct link
+            ══════════════════════════════════════ */}
+        <div className="w-full lg:w-64 lg:shrink-0">
+          {/* "or" label — horizontal rule on mobile, label only on desktop */}
+          <div className="mb-4 flex items-center gap-3 lg:mb-3">
+            <div className="h-px flex-1 border-t border-dashed lg:hidden" />
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              or, no code needed
+            </span>
+            <div className="h-px flex-1 border-t border-dashed lg:hidden" />
+          </div>
+
+          <Card className="border-dashed">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div>
+                    <CardTitle className="text-sm font-medium leading-tight">
+                      Share a direct link
+                    </CardTitle>
+                    <Badge variant="outline" className="mt-1 text-[10px]">
+                      Optional
+                    </Badge>
+                  </div>
+                </div>
+                <Switch
+                  id="public-enabled"
+                  disabled={isTogglingEnabled || !slugData}
+                  checked={slugData?.public_chat_enabled ?? true}
+                  onCheckedChange={(v) => void toggleEnabled(v)}
                 />
+              </div>
+              <CardDescription className="mt-1 text-xs">
+                A standalone page for sharing — not for embedding into your site.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {/* URL display */}
+              {publicUrl && slugData?.public_chat_enabled ? (
+                <div className="space-y-1.5">
+                  <div className="truncate rounded-md border bg-muted/30 px-2.5 py-2 font-mono text-[11px]">
+                    {publicUrl}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 flex-1 text-xs"
+                      onClick={() => void navigator.clipboard.writeText(publicUrl)}
+                    >
+                      Copy link
+                    </Button>
+                    <Button asChild size="sm" variant="outline" className="h-7 w-7 shrink-0 p-0">
+                      <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className={cn(
+                  "rounded-md border bg-muted/30 px-2.5 py-2 text-[11px] text-muted-foreground",
+                  slugData?.public_chat_enabled === false && "opacity-50"
+                )}>
+                  {slugData?.public_chat_enabled === false
+                    ? "Public link is disabled"
+                    : "Save a slug to generate your link"}
+                </div>
+              )}
+
+              {/* Slug editor */}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-medium text-muted-foreground">Slug</Label>
+                <div className="flex gap-1.5">
+                  <Input
+                    value={slugInput}
+                    onChange={(e) => { setSlugInput(e.target.value); setSlugError(""); }}
+                    className={cn("h-8 font-mono text-xs", slugError && "border-destructive")}
+                    placeholder="my-project"
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 shrink-0"
+                    onClick={() => void saveSlug()}
+                    disabled={isSavingSlug || slugInput === (slugData?.slug ?? "")}
+                  >
+                    Save
+                  </Button>
+                </div>
+                {slugError && <p className="text-[11px] text-destructive">{slugError}</p>}
+                <p className="text-[10px] text-muted-foreground">
+                  contextly.live/chat/<span className="text-foreground">{slugInput || "…"}</span>
+                </p>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+      </div>
     </TabsContent>
   );
 }

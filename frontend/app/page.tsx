@@ -148,12 +148,12 @@ export default function Home() {
                           <div className="max-w-full overflow-x-auto">
                             <CopyBlock
                               value={`<script 
-  src="https://www.contextly.live/embed.js"
-  data-token="YOUR_WIDGET_TOKEN"
-  data-project-id="YOUR_PROJECT_ID"
-  data-api-base-url="https://api.contextly.live/api/v1"
-  defer
-></script>`}
+                                src="https://www.contextly.live/embed.js"
+                                data-token="YOUR_WIDGET_TOKEN"
+                                data-project-id="YOUR_PROJECT_ID"
+                                data-api-base-url="https://api.pranavbuilds.tech/api/v1"
+                                defer
+                              ></script>`}
                             />
                           </div>
                         </div>
@@ -183,15 +183,14 @@ export default function Home() {
                           <div className="max-w-full overflow-x-auto">
                             <CopyBlock
                               value={`import { Chat } from "contextly";
-
-export default function App() {
-  return (
-    <Chat 
-      projectId="YOUR_PROJECT_ID"
-      token="YOUR_WIDGET_TOKEN"
-    />
-  );
-}`}
+                                    export default function App() {
+                                      return (
+                                        <Chat 
+                                          projectId="YOUR_PROJECT_ID"
+                                          token="YOUR_WIDGET_TOKEN"
+                                        />
+                                      );
+                                    }`}
                             />
                           </div>
                         </div>

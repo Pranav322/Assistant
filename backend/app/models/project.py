@@ -29,6 +29,10 @@ class Project(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
+    public_slug: Mapped[Optional[str]] = mapped_column(
+        String, nullable=True, unique=True, index=True
+    )
+    public_chat_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
     allowed_origins: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     plan: Mapped[str] = mapped_column(String, default="free")

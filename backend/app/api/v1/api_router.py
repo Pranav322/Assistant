@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     ingestion,
     metrics,
     projects,
+    public,
     tokens,
     usage,
 )
@@ -24,3 +25,4 @@ api_router.include_router(admin.router, tags=["admin"])
 api_router.include_router(auth.router, tags=["auth"])
 api_router.include_router(auth_firebase.router, tags=["auth"])
 api_router.include_router(billing.router, tags=["billing"])
+api_router.include_router(public.router, tags=["public"])
