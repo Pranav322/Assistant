@@ -363,7 +363,7 @@ export default function ProjectDetailPage() {
 
   const previewOrigin = originToUse;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
-  const previewSnippet = `${widgetBaseUrl}/widget?projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
+  const previewSnippet = `${widgetBaseUrl}/widget?project_id=${project.id}&projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
 
   const isNewProject = (sources?.length ?? 0) === 0;
 
