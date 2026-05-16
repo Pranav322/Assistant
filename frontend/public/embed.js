@@ -1,4 +1,40 @@
 (function () {
+  function createRequestId() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return `req_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
+  function createMessage(type, payload) {
+    const message = {
+      type,
+      payload: payload || {},
+      requestId: createRequestId(),
+      timestamp: new Date().toISOString(),
+    };
+
+    if (payload && typeof payload === "object") {
+      Object.keys(payload).forEach((key) => {
+        if (message[key] === undefined) {
+          message[key] = payload[key];
+        }
+      });
+    }
+
+    return message;
+  }
+
+  function getMessagePayload(data) {
+    if (!data || typeof data !== "object") {
+      return {};
+    }
+    if (data.payload && typeof data.payload === "object") {
+      return data.payload;
+    }
+    return data;
+  }
+
   const scriptTag =
     document.currentScript || document.querySelector('script[src*="embed.js"]');
   if (!scriptTag) {
@@ -31,7 +67,7 @@
   const triggerSelector = scriptTag.getAttribute("data-trigger-selector");
   const hideLauncher = scriptTag.getAttribute("data-hide-launcher") === "true";
   // For embedded mode, we always default to open. For popup, we respect the attribute.
-  const defaultOpen = mode === "embedded" ? true : scriptTag.getAttribute("data-open") !== "false";
+  const defaultOpen = mode === "embedded" ? true : scriptTag.getAttribute("data-open") === "true";
   const buttonLabel = scriptTag.getAttribute("data-button-label") || "Chat";
 
   const scriptUrl = scriptTag.src ? new URL(scriptTag.src) : null;
@@ -61,9 +97,12 @@
   })();
 
   const iframeSrc = new URL(widgetUrl, window.location.href);
-  iframeSrc.searchParams.set("token", token);
+  if (token) {
+    iframeSrc.searchParams.set("token", token);
+  }
   iframeSrc.searchParams.set("origin", origin);
   if (projectId) {
+    iframeSrc.searchParams.set("project_id", projectId);
     iframeSrc.searchParams.set("projectId", projectId);
   }
   if (mode === "embedded") {
@@ -160,7 +199,7 @@
 
   let open = defaultOpen;
 
-  function setOpen(nextOpen) {
+  function setOpen(nextOpen, fromMessage) {
     // Embedded mode is always open
     if (mode === "embedded") return;
 
@@ -169,6 +208,10 @@
 
     if (shouldShowButton) {
       button.style.display = open ? "none" : "flex";
+    }
+
+    if (!fromMessage) {
+      postToWidget(createMessage(nextOpen ? "chatbot:open" : "chatbot:close", {}));
     }
   }
 
@@ -215,7 +258,14 @@
   }
 
   iframe.addEventListener("load", function () {
-    postToWidget({ type: "chatbot:init", token, projectId, origin });
+    postToWidget(
+      createMessage("chatbot:init", {
+        token,
+        projectId,
+        project_id: projectId,
+        origin,
+      })
+    );
     if (token) {
       scheduleRefresh(token);
     } else {
@@ -228,7 +278,7 @@
       return;
     }
     token = nextToken;
-    postToWidget({ type: "chatbot:set_token", token: nextToken });
+    postToWidget(createMessage("chatbot:set_token", { token: nextToken }));
     scheduleRefresh(nextToken);
   }
 
@@ -313,21 +363,35 @@
       return;
     }
     const data = event.data || {};
-    if (data.type === "chatbot:resize" && data.payload) {
-      if (data.payload.height) {
-        panel.style.height = `${data.payload.height}px`;
+    const payload = getMessagePayload(data);
+    if (data.type === "chatbot:ready") {
+      postToWidget(createMessage("chatbot:init", {
+        token: token,
+        projectId: projectId,
+        project_id: projectId,
+        origin: origin,
+      }));
+    }
+    if (data.type === "chatbot:set_token") {
+      var newToken = payload.token;
+      if (newToken && typeof newToken === "string") {
+        token = newToken;
+        scheduleRefresh(newToken);
       }
-      if (data.payload.width) {
-        panel.style.width = `${data.payload.width}px`;
+    }
+    if (data.type === "chatbot:resize") {
+      if (payload.height) {
+        panel.style.height = `${payload.height}px`;
+      }
+      if (payload.width) {
+        panel.style.width = `${payload.width}px`;
       }
     }
     if (data.type === "chatbot:close") {
-      console.log('[Embed] Received chatbot:close, calling setOpen(false)');
-      setOpen(false);
+      setOpen(false, true);
     }
     if (data.type === "chatbot:open") {
-      console.log('[Embed] Received chatbot:open, calling setOpen(true)');
-      setOpen(true);
+      setOpen(true, true);
     }
     if (data.type === "chatbot:token_expired") {
       refreshToken();

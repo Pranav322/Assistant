@@ -15,7 +15,16 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  citations?: Array<Record<string, unknown>>;
   status?: "pending" | "complete" | "error" | "stopped";
+};
+
+type ProtocolMessage = {
+  type?: string;
+  payload?: Record<string, unknown>;
+  requestId?: string;
+  timestamp?: string;
+  [key: string]: unknown;
 };
 
 type ProjectConfig = {
@@ -48,6 +57,58 @@ function decodeJwt(token: string): { exp: number } | null {
   }
 }
 
+function createProtocolMessage(type: string, payload: Record<string, unknown> = {}): ProtocolMessage {
+  return {
+    type,
+    payload,
+    requestId: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    ...payload,
+  };
+}
+
+function getMessagePayload(data: ProtocolMessage): Record<string, unknown> {
+  if (data.payload && typeof data.payload === "object") {
+    return data.payload;
+  }
+  return data;
+}
+
+function normalizeCitations(raw: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .map((item) => {
+      if (typeof item === "string") {
+        return { source: item };
+      }
+      if (item && typeof item === "object") {
+        return item as Record<string, unknown>;
+      }
+      return null;
+    })
+    .filter((item): item is Record<string, unknown> => item !== null);
+}
+
+function citationToText(citation: Record<string, unknown>): string {
+  const candidates = [
+    citation.source,
+    citation.url,
+    citation.title,
+    citation.text_preview,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate;
+    }
+  }
+
+  return "Source";
+}
+
 function WidgetContent() {
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<"popup" | "embedded">("popup");
@@ -72,7 +133,7 @@ function WidgetContent() {
 
   useEffect(() => {
     const initialToken = searchParams.get("token");
-    const initialProject = searchParams.get("projectId");
+    const initialProject = searchParams.get("project_id") || searchParams.get("projectId");
     const initialOrigin = searchParams.get("origin");
     const initialMode = searchParams.get("mode") as "popup" | "embedded";
     setToken(initialToken);
@@ -81,7 +142,7 @@ function WidgetContent() {
     if (initialMode) setMode(initialMode);
 
     if (initialOrigin) {
-      window.parent?.postMessage({ type: "chatbot:ready" }, initialOrigin);
+      window.parent?.postMessage(createProtocolMessage("chatbot:ready"), initialOrigin);
     }
   }, [searchParams]);
 
@@ -111,18 +172,28 @@ function WidgetContent() {
   }, [projectId, allowedOrigin]);
 
   useEffect(() => {
-    function onMessage(event: MessageEvent) {
+    function onMessage(event: MessageEvent<ProtocolMessage>) {
       if (allowedOrigin && event.origin !== allowedOrigin) {
         return;
       }
       const data = event.data || {};
+      const payload = getMessagePayload(data);
       if (data.type === "chatbot:init") {
-        if (data.token) setToken(data.token);
-        if (data.projectId) setProjectId(data.projectId);
-        if (data.origin) setAllowedOrigin(data.origin);
+        const nextToken = typeof payload.token === "string" ? payload.token : null;
+        const nextProjectId =
+          typeof payload.project_id === "string"
+            ? payload.project_id
+            : typeof payload.projectId === "string"
+              ? payload.projectId
+              : null;
+        const nextOrigin = typeof payload.origin === "string" ? payload.origin : null;
+        if (nextToken) setToken(nextToken);
+        if (nextProjectId) setProjectId(nextProjectId);
+        if (nextOrigin) setAllowedOrigin(nextOrigin);
       }
       if (data.type === "chatbot:set_token") {
-        setToken(data.token);
+        const nextToken = typeof payload.token === "string" ? payload.token : null;
+        if (nextToken) setToken(nextToken);
       }
       if (data.type === "chatbot:toggle") {
         setIsOpen((prev) => !prev);
@@ -168,7 +239,7 @@ function WidgetContent() {
           setToken(data.token);
           if (allowedOrigin) {
             window.parent?.postMessage(
-              { type: "chatbot:set_token", token: data.token },
+              createProtocolMessage("chatbot:set_token", { token: data.token }),
               allowedOrigin
             );
           }
@@ -286,10 +357,8 @@ function WidgetContent() {
             updateMessage(assistantId, {
               status: "complete",
               content: data.response || "",
+              citations: normalizeCitations(data.citations),
             });
-            if (allowedOrigin) {
-              window.parent?.postMessage({ type: "chatbot:resize" }, allowedOrigin);
-            }
             return;
           }
         }
@@ -298,7 +367,7 @@ function WidgetContent() {
           content: "Session expired. Please refresh the page.",
         });
         if (allowedOrigin) {
-          window.parent?.postMessage({ type: "chatbot:token_expired" }, allowedOrigin);
+          window.parent?.postMessage(createProtocolMessage("chatbot:token_expired"), allowedOrigin);
         }
         return;
       }
@@ -320,12 +389,10 @@ function WidgetContent() {
       updateMessage(assistantId, {
         status: "complete",
         content: data.response || "",
+        citations: normalizeCitations(data.citations),
       });
       if (data.conversation_id) {
         setConversationId(data.conversation_id);
-      }
-      if (allowedOrigin) {
-        window.parent?.postMessage({ type: "chatbot:resize" }, allowedOrigin);
       }
     } catch (error) {
       if (controller.signal.aborted) {
@@ -424,10 +491,9 @@ function WidgetContent() {
             size="icon"
             className="h-8 w-8 rounded-full text-white hover:bg-black/10"
             onClick={() => {
-              console.log("[Widget] Close button clicked, allowedOrigin:", allowedOrigin);
               setIsOpen(false);
               if (allowedOrigin) {
-                window.parent?.postMessage({ type: "chatbot:close" }, allowedOrigin);
+                window.parent?.postMessage(createProtocolMessage("chatbot:close"), allowedOrigin);
               }
             }}
           >
@@ -511,36 +577,71 @@ function WidgetContent() {
                 {msg.status === "pending" ? (
                   <LoadingDots />
                 ) : msg.role === "assistant" ? (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      p: ({ children }) => (
-                        <p className="leading-relaxed whitespace-pre-wrap">{children}</p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc space-y-1 pl-5">{children}</ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal space-y-1 pl-5">{children}</ol>
-                      ),
-                      li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                      strong: ({ children }) => (
-                        <strong className="font-semibold">{children}</strong>
-                      ),
-                      code: ({ children }) => (
-                        <code className="bg-background/60 rounded border px-1 py-0.5 font-mono text-[0.85em]">
-                          {children}
-                        </code>
-                      ),
-                      pre: ({ children }) => (
-                        <pre className="bg-background/50 mt-2 overflow-x-auto rounded-lg border p-3 text-xs">
-                          {children}
-                        </pre>
-                      ),
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
+                  <>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ children }) => (
+                          <p className="leading-relaxed whitespace-pre-wrap">{children}</p>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="list-disc space-y-1 pl-5">{children}</ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="list-decimal space-y-1 pl-5">{children}</ol>
+                        ),
+                        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                        strong: ({ children }) => (
+                          <strong className="font-semibold">{children}</strong>
+                        ),
+                        code: ({ children }) => (
+                          <code className="bg-background/60 rounded border px-1 py-0.5 font-mono text-[0.85em]">
+                            {children}
+                          </code>
+                        ),
+                        pre: ({ children }) => (
+                          <pre className="bg-background/50 mt-2 overflow-x-auto rounded-lg border p-3 text-xs">
+                            {children}
+                          </pre>
+                        ),
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                    {msg.citations && msg.citations.length > 0 && (
+                      <div className="mt-3 border-t pt-2">
+                        <p className="text-muted-foreground mb-1 text-[10px] font-bold tracking-wider uppercase">
+                          Sources
+                        </p>
+                        <ul className="space-y-1">
+                          {msg.citations.map((citation, i) => {
+                            const citationText = citationToText(citation);
+                            const isUrl = /^https?:\/\//i.test(citationText);
+                            return (
+                              <li key={i} className="text-muted-foreground flex items-start gap-1 text-xs">
+                                <span className="text-primary select-none">•</span>
+                                {isUrl ? (
+                                  <a
+                                    href={citationText}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary truncate hover:underline"
+                                    title={citationText}
+                                  >
+                                    {citationText}
+                                  </a>
+                                ) : (
+                                  <span className="truncate" title={citationText}>
+                                    {citationText}
+                                  </span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <span className="whitespace-pre-wrap">{msg.content}</span>
                 )}
