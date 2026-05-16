@@ -101,6 +101,9 @@ async def test_chat_endpoint_creates_conversation(
     data = response.json()
     assert data["response"] == "Answer"
     assert data["citations"]
+    assert isinstance(data["citations"], list)
+    assert isinstance(data["citations"][0], dict)
+    assert "source_id" in data["citations"][0]
     assert data["conversation_id"]
 
     conversation_id = uuid.UUID(data["conversation_id"])
