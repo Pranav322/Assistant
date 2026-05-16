@@ -11,6 +11,48 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+type ProtocolMessage = {
+  type?: string;
+  payload?: Record<string, unknown>;
+  requestId?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+};
+
+function createProtocolMessage(type: string, payload: Record<string, unknown> = {}) {
+  return {
+    type,
+    payload,
+    requestId: generateUUID(),
+    timestamp: new Date().toISOString(),
+    ...payload,
+  };
+}
+
+function getMessagePayload(data: ProtocolMessage): Record<string, unknown> {
+  if (data.payload && typeof data.payload === "object") {
+    return data.payload;
+  }
+  return data;
+}
+
+function citationToText(citation: unknown): string {
+  if (typeof citation === "string") {
+    return citation;
+  }
+
+  if (!citation || typeof citation !== "object") {
+    return "Source";
+  }
+
+  const c = citation as Record<string, unknown>;
+  if (typeof c.source === "string" && c.source.trim()) return c.source;
+  if (typeof c.url === "string" && c.url.trim()) return c.url;
+  if (typeof c.title === "string" && c.title.trim()) return c.title;
+  if (typeof c.text_preview === "string" && c.text_preview.trim()) return c.text_preview;
+  return "Source";
+}
+
 interface ChatProps {
   projectId?: string;
   token?: string;
@@ -51,7 +93,7 @@ export function Chat({
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (!projectId) setProjectId(params.get("project_id") || undefined);
+      if (!projectId) setProjectId(params.get("project_id") || params.get("projectId") || undefined);
       if (!token) setToken(params.get("token") || undefined);
       if (!origin) setOrigin(params.get("origin") || undefined);
     }
@@ -81,18 +123,21 @@ export function Chat({
     }
 
     // 2. Message Listener
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent<ProtocolMessage>) => {
       if (event.origin !== origin) return;
 
       try {
-        const { type, payload } = event.data;
+        const data = event.data || {};
+        const payload = getMessagePayload(data);
+        const type = data.type;
         switch (type) {
           case "chatbot:init":
-            if (payload.token) setToken(payload.token);
-            if (payload.projectId) setProjectId(payload.projectId);
+            if (typeof payload.token === "string") setToken(payload.token);
+            if (typeof payload.project_id === "string") setProjectId(payload.project_id);
+            if (typeof payload.projectId === "string") setProjectId(payload.projectId);
             break;
           case "chatbot:set_token":
-            if (payload.token) setToken(payload.token);
+            if (typeof payload.token === "string") setToken(payload.token);
             break;
         }
       } catch (err) {
@@ -104,12 +149,7 @@ export function Chat({
 
     // 3. Send Ready
     window.parent.postMessage(
-      {
-        type: "chatbot:ready",
-        payload: {},
-        requestId: generateUUID(),
-        timestamp: new Date().toISOString(),
-      },
+      createProtocolMessage("chatbot:ready"),
       origin
     );
 
@@ -126,12 +166,7 @@ export function Chat({
       // Handle token expiration specifically
       if (err.message === "Unauthorized" && origin) {
         window.parent.postMessage(
-          {
-            type: "chatbot:token_expired",
-            payload: {},
-            requestId: generateUUID(),
-            timestamp: new Date().toISOString(),
-          },
+          createProtocolMessage("chatbot:token_expired"),
           origin
         );
       }
@@ -150,12 +185,7 @@ export function Chat({
       for (const entry of entries) {
         const height = entry.contentRect.height;
         window.parent.postMessage(
-          {
-            type: "chatbot:resize",
-            payload: { height },
-            requestId: generateUUID(),
-            timestamp: new Date().toISOString(),
-          },
+          createProtocolMessage("chatbot:resize", { height }),
           origin
         );
       }
@@ -307,23 +337,24 @@ export function Chat({
                     </p>
                     <ul className="space-y-1">
                       {msg.citations.map((citation, i) => {
-                        const isUrl = /^https?:\/\//i.test(citation);
+                        const citationText = citationToText(citation);
+                        const isUrl = /^https?:\/\//i.test(citationText);
                         return (
                           <li key={i} className="text-xs text-gray-600 truncate flex items-start gap-1">
                             <span className="text-indigo-400 select-none">•</span>
                             {isUrl ? (
                               <a
-                                href={citation}
+                                href={citationText}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="truncate text-indigo-600 hover:text-indigo-800 hover:underline"
-                                title={citation}
+                                title={citationText}
                               >
-                                {citation}
+                                {citationText}
                               </a>
                             ) : (
-                              <span className="truncate" title={citation}>
-                                {citation}
+                              <span className="truncate" title={citationText}>
+                                {citationText}
                               </span>
                             )}
                           </li>

@@ -1,8 +1,21 @@
+export type Citation = {
+  id?: number;
+  chunk_id?: string;
+  source_id?: string;
+  title?: string;
+  page?: number | null;
+  section?: string | null;
+  confidence?: number;
+  text_preview?: string;
+  source?: string;
+  url?: string;
+};
+
 export type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  citations?: string[];
+  citations?: Citation[];
   status?: "pending" | "complete" | "error" | "stopped";
 };
 

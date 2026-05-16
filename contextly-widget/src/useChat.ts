@@ -1,6 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Message, ChatConfig, ChatState } from "./types";
 
+function normalizeCitations(raw: unknown): Message["citations"] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .map((item) => {
+      if (typeof item === "string") {
+        return { source: item };
+      }
+
+      if (item && typeof item === "object") {
+        return item;
+      }
+
+      return null;
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+}
+
 export function generateUUID() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -127,7 +147,7 @@ export function useChat({
         updateMessage(assistantId, {
           status: "complete",
           content: data.response || "",
-          citations: data.citations || [],
+          citations: normalizeCitations(data.citations),
         });
       } catch (error) {
         if (controller.signal.aborted) {
