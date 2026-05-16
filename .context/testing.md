@@ -1,7 +1,7 @@
 # TESTING STRATEGY
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Aligned with:** schema.sql v2.2, deployment.md v1.0.1
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-04-24
 
 ---
 
@@ -72,9 +72,15 @@ async def test_create_project(async_client, db_session):
    - Verify widget rejects messages from wrong origin.
    - Verify widget API calls have correct Origin header.
 2. **Functionality:**
-   - Open/Close toggle.
-   - Send message -> Receive response.
-   - Resize events.
+    - Open/Close toggle.
+    - Send message -> Receive response.
+    - Resize events.
+
+3. **Protocol Compatibility:**
+   - Canonical message envelope (`type`, `payload`, `requestId`, `timestamp`).
+   - Legacy flat messages accepted during migration.
+   - Query param compatibility (`project_id` canonical, `projectId` legacy).
+   - Token refresh parity across script embed, hosted widget page, and React SDK.
 
 ### **Example (Playwright):**
 ```python
@@ -135,6 +141,24 @@ jobs:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/chatbot
           REDIS_URL: redis://localhost:6379/0
 ```
+
+### **Required Merge Gates (Widget Changes):**
+
+For PRs touching `frontend/public/embed.js`, `frontend/app/widget/*`, or `contextly-widget/*`, all must pass:
+
+1. Unit/integration tests (`uv run pytest tests/ --cov=app`)
+2. Widget protocol compatibility tests (canonical + legacy)
+3. Frontend lint/build (`pnpm lint`, `pnpm build` in `frontend/`)
+4. Widget package build (`pnpm build` in `contextly-widget/`)
+
+### **Protocol Contract Matrix (Must Be Tested):**
+
+1. `embed.js` canonical-write -> hosted widget dual-read
+2. `embed.js` canonical-write -> React SDK `Chat` dual-read
+3. legacy flat message -> hosted widget dual-read
+4. legacy flat message -> React SDK `Chat` dual-read
+5. `project_id` query param path
+6. `projectId` legacy query param path
 
 ---
 

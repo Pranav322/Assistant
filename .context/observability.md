@@ -1,7 +1,7 @@
 # OBSERVABILITY SPECIFICATION
-**Version:** 1.0.1
+**Version:** 1.1.0
 **Aligned with:** schema.sql v2.2, security.md v3.0, retrieval.md v1.0, deployment.md v1.0.1
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-04-24
 
 ---
 
@@ -52,6 +52,10 @@ All metrics must include:
 | `http_requests_in_flight` | Gauge | Current active requests |
 | `auth_failures_total` | Counter | Failed auth attempts by reason |
 | `rate_limit_hits_total` | Counter | Throttled requests |
+| `widget_protocol_messages_total` | Counter | Widget protocol messages by direction/type/version |
+| `widget_protocol_validation_failures_total` | Counter | Invalid/malformed widget protocol messages |
+| `widget_token_refresh_failures_total` | Counter | Widget token refresh failures |
+| `widget_origin_mismatch_total` | Counter | Widget origin validation failures |
 
 ### **2. Database Metrics (PostgreSQL):**
 | Metric Name | Type | Description |
@@ -205,6 +209,8 @@ with tracer.start_as_current_span("generate_embeddings"):
 | `High_Latency_Chat` | P2 | `P95_latency > 5s` for 5m | Check LLM provider status |
 | `Disk_Space_Low` | P2 | `disk_free < 10%` | Clean logs, expand volume |
 | `Rate_Limit_Abuse` | P3 | `rate_limit_hits > 1000/m` | Investigate IP |
+| `Widget_Protocol_Failures` | P2 | `widget_protocol_validation_failures_total` spike over 5m baseline | Check rollout compatibility |
+| `Widget_Origin_Mismatch_Spike` | P2 | `widget_origin_mismatch_total` above expected baseline | Inspect origin config and abuse |
 
 ---
 

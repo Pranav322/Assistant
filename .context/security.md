@@ -532,20 +532,28 @@ def reset_daily_tokens():
 ```javascript
 // Widget iframe -> Parent page
 window.parent.postMessage({
-  type: "chatbot:message",
-  payload: { text: "Hello", sessionId: "..." },
+  type: "chatbot:resize",
+  payload: { height: 600 },
   requestId: "unique-id",
   timestamp: "2026-02-12T10:30:00Z"
 }, "https://customer-domain.com");  // Specific target origin
 
 // Parent page -> Widget iframe
 iframe.contentWindow.postMessage({
-  type: "chatbot:response",
-  payload: { reply: "Hi there!" },
+  type: "chatbot:init",
+  payload: { token: "JWT", project_id: "uuid", origin: "https://customer-domain.com" },
   requestId: "unique-id",
   timestamp: "2026-02-12T10:30:01Z"
 }, "https://widget.chatbot.com");  // Specific target origin
 ```
+
+Canonical message shape and compatibility requirements are defined in `.context/widget_protocol.md`.
+
+Migration rules:
+
+- New emitters should send canonical envelope (`type`, `payload`, `requestId`, `timestamp`).
+- Receivers should parse canonical envelope and legacy flat messages during migration windows.
+- Canonical key for project identity is `project_id` (legacy `projectId` accepted for backward compatibility).
 
 **Validation Rules:**
 1. Validate origin on both sides

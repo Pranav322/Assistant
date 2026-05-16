@@ -137,3 +137,29 @@ From `observability.md`:
 2. Update `IMPLEMENTATION_PLAN.md` checkboxes as work is completed.
 3. Always add or update tests for new behavior.
 4. Update CI/CD workflows when tests, commands, or dependencies change.
+
+## Widget Protocol Rules (Required)
+
+- Treat `.context/widget_protocol.md` as canonical for widget messaging behavior.
+- For changes in `frontend/public/embed.js`, `frontend/app/widget/*`, or `contextly-widget/*`:
+  - Update protocol docs first or in the same PR.
+  - Keep backward compatibility for existing embeds unless a major version migration is explicitly planned.
+  - Support canonical envelope (`type`, `payload`, `requestId`, `timestamp`) and legacy flat message parsing during migration windows.
+  - Prefer `project_id` as canonical query/message key; accept `projectId` legacy input where needed.
+
+## Documentation Sync Rules
+
+- Any behavior change to auth/token/refresh/chat/widget flow must update relevant files in `.context/` in the same change set:
+  - `api_spec.md`
+  - `widget_protocol.md`
+  - `security.md` (if security posture changes)
+  - `testing.md`
+  - `observability.md` (if metrics/alerts change)
+
+## Validation Gates For Widget Changes
+
+- Before marking widget-related work complete, run at least:
+  - backend tests impacted by auth/widget flow
+  - frontend lint/build
+  - contextly-widget build
+- If compatibility behavior changed, add or update tests covering canonical and legacy protocol paths.

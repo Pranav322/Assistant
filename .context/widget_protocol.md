@@ -1,75 +1,41 @@
 # WIDGET COMMUNICATION PROTOCOL
-**Version:** 1.1.0
-**Aligned with:** schema.sql v2.2, security.md v3.0
-**Last Updated:** 2026-02-12
+**Version:** 1.2.0
+**Aligned with:** schema.sql v2.2, security.md v3.0, api_spec.md v1.2.0
+**Last Updated:** 2026-04-24
 
 ---
 
-## **🎯 OVERVIEW**
+## Overview
 
-The widget is embedded as an iframe on customer websites. To ensure security and token isolation, **all API communication happens inside the iframe**. The parent page only acts as a UI container and message relay for user interactions (open/close).
+This protocol defines communication between:
 
-### **Security Architecture:**
-1. **Parent Page:** Loads iframe with `token`. Does NOT make API calls.
-2. **Iframe:** Validates parent origin, holds the JWT, and calls the API.
-3. **API:** Validates JWT and ensures the request comes from the widget origin.
+1. Parent host page (`embed.js` or custom integrator)
+2. Widget iframe (`/widget` page)
+3. React SDK (`contextly-widget` package)
 
----
-
-## **🔧 WIDGET EMBEDDING**
-
-### **Script Tag Method:**
-```html
-<script src="https://widget.chatbot.com/embed.js" defer></script>
-<!-- Resulting iframe src: -->
-<!-- https://widget.chatbot.com/widget.html?token=JWT&origin=https://customer.com -->
-```
-
-### **Configuration Parameters:**
-| Parameter | Description |
-|-----------|-------------|
-| `token` | JWT token (Required) |
-| `origin` | Expected parent origin (Required for validation) |
-| `project_id` | Project ID (Optional, redundant if in token) |
+Security model stays the same: API calls happen in iframe/SDK context, not in parent host page.
 
 ---
 
-## **🔐 SECURITY IMPLEMENTATION**
+## Versioning And Compatibility
 
-### **1. Origin Validation (Anti-Hijacking)**
-The iframe must verify it is embedded on the correct site *before* processing any messages or showing sensitive data.
+- Canonical protocol is `v1.2`.
+- Legacy `v1.1` flat messages are still accepted for backward compatibility.
+- New emitters must send canonical envelope.
+- Receivers must parse both canonical and legacy forms.
 
-**Iframe Logic:**
-```javascript
-const params = new URLSearchParams(window.location.search);
-const expectedOrigin = params.get('origin'); // e.g., https://customer.com
+Compatibility window:
 
-// 1. Check Referrer (Soft check)
-if (!document.referrer.startsWith(expectedOrigin)) {
-  console.warn('Referrer mismatch');
-}
-
-// 2. Strict Handshake
-window.addEventListener('message', (event) => {
-  if (event.origin !== expectedOrigin) {
-    return; // Ignore messages from other origins
-  }
-  
-  // Proceed...
-});
-```
-
-### **2. Token Isolation**
-- The `token` is passed to the iframe via URL fragment or query param.
-- The parent page **should not** parse or use this token for API calls.
-- The API call `POST /projects/{id}/chat` is made **from the iframe context**.
+- **Now:** dual-read, canonical-write.
+- **Future:** once telemetry confirms low legacy usage, remove legacy flat parsing in a major release.
 
 ---
 
-## **📨 MESSAGE PROTOCOL**
+## Message Envelope (Canonical)
 
-### **Message Structure:**
-```javascript
+All messages SHOULD follow:
+
+```json
 {
   "type": "chatbot:message_type",
   "payload": {},
@@ -78,82 +44,159 @@ window.addEventListener('message', (event) => {
 }
 ```
 
----
+Required fields:
 
-## **📤 WIDGET → PARENT MESSAGES**
+- `type`
+- `payload` (use `{}` if empty)
 
-### **`chatbot:ready`**
-Widget is loaded and ready.
+Recommended fields:
 
-### **`chatbot:resize`**
-Request resize (e.g., chat opened).
+- `requestId`
+- `timestamp`
 
-### **`chatbot:token_expired`**
-Requests a new token from parent (who fetches it from backend).
+Legacy compatibility:
 
----
-
-## **📥 PARENT → WIDGET MESSAGES**
-
-### **`chatbot:init`**
-Parent sends initial configuration.
-
-### **`chatbot:toggle`**
-User clicked the toggle button (if custom).
-
-### **`chatbot:set_token`**
-Parent provides a (refreshed) token.
+- Receivers must accept top-level fields (for example `token`, `projectId`) when `payload` is absent.
 
 ---
 
-## **💻 IMPLEMENTATION REFERENCE**
+## Query Parameters
 
-### **Parent Page (Customer):**
-```javascript
-// Lightweight wrapper - NO API CALLS
-class ChatbotWidgetManager {
-  constructor(config) {
-    this.iframe = document.createElement('iframe');
-    this.iframe.src = `https://widget.chatbot.com/?token=${config.token}&origin=${window.location.origin}`;
-    document.body.appendChild(this.iframe);
-    
-    window.addEventListener('message', (e) => {
-      if (e.origin !== 'https://widget.chatbot.com') return;
-      this.handleMessage(e.data);
-    });
-  }
+Canonical query params:
 
-  handleMessage(data) {
-    if (data.type === 'chatbot:resize') {
-      this.resizeIframe(data.payload);
-    }
-  }
+- `token`
+- `origin`
+- `project_id`
+- `mode` (`popup` or `embedded`)
+
+Backward compatibility:
+
+- Receivers may also read `projectId`.
+- Emitters should write `project_id` and may duplicate `projectId` during migration.
+
+---
+
+## Parent -> Widget Messages
+
+### `chatbot:init`
+
+Purpose: initialize token/project/origin.
+
+Canonical payload:
+
+```json
+{
+  "token": "JWT",
+  "project_id": "uuid",
+  "projectId": "uuid",
+  "origin": "https://customer.com"
 }
 ```
 
-### **Widget (Iframe):**
-```javascript
-// Heavy lifting - HANDLES API
-class ChatbotWidget {
-  constructor() {
-    this.token = new URLSearchParams(window.location.search).get('token');
-    this.origin = new URLSearchParams(window.location.search).get('origin');
-    this.apiBase = 'https://api.chatbot.com/v1';
-  }
+Notes:
 
-  async sendMessage(text) {
-    // Call API directly
-    const res = await fetch(`${this.apiBase}/projects/${this.projectId}/chat`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ query: text })
-    });
-    
-    const data = await res.json();
-    this.displayResponse(data);
-  }
+- `project_id` is canonical.
+- `projectId` is included for migration compatibility.
+
+### `chatbot:set_token`
+
+Purpose: update widget auth token.
+
+Canonical payload:
+
+```json
+{
+  "token": "JWT"
 }
 ```
+
+### `chatbot:open` / `chatbot:close` / `chatbot:toggle`
+
+Purpose: control open state.
+
+Canonical payload: `{}`
+
+---
+
+## Widget -> Parent Messages
+
+### `chatbot:ready`
+
+Purpose: iframe loaded and ready for init.
+
+Payload: `{}`
+
+### `chatbot:resize`
+
+Purpose: request parent container size update.
+
+Canonical payload:
+
+```json
+{
+  "height": 600,
+  "width": 360
+}
+```
+
+Any field may be omitted if unchanged.
+
+### `chatbot:token_expired`
+
+Purpose: notify parent that token refresh is required.
+
+Payload: `{}`
+
+---
+
+## Security Requirements
+
+1. Validate `event.origin` for every `postMessage` on both sides.
+2. Use specific `targetOrigin` in `postMessage`; never `*` in production.
+3. Treat message payload as untrusted input and validate expected fields/types.
+4. Prefer canonical envelope with `requestId` and `timestamp` for traceability.
+5. Parent must never call protected chat APIs directly with widget token.
+
+---
+
+## Implementation Guidance
+
+Receiver parsing pattern:
+
+```javascript
+function getPayload(data) {
+  if (data && data.payload && typeof data.payload === "object") {
+    return data.payload;
+  }
+  return data || {};
+}
+```
+
+Emitter pattern:
+
+```javascript
+function createMessage(type, payload = {}) {
+  return {
+    type,
+    payload,
+    requestId: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    ...payload
+  };
+}
+```
+
+The spread of payload at top-level is optional, but useful for temporary legacy interop.
+
+---
+
+## Test Matrix (Required)
+
+1. `embed.js` (canonical write) -> hosted widget (dual read)
+2. `embed.js` (canonical write) -> React SDK `Chat` (dual read)
+3. Legacy flat message -> hosted widget (dual read)
+4. Legacy flat message -> React SDK `Chat` (dual read)
+5. Canonical `project_id` query param path
+6. Legacy `projectId` query param path
+
+All scenarios must pass before removing legacy parsing.

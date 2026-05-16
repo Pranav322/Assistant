@@ -1,48 +1,95 @@
 # API SPECIFICATION
-**Version:** 1.1.0
-**Aligned with:** schema.sql v2.2, security.md v3.0, retrieval.md v1.0
-**Last Updated:** 2026-02-12
+**Version:** 1.2.0
+**Aligned with:** schema.sql v2.2, security.md v3.0, widget_protocol.md v1.2.0
+**Last Updated:** 2026-04-24
 
 ---
 
-## **📋 OVERVIEW**
+## Overview
 
 All endpoints require authentication. Rate limiting is enforced per key or token.
 
-**Base URL:** `https://api.chatbot.com/v1`
-**Versioning:** `Accept-Version: v1` (Optional, defaults to v1)
+- Base URL: `https://api.chatbot.com/v1`
+- Versioning: `Accept-Version: v1` (optional, defaults to v1)
 
 ---
 
-## **🔐 AUTHENTICATION ENDPOINTS**
+## Authentication Endpoints
 
-### **POST /tokens/widget**
-Generate JWT token for browser widget.
+### POST `/tokens/widget`
 
-**Request:** `{"origin": "https://customer.com", "project_id": "uuid"}`
-**Response:** `{"token": "JWT", "expires_in": 86400}`
+Generate JWT token for browser widget (API key flow).
+
+Request:
+
+```json
+{
+  "origin": "https://customer.com",
+  "project_id": "uuid"
+}
+```
+
+Response:
+
+```json
+{
+  "token": "JWT",
+  "expires_in": 86400
+}
+```
+
+### POST `/tokens/widget/user`
+
+Generate JWT token for browser widget (dashboard user flow).
+
+Request/Response shape is same as `/tokens/widget`.
+
+### POST `/tokens/refresh`
+
+Refresh an existing widget JWT.
+
+Headers:
+
+- `Authorization: Bearer <widget_token>`
+- `Origin: https://customer.com`
+
+Response:
+
+```json
+{
+  "token": "JWT",
+  "expires_in": 86400
+}
+```
+
+Behavior:
+
+- Validates signature, expiry, audience, issuer, origin.
+- Revokes old token record and issues a new token record.
 
 ---
 
-## **🏢 PROJECT MANAGEMENT**
+## Project Management
 
-### **GET /projects**
+### GET `/projects`
 List projects.
 
-### **POST /projects**
+### POST `/projects`
 Create project.
 
-### **GET /projects/{id}**
+### GET `/projects/{id}`
 Get project details.
 
 ---
 
-## **💬 CHAT ENDPOINTS**
+## Chat Endpoints
 
-### **POST /projects/{project_id}/chat**
+### POST `/projects/{project_id}/chat`
+
 Send message and get response.
 
-**Request:**
+Request:
+
 ```json
 {
   "query": "Hello",
@@ -51,28 +98,63 @@ Send message and get response.
 }
 ```
 
-**Response:**
+Response:
+
 ```json
 {
   "response": "Hi there!",
-  "citations": []
+  "citations": [],
+  "conversation_id": "uuid"
 }
 ```
 
+Notes:
+
+- `conversation_id` in response is recommended when server creates or rotates conversation context.
+- `citations` should be present as an array (possibly empty) for consistent client rendering.
+
 ---
 
-## **⚙️ SYSTEM & OBSERVABILITY ENDPOINTS**
+## Widget Metrics Endpoint
 
-### **GET /health**
-Quick liveness check. Returns `{"status": "ok"}`.
+### POST `/metrics/widget`
 
-### **GET /health/ready**
-Deep readiness check (DB, Redis, S3). Returns `{"status": "ready"}` or 503.
+Ingest batched Real User Monitoring (RUM) metrics from widget clients.
 
-### **GET /admin/projects/{project_id}/metrics/retrieval**
-Get retrieval performance metrics for admin dashboard.
+Request:
 
-**Response:**
+```json
+{
+  "metrics": [
+    { "name": "widget_load_time", "value": 300, "tags": { "browser": "chrome" } }
+  ]
+}
+```
+
+Response:
+
+- `202 Accepted`
+
+Auth:
+
+- Widget bearer token required.
+- Origin validation required.
+
+---
+
+## System & Observability Endpoints
+
+### GET `/health`
+Quick liveness check. Returns `{ "status": "ok" }`.
+
+### GET `/health/ready`
+Readiness check (DB, Redis, S3). Returns `{ "status": "ready" }` or 503.
+
+### GET `/admin/projects/{project_id}/metrics/retrieval`
+Retrieval performance metrics for admin dashboard.
+
+Example response:
+
 ```json
 {
   "avg_latency_ms": 145,
@@ -81,14 +163,8 @@ Get retrieval performance metrics for admin dashboard.
 }
 ```
 
-### **POST /metrics/widget**
-Ingest Real User Monitoring (RUM) metrics from widget.
-
-**Request:** `{"metrics": [{"name": "load_time", "value": 300}]}`
-**Response:** 202 Accepted.
-
-### **GET /usage**
-Returns current API usage stats.
+### GET `/usage`
+Current API usage stats.
 
 ```json
 {
