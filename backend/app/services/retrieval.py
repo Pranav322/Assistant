@@ -10,9 +10,11 @@ from typing import Any, Iterable, Sequence, cast
 
 import structlog
 import tiktoken
+from openai import AsyncAzureOpenAI
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.config import settings
 from app.models import Chunk, Embedding, Project, RetrievalMetric, Source
 from app.services.embedding import EmbeddingService
 from app.services.embedding_cache import EmbeddingCache
@@ -294,6 +296,15 @@ def generate_citations(
             "chunk_id": str(chunk.chunk_id),
             "source_id": str(chunk.source_id),
             "title": source_meta.get("title", "Document"),
+            "url": (
+                source_meta.get("url")
+                or source_meta.get("source_url")
+                or source_meta.get("file_url")
+            ),
+            "source": (
+                source_meta.get("filename")
+                or source_meta.get("original_filename")
+            ),
             "page": chunk_meta.get("page_number"),
             "section": chunk_meta.get("section_title"),
             "confidence": confidence,
@@ -325,16 +336,15 @@ class QueryProcessor:
     def __init__(self) -> None:
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
         self.stop_words = {
-            "what",
-            "how",
-            "why",
-            "the",
-            "a",
-            "an",
-            "is",
-            "are",
-            "can",
-            "do",
+            "a", "an", "the", "and", "or", "but", "in", "on", "at", "to",
+            "for", "of", "with", "by", "from", "as", "is", "are", "was",
+            "were", "be", "been", "being", "have", "has", "had", "do", "does",
+            "did", "will", "would", "could", "should", "may", "might", "shall",
+            "can", "need", "dare", "ought", "used", "what", "which", "who",
+            "whom", "this", "that", "these", "those", "how", "why", "when",
+            "where", "i", "me", "my", "we", "our", "you", "your", "it", "its",
+            "they", "them", "their", "about", "up", "out", "into", "than",
+            "so", "if", "not", "no", "nor", "just", "also",
         }
 
     def process_query(
@@ -525,12 +535,46 @@ class RetrievalPipeline:
         self.rrf = ReciprocalRankFusion()
         self.query_processor = QueryProcessor()
         self.context_assembler = ContextAssembler()
+        self.llm_client = AsyncAzureOpenAI(
+            api_key=settings.AZURE_OPENAI_API_KEY,
+            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+            api_version=settings.AZURE_OPENAI_API_VERSION,
+        )
         bind = db.bind
         if bind is None:
             raise ValueError("Database bind is required for retrieval pipeline")
         self._session_factory = async_sessionmaker(
             bind, class_=AsyncSession, expire_on_commit=False
         )
+
+    async def _expand_query_with_llm(self, query: str, num: int = 3) -> list[str]:
+        try:
+            response = await self.llm_client.chat.completions.create(
+                model=settings.AZURE_DEPLOYMENT_NAME,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            f"Generate {num} alternative phrasings of the user's search query "
+                            "to improve document retrieval. Return only the queries, one per line, "
+                            "no numbering, no explanation."
+                        ),
+                    },
+                    {"role": "user", "content": query},
+                ],
+                temperature=0.7,
+                max_tokens=150,
+            )
+            text = response.choices[0].message.content or ""
+            expansions = [line.strip() for line in text.strip().splitlines() if line.strip()]
+            return expansions[:num]
+        except Exception:
+            logger.warning("llm_query_expansion_failed", query=query)
+            return [
+                query + " in detail",
+                "Explain " + query,
+                "Information about " + query,
+            ]
 
     def build_config(self, project: Project | None) -> dict[str, Any]:
         return self._build_retrieval_config(project)
@@ -547,13 +591,17 @@ class RetrievalPipeline:
 
         start = time.perf_counter()
 
-        expansions, key_terms = self.query_processor.process_query(
-            query,
-            conversation_history,
-            max_expansions=config["max_query_expansions"],
+        if config["enable_query_expansion"]:
+            expansions = await self._expand_query_with_llm(
+                query, num=config["max_query_expansions"]
+            )
+        else:
+            expansions = []
+        _, key_terms = self.query_processor.process_query(
+            query, conversation_history, max_expansions=0
         )
 
-        queries = [query] + expansions if config["enable_query_expansion"] else [query]
+        queries = [query] + expansions
 
         cache = EmbeddingCache(
             self.db,

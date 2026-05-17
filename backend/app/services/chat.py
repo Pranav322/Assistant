@@ -174,7 +174,12 @@ class ChatService:
     ) -> tuple[str, dict[str, Any] | None]:
         system_prompt = (
             project.settings.get("system_prompt") if project.settings else None
-        ) or "You are a helpful assistant. Use the provided documents to answer."
+        ) or (
+            "You are a helpful assistant. Answer questions using the provided documents. "
+            "When your answer draws from a document, cite it inline using [Document N] notation "
+            "(e.g. [Document 1], [Document 2]). "
+            "If the documents don't contain enough information to answer, say so clearly."
+        )
 
         messages = [{"role": "system", "content": system_prompt}]
 
