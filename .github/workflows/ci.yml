@@ -40,6 +40,10 @@ jobs:
         ports:
           - 5432:5432
 
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
       - uses: actions/checkout@v4
 
@@ -60,7 +64,7 @@ jobs:
 
       - name: Lint with Isort
         run: uv run isort --check .
-      
+
       # - name: Type check with Mypy
       #   run: uv run mypy .
 
