@@ -5,6 +5,8 @@ import uuid
 from typing import Optional
 
 import pdfplumber
+import pytesseract
+from pdf2image import convert_from_bytes
 import redis.asyncio as redis
 from markdownify import markdownify
 from sqlalchemy import select
@@ -298,6 +300,15 @@ class IngestionService:
             for index, page in enumerate(pdf.pages, start=1):
                 page_text = page.extract_text() or ""
                 pages.append((index, page_text))
+
+        # If pdfplumber got nothing (scanned/image PDF), fall back to OCR
+        if not any(text.strip() for _, text in pages):
+            images = convert_from_bytes(file_content)
+            pages = [
+                (i + 1, pytesseract.image_to_string(img))
+                for i, img in enumerate(images)
+            ]
+
         return pages
 
     def _is_text_file(self, filename: str) -> bool:
