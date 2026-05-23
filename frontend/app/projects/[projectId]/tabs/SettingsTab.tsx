@@ -1,14 +1,11 @@
 import type { FormEvent } from "react";
 
 import {
-  AlertCircle,
-  CheckCircle2,
   Code,
   Globe,
   Key,
   Loader2,
   Plus,
-  RefreshCw,
   Trash2,
   X,
 } from "lucide-react";
@@ -20,7 +17,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,11 +39,6 @@ import type { ApiKey, Project } from "../types";
 
 type Props = {
   usage: { requests: number; tokens: number; limit?: number } | undefined;
-  tokenError: string;
-  widgetToken: string | null;
-  tokenExpiresIn: number | null;
-  tokenLoading: boolean;
-  generateWidgetToken: () => void;
   newOriginInput: string;
   setNewOriginInput: (value: string) => void;
   handleAddOrigin: (e: FormEvent) => void;
@@ -70,11 +61,6 @@ type Props = {
 
 export function SettingsTab({
   usage,
-  tokenError,
-  widgetToken,
-  tokenExpiresIn,
-  tokenLoading,
-  generateWidgetToken,
   newOriginInput,
   setNewOriginInput,
   handleAddOrigin,
@@ -134,77 +120,7 @@ export function SettingsTab({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-primary flex items-center gap-2">
-              <Key className="h-5 w-5" /> Widget Token
-            </CardTitle>
-            <CardDescription>
-              Use this token to embed the chatbot widget on your website.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {tokenError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{tokenError}</AlertDescription>
-              </Alert>
-            )}
-
-            {widgetToken ? (
-              <div className="space-y-3">
-                <div className="bg-muted/50 min-w-0 rounded-lg border p-3">
-                  <Label className="text-muted-foreground mb-2 block text-xs font-bold tracking-wider uppercase">
-                    Your Widget Token
-                  </Label>
-                  <div className="min-w-0 overflow-hidden">
-                    <CopyBlock value={widgetToken} className="text-xs" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-muted-foreground flex items-center gap-4 text-xs">
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                      Token active
-                    </span>
-                    {tokenExpiresIn && <span>Expires in {Math.floor(tokenExpiresIn / 60)}m</span>}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={generateWidgetToken}
-                    disabled={tokenLoading}
-                  >
-                    {tokenLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="text-muted-foreground bg-muted/30 rounded-md border border-dashed p-4 text-sm">
-                  No widget token generated yet.
-                </div>
-                <Button onClick={generateWidgetToken} disabled={tokenLoading} size="sm">
-                  {tokenLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Key className="mr-2 h-4 w-4" /> Generate Token
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-6 lg:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

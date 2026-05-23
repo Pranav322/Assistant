@@ -345,11 +345,8 @@ export default function ProjectDetailPage() {
   const originToUse = originValue;
   const embedSnippet = `<script
   src="${widgetBaseUrl}/embed.js"
-  data-token="<WIDGET_TOKEN>"
-  data-origin="${originToUse}"
   data-project-id="${project.id}"
-  data-api-base-url="${apiBaseUrl}"
-  data-mode="${embedMode}"${
+  data-api-key="YOUR_API_KEY"${embedMode !== "popup" ? `\n  data-mode="${embedMode}"` : ""}${
     embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth)
       ? `\n  data-width="${embedWidth}"`
       : ""
@@ -443,11 +440,6 @@ export default function ProjectDetailPage() {
 
           <SettingsTab
             usage={usage}
-            tokenError={tokenError}
-            widgetToken={widgetToken}
-            tokenExpiresIn={tokenExpiresIn}
-            tokenLoading={tokenLoading}
-            generateWidgetToken={() => void generateWidgetToken()}
             newOriginInput={newOriginInput}
             setNewOriginInput={setNewOriginInput}
             handleAddOrigin={handleAddOrigin}

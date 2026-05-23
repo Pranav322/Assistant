@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, ExternalLink, Globe, Puzzle, Rocket } from "lucide-react";
+import { ExternalLink, Globe, Rocket } from "lucide-react";
 
 import CopyBlock from "@/components/CopyBlock";
 import { Badge } from "@/components/ui/badge";
@@ -125,18 +125,10 @@ export function EmbedTab({ projectId, embedSnippet }: Props) {
           </div>
 
           <Tabs defaultValue="script" className="w-full space-y-4">
-            <TabsList className="bg-muted/30 grid h-auto w-full grid-cols-3 rounded-lg p-1">
+            <TabsList className="bg-muted/30 grid h-auto w-full grid-cols-1 rounded-lg p-1">
               <TabsTrigger value="script"
                 className="data-[state=active]:bg-background py-2 text-sm data-[state=active]:rounded-md data-[state=active]:shadow-sm">
                 Script
-              </TabsTrigger>
-              <TabsTrigger value="react-sdk"
-                className="data-[state=active]:bg-background py-2 text-sm data-[state=active]:rounded-md data-[state=active]:shadow-sm">
-                React SDK
-              </TabsTrigger>
-              <TabsTrigger value="headless"
-                className="data-[state=active]:bg-background py-2 text-sm data-[state=active]:rounded-md data-[state=active]:shadow-sm">
-                Headless
               </TabsTrigger>
             </TabsList>
 
@@ -187,7 +179,7 @@ export function EmbedTab({ projectId, embedSnippet }: Props) {
   <h1>Welcome</h1>
   <button class="chat-trigger-btn" onclick="ChatbotWidget?.toggle()">💬 Chat with us</button>
 
-${embedSnippet.replace("<WIDGET_TOKEN>", "<YOUR_WIDGET_TOKEN>")}
+${embedSnippet}
 </body>
 </html>`}
                     className="text-xs"
@@ -196,71 +188,6 @@ ${embedSnippet.replace("<WIDGET_TOKEN>", "<YOUR_WIDGET_TOKEN>")}
               </Card>
             </TabsContent>
 
-            <TabsContent value="react-sdk" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Box className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <CardTitle className="text-base">React SDK</CardTitle>
-                      <CardDescription>High-level component for React &amp; Next.js</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">1. Install</Label>
-                    <CopyBlock value="npm install contextly" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">2. Usage</Label>
-                    <CopyBlock value={`import { Chat } from "contextly";
-
-function App() {
-  return <Chat projectId="${projectId}" token="YOUR_WIDGET_TOKEN" />;
-}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="headless" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Puzzle className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <CardTitle className="text-base">Headless Hooks</CardTitle>
-                      <CardDescription>Your UI, our logic</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">1. Install</Label>
-                    <CopyBlock value="npm install contextly" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold">2. Usage</Label>
-                    <CopyBlock value={`import { useChat } from "contextly";
-
-function CustomUI() {
-  const { messages, input, setInput, sendMessage, isLoading } = useChat({
-    projectId: "${projectId}",
-    token: "YOUR_WIDGET_TOKEN",
-  });
-  return (
-    <div>
-      {messages.map(m => <div key={m.id}>{m.content}</div>)}
-      <input value={input} onChange={e => setInput(e.target.value)} />
-      <button onClick={() => sendMessage()} disabled={isLoading}>Send</button>
-    </div>
-  );
-}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </div>
 
