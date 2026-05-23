@@ -57,4 +57,4 @@ WORKDIR /app
 COPY --chown=worker:worker . .
 
 # Run worker
-CMD ["dramatiq", "app.worker", "app.worker.tasks", "--processes", "4", "--threads", "2"]
+CMD ["dramatiq", "app.worker", "app.worker.tasks", "--processes", "1", "--threads", "4"]
