@@ -100,6 +100,9 @@ class IngestionService:
             }
             await self.db.flush()
 
+        # Capture source.id before any potential rollback expires the ORM object
+        source_db_id = source.id
+
         try:
             # Mark as processing with initial progress
             source.status = "processing"
@@ -262,7 +265,7 @@ class IngestionService:
             # Update status to failed
             result = await self.db.execute(
                 select(Source).where(
-                    Source.id == source.id, Source.project_id == project_id
+                    Source.id == source_db_id, Source.project_id == project_id
                 )
             )
             fail_source = result.scalar_one()
