@@ -15,7 +15,7 @@ from app.services.ingestion_events import publish_ingestion_event
 from app.services.ingestion_validation import derive_file_type
 from app.services.storage import StorageService
 from app.services.url_fetcher import fetch_url_content
-from app.worker.db import WorkerAsyncSessionLocal
+from app.worker.db import create_worker_engine, create_worker_session_factory
 
 logger = structlog.get_logger()
 
@@ -31,9 +31,10 @@ async def process_ingestion_async(
 ) -> None:
     import base64
 
-    # Use worker-specific session factory to avoid MissingGreenlet error
-    # This factory creates a fresh engine without pool_pre_ping
-    session_factory = WorkerAsyncSessionLocal()
+    # Create a fresh engine per task so threads don't share asyncpg connections
+    # across different event loops (each asyncio.run() creates a new event loop)
+    engine = create_worker_engine()
+    session_factory = create_worker_session_factory(engine)
     async with session_factory() as db:
         redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
         ingestion_service = IngestionService(db, redis_client=redis_client)
@@ -220,6 +221,7 @@ async def process_ingestion_async(
                 await close_method()
             else:
                 await redis_client.close()
+    await engine.dispose()
 
 
 @dramatiq.actor(

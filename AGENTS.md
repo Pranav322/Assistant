@@ -1,5 +1,44 @@
 # Agent Guide (rag-prod)
 
+## Deployment & Infrastructure
+
+- **Backend**: FastAPI on DigitalOcean droplet `pranawww` at `143.110.247.23`, running via Docker Compose (`backend/docker-compose.yml`). Services: `chatbot-api` (port 8001), `chatbot-worker` (Dramatiq), `chatbot-redis`.
+- **Frontend**: Next.js on Vercel at `contextly.live`. Widget iframe at `contextly.live/widget`. embed.js at `contextly.live/embed.js`.
+- **Database**: External Neon PostgreSQL with pgvector (not in Docker Compose).
+- **API public URL**: `https://api.pranavbuilds.tech` (Caddy reverse proxy → port 8001).
+- **Deploy**: Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`) SSHs into VPS and runs `docker compose down && docker compose up -d --build`. SSH key: `~/.ssh/contextly_deploy`.
+- **VPS swap**: 2GB swap file at `/swapfile` (added to prevent OOM kills during ingestion).
+- **Worker config**: `--processes 1 --threads 4` (reduced from 4 processes to save memory; ~300MB baseline vs 1.1GB before).
+
+## Widget Embed (One-liner)
+
+Customers embed the widget with just:
+```html
+<script src="https://contextly.live/embed.js" data-project-id="uuid" data-api-key="ctly_xxx" defer></script>
+```
+
+`embed.js` auto-calls `POST /api/v1/tokens/widget` using the API key, gets a JWT, then creates the iframe. No server-side token generation needed on the customer's side.
+
+- CORS on `/api/v1/tokens/widget` is opened to `*` via a path-specific middleware in `backend/app/main.py` (`widget_token_cors`).
+- Security is enforced by API key validation + `project.allowed_origins` check on the token endpoint.
+- Customers must add their domain to **allowed origins** in the Contextly dashboard.
+- After auto-fetch, normal JWT refresh cycle takes over (`/tokens/refresh` with Bearer token).
+
+## Known Issues Fixed
+
+- **Worker OOM kills**: Reduced to 1 process + added 2GB swap. Was 4 processes × ~200MB = 800MB baseline.
+- **MissingGreenlet on ingestion failure**: `source.id` was accessed after `db.rollback()` expired the ORM object. Fixed by capturing `source_db_id = source.id` before the try block (`backend/app/services/ingestion.py`).
+- **Thread-shared asyncpg engine**: With `--threads 4`, each thread runs `asyncio.run()` with its own event loop but previously shared a singleton asyncpg engine → "another operation is in progress". Fixed by creating a fresh engine per task in `backend/app/worker/tasks.py`.
+- **API startup crash**: VPS `.env` had `BACKEND_CORS_ORIGINS='[...]'` with literal single quotes → Pydantic JSON parse failure. Fixed by removing quotes on VPS.
+
+## Ingestion Worker Architecture
+
+Dramatiq actor `process_ingestion_task` (sync) calls `asyncio.run(process_ingestion_async(...))`.
+`process_ingestion_async` creates a **fresh** `create_worker_engine()` + session per call — do NOT use the singleton `WorkerAsyncSessionLocal` (causes cross-event-loop asyncpg sharing).
+Engine is disposed with `await engine.dispose()` after the session context exits.
+
+
+
 This repository is primarily specification docs for a RAG chatbot platform. This file is a living summary derived from the specs in `.context/` and can be updated.
 
 ## Project Structure
