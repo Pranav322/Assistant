@@ -4,7 +4,7 @@ import uuid
 import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.api.v1.api_router import api_router
 from app.core.config import settings
@@ -54,6 +54,25 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+@app.middleware("http")
+async def widget_token_cors(request: Request, call_next):
+    """Allow any origin to call the widget token endpoint (embed.js auto-fetch)."""
+    if request.url.path == "/api/v1/tokens/widget":
+        if request.method == "OPTIONS":
+            resp = Response()
+            resp.headers["Access-Control-Allow-Origin"] = "*"
+            resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+            resp.headers["Access-Control-Allow-Headers"] = (
+                "Content-Type, X-API-Key, Authorization"
+            )
+            resp.headers["Access-Control-Max-Age"] = "86400"
+            return resp
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
+    return await call_next(request)
 
 
 @app.middleware("http")

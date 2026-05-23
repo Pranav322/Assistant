@@ -46,10 +46,11 @@
   const refreshMethod = (scriptTag.getAttribute("data-refresh-method") || "POST").toUpperCase();
   const refreshCredentials =
     scriptTag.getAttribute("data-refresh-credentials") || "include";
+  const apiKey = scriptTag.getAttribute("data-api-key");
 
   let token = scriptTag.getAttribute("data-token");
-  if (!token && !refreshUrl) {
-    console.error("[Contextly Widget] Missing data-token attribute.");
+  if (!token && !refreshUrl && !apiKey) {
+    console.error("[Contextly Widget] Missing data-token or data-api-key attribute.");
     return;
   }
 
@@ -95,6 +96,30 @@
       return "";
     }
   })();
+
+  async function init() {
+    // Auto-fetch token from API key if no token pre-supplied
+    if (!token && apiKey) {
+      try {
+        const res = await fetch(`${apiBaseUrl}/tokens/widget`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey,
+          },
+          body: JSON.stringify({ project_id: projectId, origin }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || !data.token) {
+          console.error("[Contextly Widget] Failed to fetch widget token.", data);
+          return;
+        }
+        token = data.token;
+      } catch (e) {
+        console.error("[Contextly Widget] Network error fetching token.", e);
+        return;
+      }
+    }
 
   const iframeSrc = new URL(widgetUrl, window.location.href);
   if (token) {
@@ -431,4 +456,7 @@
     onTokenExpired: null,
     refreshToken,
   };
+  } // end init()
+
+  init();
 })();
