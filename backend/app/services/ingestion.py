@@ -298,14 +298,14 @@ class IngestionService:
         pages: list[tuple[int, str]] = []
         with pdfplumber.open(io.BytesIO(file_content)) as pdf:
             for index, page in enumerate(pdf.pages, start=1):
-                page_text = page.extract_text() or ""
+                page_text = (page.extract_text() or "").replace("\x00", "")
                 pages.append((index, page_text))
 
         # If pdfplumber got nothing (scanned/image PDF), fall back to OCR
         if not any(text.strip() for _, text in pages):
             images = convert_from_bytes(file_content)
             pages = [
-                (i + 1, pytesseract.image_to_string(img))
+                (i + 1, pytesseract.image_to_string(img).replace("\x00", ""))
                 for i, img in enumerate(images)
             ]
 
