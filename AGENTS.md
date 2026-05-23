@@ -1,41 +1,279 @@
 # Agent Guide (rag-prod)
 
-## Deployment & Infrastructure
+---
 
-- **Backend**: FastAPI on DigitalOcean droplet `pranawww` at `143.110.247.23`, running via Docker Compose (`backend/docker-compose.yml`). Services: `chatbot-api` (port 8001), `chatbot-worker` (Dramatiq), `chatbot-redis`.
-- **Frontend**: Next.js on Vercel at `contextly.live`. Widget iframe at `contextly.live/widget`. embed.js at `contextly.live/embed.js`.
-- **Database**: External Neon PostgreSQL with pgvector (not in Docker Compose).
-- **API public URL**: `https://api.pranavbuilds.tech` (Caddy reverse proxy → port 8001).
-- **Deploy**: Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`) SSHs into VPS and runs `docker compose down && docker compose up -d --build`. SSH key: `~/.ssh/contextly_deploy`.
-- **VPS swap**: 2GB swap file at `/swapfile` (added to prevent OOM kills during ingestion).
-- **Worker config**: `--processes 1 --threads 4` (reduced from 4 processes to save memory; ~300MB baseline vs 1.1GB before).
+## Infrastructure Overview
 
-## Widget Embed (One-liner)
+```
+User's Browser
+    │
+    ├─► contextly.live  (Vercel — Next.js frontend + widget iframe)
+    │       frontend/public/embed.js      ← loaded by customer sites
+    │       frontend/app/widget/page.tsx  ← widget iframe content
+    │
+    └─► api.pranavbuilds.tech  (Caddy → Docker → FastAPI)
+            │
+            ├─ chatbot-api     (FastAPI, port 8001 inside container → 8001 on host)
+            ├─ chatbot-worker  (Dramatiq async task worker)
+            ├─ chatbot-redis   (Redis 7, broker + cache, port 6379 localhost-only)
+            └─ Neon PostgreSQL (external, pgvector enabled, not in Docker)
+```
 
-Customers embed the widget with just:
+---
+
+## VPS
+
+| Field | Value |
+|---|---|
+| Provider | DigitalOcean |
+| Droplet name | `pranawww` |
+| IP | `143.110.247.23` |
+| OS | Ubuntu 24.04.3 LTS |
+| RAM | 2 GB + 2 GB swap (`/swapfile`) |
+| Disk | 48 GB (19 GB used) |
+| SSH key | `~/.ssh/contextly_deploy` (passphrase-free deploy key) |
+| Project path | `/root/Assistant` |
+
+**SSH in:**
+```bash
+ssh -i ~/.ssh/contextly_deploy root@143.110.247.23
+```
+
+---
+
+## Caddy (Reverse Proxy)
+
+Config: `/etc/caddy/Caddyfile`
+```
+api.pranavbuilds.tech {
+    reverse_proxy 127.0.0.1:8001
+}
+
+watch.contextly.live {
+    reverse_proxy 127.0.0.1:3000
+}
+```
+Caddy handles TLS automatically (Let's Encrypt). Systemd service: `caddy`.
+
+**Diagnose:**
+```bash
+systemctl status caddy
+journalctl -u caddy -n 50
+```
+
+---
+
+## Docker Compose (Backend)
+
+File: `/root/Assistant/backend/docker-compose.yml`
+
+| Container | Image | Role | Port |
+|---|---|---|---|
+| `chatbot-redis` | `redis:7-alpine` | Message broker + cache | `127.0.0.1:6379` |
+| `chatbot-api` | `backend-api` (built) | FastAPI HTTP server | `0.0.0.0:8001` |
+| `chatbot-worker` | `backend-worker` (built) | Dramatiq task worker | none |
+
+Worker runs: `dramatiq app.worker app.worker.tasks --processes 1 --threads 4`
+(`--processes 1` critical — 4 processes each load ML stack, exceeds 2 GB RAM)
+
+**Common commands:**
+```bash
+cd /root/Assistant/backend
+
+docker compose ps                    # container status
+docker compose logs chatbot-api -f   # live API logs
+docker compose logs chatbot-worker -f # live worker logs
+docker stats --no-stream             # memory per container
+docker compose down && docker compose up -d --build  # full redeploy
+docker compose restart api           # restart just API
+```
+
+**Env file:** `/root/Assistant/backend/.env` (gitignored, must be managed manually on VPS)
+
+---
+
+## Deploy Pipeline
+
+```
+git push origin main
+    │
+    └─► GitHub Actions (.github/workflows/deploy.yml)
+            triggers on: push to main with backend/** changes OR workflow_dispatch
+            runner: ubuntu-latest
+            environment: deploy-ssh
+            │
+            └─► appleboy/ssh-action@v1.0.3
+                    secrets: VPS_HOST, VPS_USERNAME (root), VPS_SSH_KEY, VPS_PROJECT_PATH
+                    script:
+                        cd $VPS_PROJECT_PATH/backend
+                        git pull origin main
+                        docker compose down
+                        docker compose up -d --build
+```
+
+**Frontend deploy:** Vercel auto-deploys on push to `main` — no config needed.
+
+**Check deploy status:**
+```bash
+gh run list --limit 5
+gh run view <run-id> --log-failed
+```
+
+**GitHub secrets to verify if deploy breaks:**
+```bash
+gh secret list --env deploy-ssh
+# Required: VPS_HOST=143.110.247.23, VPS_USERNAME=root, VPS_SSH_KEY, VPS_PROJECT_PATH=/root/Assistant
+```
+
+---
+
+## Tech Stack
+
+### Backend (`backend/`)
+| Layer | Tech |
+|---|---|
+| Language | Python 3.11 |
+| Framework | FastAPI + Uvicorn |
+| ORM | SQLAlchemy 2 async (asyncpg driver) |
+| DB | Neon PostgreSQL + pgvector |
+| Cache/Broker | Redis 7 |
+| Task queue | Dramatiq |
+| LLM | Azure OpenAI (`gpt-4` via `AZURE_DEPLOYMENT_NAME`) |
+| Embeddings | Azure OpenAI (`text-embedding-3-small`) |
+| Auth | Firebase Admin SDK (user auth) + bcrypt API keys + JWT widget tokens |
+| Package manager | `uv` (pyproject.toml / uv.lock) |
+| Linter/Formatter | Black + isort |
+
+### Frontend (`frontend/`)
+| Layer | Tech |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Hosting | Vercel |
+| Widget embed | `frontend/public/embed.js` (vanilla JS, creates iframe) |
+| Widget UI | `frontend/app/widget/page.tsx` (iframe content, React) |
+| Package manager | pnpm |
+
+### Deprecated
+- `contextly-widget/` — React SDK, frozen. Do not maintain. iframe-only is canonical.
+
+---
+
+## Required `.env` on VPS
+
+```
+DATABASE_URL=postgresql+asyncpg://...         # Neon connection string
+REDIS_URL=redis://redis:6379/0
+JWT_SECRET=...
+ENVIRONMENT=production
+AZURE_OPENAI_API_KEY=...
+AZURE_OPENAI_ENDPOINT=https://....openai.azure.com/
+AZURE_OPENAI_API_VERSION=2023-05-15
+AZURE_DEPLOYMENT_NAME=...                     # e.g. gpt-4
+AZURE_EMBEDDING_DEPLOYMENT_NAME=...
+BACKEND_CORS_ORIGINS=["https://contextly.live","https://www.contextly.live","http://localhost:3000"]
+WIDGET_PUBLIC_ORIGIN=https://contextly.live
+FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
+```
+
+⚠️ **Do NOT wrap values in single quotes** — Docker passes them literally, breaking Pydantic JSON parsing.
+
+---
+
+## Diagnosing Issues
+
+### API down / 502
+```bash
+ssh -i ~/.ssh/contextly_deploy root@143.110.247.23
+docker compose -f /root/Assistant/backend/docker-compose.yml ps
+docker logs chatbot-api --tail 50
+# Common causes:
+# 1. .env has bad formatting (single-quoted JSON values → Pydantic parse error)
+# 2. DB connection failed (check DATABASE_URL, Neon dashboard)
+# 3. Containers stopped — run: docker compose up -d
+```
+
+### Worker not processing ingestion jobs
+```bash
+docker logs chatbot-worker --tail 80
+# Common errors:
+# "another operation is in progress" → asyncpg engine shared across threads
+#   Fix: ensure tasks.py uses create_worker_engine() per call, NOT WorkerAsyncSessionLocal singleton
+# "MissingGreenlet" → ORM object accessed after rollback
+#   Fix: capture source.id before try block
+# "Retries exceeded" → check dead letter table in DB
+# Worker OOM-killed (exit code -9) → check: dmesg | grep -i oom
+#   Fix: docker compose -f ... restart worker (swap is enabled, should recover)
+```
+
+### OOM / memory issues
+```bash
+free -h                     # check swap usage
+docker stats --no-stream    # per-container memory
+dmesg | grep -i "oom\|killed process" | tail -10
+# Swap: /swapfile (2GB) — persistent across reboots (in /etc/fstab)
+# If worker baseline > 400MB something is leaking
+```
+
+### Deploy not triggering
+```bash
+gh run list --limit 5
+# Check: did push include backend/** changes? Deploy only triggers on those paths.
+# Force trigger: gh workflow run deploy.yml
+```
+
+### CORS errors on customer sites
+```bash
+# POST /api/v1/tokens/widget is open to * via widget_token_cors middleware in main.py
+# Other endpoints require origin in BACKEND_CORS_ORIGINS
+# If customer gets 403 on token fetch: their domain not in project.allowed_origins
+```
+
+---
+
+## Widget Embed Flow
+
+**Customer drops this on their site:**
 ```html
 <script src="https://contextly.live/embed.js" data-project-id="uuid" data-api-key="ctly_xxx" defer></script>
 ```
 
-`embed.js` auto-calls `POST /api/v1/tokens/widget` using the API key, gets a JWT, then creates the iframe. No server-side token generation needed on the customer's side.
+**What happens:**
+1. `embed.js` reads `data-api-key` + `data-project-id`
+2. Calls `POST https://api.pranavbuilds.tech/api/v1/tokens/widget` with `X-API-Key` header
+3. Backend validates key, checks `window.location.origin` against `project.allowed_origins`
+4. Returns short-lived JWT (24h)
+5. `embed.js` creates `<iframe src="https://contextly.live/widget?token=...">` 
+6. Sends `chatbot:init` postMessage to iframe with token + projectId
+7. Widget renders chat UI, user messages go to `POST /api/v1/chat`
+8. Token auto-refreshes 5min before expiry via `POST /api/v1/tokens/refresh`
 
-- CORS on `/api/v1/tokens/widget` is opened to `*` via a path-specific middleware in `backend/app/main.py` (`widget_token_cors`).
-- Security is enforced by API key validation + `project.allowed_origins` check on the token endpoint.
-- Customers must add their domain to **allowed origins** in the Contextly dashboard.
-- After auto-fetch, normal JWT refresh cycle takes over (`/tokens/refresh` with Bearer token).
+**Customer must add their domain to allowed origins in the Contextly dashboard.**
 
-## Known Issues Fixed
-
-- **Worker OOM kills**: Reduced to 1 process + added 2GB swap. Was 4 processes × ~200MB = 800MB baseline.
-- **MissingGreenlet on ingestion failure**: `source.id` was accessed after `db.rollback()` expired the ORM object. Fixed by capturing `source_db_id = source.id` before the try block (`backend/app/services/ingestion.py`).
-- **Thread-shared asyncpg engine**: With `--threads 4`, each thread runs `asyncio.run()` with its own event loop but previously shared a singleton asyncpg engine → "another operation is in progress". Fixed by creating a fresh engine per task in `backend/app/worker/tasks.py`.
-- **API startup crash**: VPS `.env` had `BACKEND_CORS_ORIGINS='[...]'` with literal single quotes → Pydantic JSON parse failure. Fixed by removing quotes on VPS.
+---
 
 ## Ingestion Worker Architecture
 
-Dramatiq actor `process_ingestion_task` (sync) calls `asyncio.run(process_ingestion_async(...))`.
-`process_ingestion_async` creates a **fresh** `create_worker_engine()` + session per call — do NOT use the singleton `WorkerAsyncSessionLocal` (causes cross-event-loop asyncpg sharing).
-Engine is disposed with `await engine.dispose()` after the session context exits.
+```
+API receives file upload
+    │
+    └─► enqueues Dramatiq message on Redis "ingestion" queue
+            │
+            └─► chatbot-worker picks it up
+                    process_ingestion_task() [sync Dramatiq actor]
+                        └─► asyncio.run(process_ingestion_async())
+                                │
+                                ├─ creates fresh engine via create_worker_engine()
+                                ├─ fetches file from storage / URL
+                                ├─ IngestionService.process_file()
+                                │     ├─ extract text (PDF/HTML/text)
+                                │     ├─ chunk text
+                                │     ├─ generate embeddings (Azure OpenAI)
+                                │     ├─ store chunks + embeddings in Neon DB
+                                │     └─ mark source.status = "completed"
+                                └─ disposes engine (await engine.dispose())
+```
+
+⚠️ **NEVER use `WorkerAsyncSessionLocal` singleton in tasks** — it shares one asyncpg engine across threads with different event loops → "another operation is in progress" error. Always call `create_worker_engine()` directly per task.
 
 
 
