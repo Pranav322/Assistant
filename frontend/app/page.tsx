@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CopyBlock from "@/components/CopyBlock";
 import { CheckCircle2, Layers, Search, Zap, Shield, Code, Package, Sparkles } from "lucide-react";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
@@ -119,107 +118,80 @@ export default function Home() {
               </div>
 
               <div className="animate-slide-in-from-top relative mt-8 w-full min-w-0 lg:mt-0">
-                <div className="bg-muted/40 overflow-hidden rounded-3xl border p-4 shadow-sm sm:p-6">
-                  <div className="bg-background flex h-[500px] w-full flex-col rounded-2xl border p-4 shadow-lg sm:h-[550px] sm:p-6">
-                    <Tabs defaultValue="widget" className="flex w-full flex-1 flex-col">
-                      <div className="mb-4 flex items-center justify-between">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="widget">
-                            <Code className="mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">Script Tag</span>
-                            <span className="sm:hidden">Script</span>
-                          </TabsTrigger>
-                          <TabsTrigger value="package">
-                            <Package className="mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">React Package</span>
-                            <span className="sm:hidden">React</span>
-                          </TabsTrigger>
-                        </TabsList>
+                <div className="bg-background overflow-hidden rounded-2xl border shadow-xl">
+                  {/* Card header */}
+                  <div className="flex items-center justify-between border-b px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary/10 text-primary flex h-7 w-7 items-center justify-center rounded-md">
+                        <Code className="h-3.5 w-3.5" />
                       </div>
+                      <span className="text-sm font-semibold">Embed with one line</span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
+                      HTML / Any Framework
+                    </Badge>
+                  </div>
 
-                      <TabsContent value="widget" className="flex-1 space-y-4 overflow-auto">
-                        <div className="bg-muted/50 rounded-lg border p-3 sm:p-4">
-                          <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                            <h3 className="text-sm font-medium">Embed with one line</h3>
-                            <Badge variant="outline" className="w-fit text-xs">
-                              HTML / Any Framework
-                            </Badge>
-                          </div>
-                          <div className="max-w-full overflow-x-auto">
-                            <CopyBlock
-                              value={`<script 
-                                src="https://www.contextly.live/embed.js"
-                                data-token="YOUR_WIDGET_TOKEN"
-                                data-project-id="YOUR_PROJECT_ID"
-                                data-api-base-url="https://api.pranavbuilds.tech/api/v1"
-                                defer
-                              ></script>`}
-                            />
-                          </div>
-                        </div>
-                        <ul className="text-muted-foreground space-y-2 text-sm">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2 className="text-primary h-4 w-4" />
-                            <span>Auto-updates with new features</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2 className="text-primary h-4 w-4" />
-                            <span>Zero configuration required</span>
-                          </li>
-                        </ul>
-                      </TabsContent>
+                  {/* Code snippet */}
+                  <div className="bg-muted/30 px-5 py-4">
+                    <CopyBlock
+                      className="text-xs"
+                      value={`<script
+  src="https://contextly.live/embed.js"
+  data-project-id="YOUR_PROJECT_ID"
+  data-api-key="YOUR_API_KEY"
+  defer
+></script>`}
+                    />
+                  </div>
 
-                      <TabsContent value="package" className="flex-1 space-y-4 overflow-auto">
-                        <div className="bg-muted/50 rounded-lg border p-3 sm:p-4">
-                          <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                            <h3 className="text-sm font-medium">Full React Integration</h3>
-                            <Badge variant="outline" className="w-fit text-xs">
-                              npm / pnpm
-                            </Badge>
-                          </div>
-                          <div className="mb-4">
-                            <CopyBlock value="npm install contextly" />
-                          </div>
-                          <div className="max-w-full overflow-x-auto">
-                            <CopyBlock
-                              value={`import { Chat } from "contextly";
-                                    export default function App() {
-                                      return (
-                                        <Chat 
-                                          projectId="YOUR_PROJECT_ID"
-                                          token="YOUR_WIDGET_TOKEN"
-                                        />
-                                      );
-                                    }`}
-                            />
-                          </div>
-                        </div>
-                        <ul className="text-muted-foreground space-y-2 text-sm">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2 className="text-primary h-4 w-4" />
-                            <span>Headless hooks for custom UI</span>
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle2 className="text-primary h-4 w-4" />
-                            <span>TypeScript support included</span>
-                          </li>
-                        </ul>
-                      </TabsContent>
-                    </Tabs>
+                  {/* Feature bullets */}
+                  <div className="space-y-2.5 border-t px-5 py-4">
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                      <span className="text-muted-foreground">
+                        Drop one tag — no server setup, no token management
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                      <span className="text-muted-foreground">
+                        Works in any HTML page, Next.js, Vue, or plain React
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2.5 text-sm">
+                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                      <span className="text-muted-foreground">
+                        Auto-updates, auto-refreshes auth — zero maintenance
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* React SDK coming soon */}
+                  <div className="border-t px-5 py-3">
+                    <div className="flex items-center gap-2.5 rounded-lg border border-dashed bg-muted/20 px-3.5 py-2.5">
+                      <Package className="text-muted-foreground h-4 w-4 shrink-0" />
+                      <span className="text-muted-foreground text-xs">
+                        React SDK — headless hooks &amp; components
+                      </span>
+                      <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">
+                        In development
+                      </Badge>
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-muted-foreground mt-6 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
-                  <div className="bg-background/80 rounded-lg border p-3">
-                    <p className="text-foreground text-lg font-semibold">99.9%</p>
+                <div className="text-muted-foreground mt-4 grid grid-cols-3 gap-3 text-xs">
+                  <div className="bg-background/80 rounded-xl border p-3">
+                    <p className="text-foreground text-lg font-bold">99.9%</p>
                     <p>uptime</p>
                   </div>
-                  <div className="bg-background/80 rounded-lg border p-3">
-                    <p className="text-foreground text-lg font-semibold">30+ GB</p>
-                    <p>chatbot knowledge indexed daily</p>
+                  <div className="bg-background/80 rounded-xl border p-3">
+                    <p className="text-foreground text-lg font-bold">30+ GB</p>
+                    <p>knowledge indexed daily</p>
                   </div>
-                  <div className="bg-background/80 col-span-2 rounded-lg border p-3 sm:col-span-1">
-                    <p className="text-foreground text-lg font-semibold">3 min</p>
+                  <div className="bg-background/80 rounded-xl border p-3">
+                    <p className="text-foreground text-lg font-bold">3 min</p>
                     <p>to first answer</p>
                   </div>
                 </div>

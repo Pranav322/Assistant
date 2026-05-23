@@ -237,16 +237,32 @@ export function SettingsTab({
                   <Code className="h-4 w-4" /> How to use your API Key
                 </h4>
                 <p className="text-muted-foreground text-xs leading-relaxed">
-                  Use the `x-api-key` header in your requests.
+                  Pass your API key via the <code className="bg-muted rounded px-1 py-0.5 font-mono">x-api-key</code> header.
+                  Use it to embed the widget on your site, ingest documents, or query the chat API directly.
                 </p>
-                <div className="relative w-full max-w-full overflow-hidden">
-                  <CopyBlock
-                    className="text-xs break-all whitespace-pre-wrap"
-                    value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">Embed snippet</p>
+                  <div className="relative w-full max-w-full overflow-hidden">
+                    <CopyBlock
+                      className="text-xs break-all whitespace-pre-wrap"
+                      value={`<script
+  src="https://contextly.live/embed.js"
+  data-project-id="${project.id}"
+  data-api-key="${freshKey?.api_key || "YOUR_API_KEY"}"
+  defer
+></script>`}
+                    />
+                  </div>
+                  <p className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider pt-1">Ingest a URL</p>
+                  <div className="relative w-full max-w-full overflow-hidden">
+                    <CopyBlock
+                      className="text-xs break-all whitespace-pre-wrap"
+                      value={`curl -X POST "${apiBaseUrl}/ingestion/url?project_id=${project.id}" \\
   -H "x-api-key: ${freshKey?.api_key || "YOUR_API_KEY"}" \\
   -H "Content-Type: application/json" \\
   -d '{"url": "https://example.com"}'`}
-                  />
+                    />
+                  </div>
                 </div>
               </div>
 
