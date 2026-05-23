@@ -44,7 +44,9 @@ def _slugify(name: str) -> str:
     return slug[:50] or "chatbot"
 
 
-async def _generate_unique_slug(name: str, db: AsyncSession, exclude_id: uuid.UUID | None = None) -> str:
+async def _generate_unique_slug(
+    name: str, db: AsyncSession, exclude_id: uuid.UUID | None = None
+) -> str:
     base = _slugify(name)
     candidate = base
     counter = 2
@@ -68,7 +70,6 @@ class SlugResponse(BaseModel):
     slug: str | None
     public_chat_enabled: bool
     public_url: str | None
-
 
 
 @router.get("/projects/{project_id}/sources", response_model=list[SourceResponse])
@@ -219,7 +220,9 @@ async def create_project(
     await db.flush()  # get the id before generating slug
 
     # Auto-generate unique slug from project name
-    project.public_slug = await _generate_unique_slug(payload.name, db, exclude_id=project.id)
+    project.public_slug = await _generate_unique_slug(
+        payload.name, db, exclude_id=project.id
+    )
 
     await db.commit()
     await db.refresh(project)
@@ -499,7 +502,9 @@ async def get_project_slug(
         if settings.ENVIRONMENT == "development"
         else "https://contextly.live"
     )
-    public_url = f"{base_url}/chat/{project.public_slug}" if project.public_slug else None
+    public_url = (
+        f"{base_url}/chat/{project.public_slug}" if project.public_slug else None
+    )
     return SlugResponse(
         slug=project.public_slug,
         public_chat_enabled=project.public_chat_enabled,
@@ -530,11 +535,18 @@ async def update_project_slug(
                 detail="Slug must be 3-50 characters: lowercase letters, numbers and hyphens only (no leading/trailing hyphens).",
             )
         # Check uniqueness
-        existing = (await db.execute(
-            select(Project).where(Project.public_slug == new_slug, Project.id != project_id)
-        )).scalar_one_or_none()
+        existing = (
+            await db.execute(
+                select(Project).where(
+                    Project.public_slug == new_slug, Project.id != project_id
+                )
+            )
+        ).scalar_one_or_none()
         if existing:
-            raise HTTPException(status_code=409, detail="This slug is already taken. Please choose a different one.")
+            raise HTTPException(
+                status_code=409,
+                detail="This slug is already taken. Please choose a different one.",
+            )
         project.public_slug = new_slug
 
     if payload.public_chat_enabled is not None:
@@ -548,10 +560,11 @@ async def update_project_slug(
         if settings.ENVIRONMENT == "development"
         else "https://contextly.live"
     )
-    public_url = f"{base_url}/chat/{project.public_slug}" if project.public_slug else None
+    public_url = (
+        f"{base_url}/chat/{project.public_slug}" if project.public_slug else None
+    )
     return SlugResponse(
         slug=project.public_slug,
         public_chat_enabled=project.public_chat_enabled,
         public_url=public_url,
     )
-

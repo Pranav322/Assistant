@@ -3,9 +3,9 @@ from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import dramatiq
-from dramatiq.brokers.stub import StubBroker
-from dramatiq.middleware import AgeLimit, TimeLimit, Callbacks, Pipelines, Retries
 import pytest
+from dramatiq.brokers.stub import StubBroker
+from dramatiq.middleware import AgeLimit, Callbacks, Pipelines, Retries, TimeLimit
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine

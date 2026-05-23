@@ -10,15 +10,18 @@ from httpx import AsyncClient
 
 from app.services.billing import get_effective_plan
 
-
 # ── Helpers ──────────────────────────────────────────────────
 
-def _make_user(plan: str = "free", expires_at: datetime | None = None) -> SimpleNamespace:
+
+def _make_user(
+    plan: str = "free", expires_at: datetime | None = None
+) -> SimpleNamespace:
     """Create a lightweight user-like object for unit tests."""
     return SimpleNamespace(plan=plan, plan_expires_at=expires_at)
 
 
 # ── Unit tests: get_effective_plan ───────────────────────────
+
 
 class TestGetEffectivePlan:
     """Pure unit tests — no DB, no async."""
@@ -50,13 +53,17 @@ class TestGetEffectivePlan:
 
     def test_naive_datetime_treated_as_utc(self):
         # Naive datetime (no tzinfo) in the future → still pro
-        future_naive = (datetime.now(timezone.utc) + timedelta(days=10)).replace(tzinfo=None)
+        future_naive = (datetime.now(timezone.utc) + timedelta(days=10)).replace(
+            tzinfo=None
+        )
         user = _make_user(plan="pro", expires_at=future_naive)
         assert get_effective_plan(user) == "pro"
 
     def test_naive_datetime_expired_treated_as_utc(self):
         # Naive datetime in the past → free
-        past_naive = (datetime.now(timezone.utc) - timedelta(days=1)).replace(tzinfo=None)
+        past_naive = (datetime.now(timezone.utc) - timedelta(days=1)).replace(
+            tzinfo=None
+        )
         user = _make_user(plan="pro", expires_at=past_naive)
         assert get_effective_plan(user) == "free"
 
@@ -73,6 +80,7 @@ class TestGetEffectivePlan:
 
 
 # ── Integration tests: billing endpoints ─────────────────────
+
 
 @pytest.mark.asyncio
 async def test_get_plan_unauthenticated(client: AsyncClient):

@@ -302,8 +302,7 @@ def generate_citations(
                 or source_meta.get("file_url")
             ),
             "source": (
-                source_meta.get("filename")
-                or source_meta.get("original_filename")
+                source_meta.get("filename") or source_meta.get("original_filename")
             ),
             "page": chunk_meta.get("page_number"),
             "section": chunk_meta.get("section_title"),
@@ -336,15 +335,83 @@ class QueryProcessor:
     def __init__(self) -> None:
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
         self.stop_words = {
-            "a", "an", "the", "and", "or", "but", "in", "on", "at", "to",
-            "for", "of", "with", "by", "from", "as", "is", "are", "was",
-            "were", "be", "been", "being", "have", "has", "had", "do", "does",
-            "did", "will", "would", "could", "should", "may", "might", "shall",
-            "can", "need", "dare", "ought", "used", "what", "which", "who",
-            "whom", "this", "that", "these", "those", "how", "why", "when",
-            "where", "i", "me", "my", "we", "our", "you", "your", "it", "its",
-            "they", "them", "their", "about", "up", "out", "into", "than",
-            "so", "if", "not", "no", "nor", "just", "also",
+            "a",
+            "an",
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "from",
+            "as",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "shall",
+            "can",
+            "need",
+            "dare",
+            "ought",
+            "used",
+            "what",
+            "which",
+            "who",
+            "whom",
+            "this",
+            "that",
+            "these",
+            "those",
+            "how",
+            "why",
+            "when",
+            "where",
+            "i",
+            "me",
+            "my",
+            "we",
+            "our",
+            "you",
+            "your",
+            "it",
+            "its",
+            "they",
+            "them",
+            "their",
+            "about",
+            "up",
+            "out",
+            "into",
+            "than",
+            "so",
+            "if",
+            "not",
+            "no",
+            "nor",
+            "just",
+            "also",
         }
 
     def process_query(
@@ -566,7 +633,9 @@ class RetrievalPipeline:
                 max_tokens=150,
             )
             text = response.choices[0].message.content or ""
-            expansions = [line.strip() for line in text.strip().splitlines() if line.strip()]
+            expansions = [
+                line.strip() for line in text.strip().splitlines() if line.strip()
+            ]
             return expansions[:num]
         except Exception:
             logger.warning("llm_query_expansion_failed", query=query)

@@ -177,9 +177,7 @@ async def verify_payment(
             "status": "already_active",
             "plan": "pro",
             "plan_expires_at": (
-                user.plan_expires_at.isoformat()
-                if user.plan_expires_at
-                else None
+                user.plan_expires_at.isoformat() if user.plan_expires_at else None
             ),
         }
 

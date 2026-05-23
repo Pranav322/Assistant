@@ -1,10 +1,12 @@
-import pytest
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
-from app.models import User
+
 from app.core import security
+from app.models import User
 
 # Mock payload for the endpoint
 MOCK_ID_TOKEN = "mock_firebase_id_token"

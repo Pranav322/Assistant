@@ -10,8 +10,8 @@ from app.services.retrieval import (
     AssembledContext,
     FusedResult,
     QueryProcessor,
-    RetrievalPipeline,
     Reranker,
+    RetrievalPipeline,
 )
 
 

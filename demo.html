@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contextly Widget Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+    .config-bar {
+      background: #1e293b;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .config-bar h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-right: 8px;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .field input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      width: 240px;
+      outline: none;
+    }
+    .field input:focus { border-color: #6366f1; }
+    .field input::placeholder { color: #475569; }
+    .load-btn {
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: flex-end;
+      transition: background .15s;
+    }
+    .load-btn:hover { background: #4f46e5; }
+    .load-btn:disabled { background: #475569; cursor: not-allowed; }
+    .status-bar {
+      background: #0f172a;
+      color: #64748b;
+      font-size: 12px;
+      padding: 6px 24px;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-bar.ok { color: #4ade80; }
+    .status-bar.err { color: #f87171; }
+    .status-bar.loading { color: #facc15; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+    .page-content {
+      max-width: 760px;
+      margin: 60px auto;
+      padding: 0 24px;
+    }
+    .page-content h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+    .page-content p { color: #64748b; line-height: 1.7; margin-bottom: 16px; font-size: 15px; }
+    .page-content ul { color: #64748b; line-height: 2; padding-left: 20px; font-size: 15px; }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 32px;
+    }
+    .card h3 { font-size: 14px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    code {
+      font-family: ui-monospace, monospace;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #6366f1;
+    }
+    .snippet {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin-top: 8px;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+
+<div class="config-bar">
+  <h1>Contextly Demo</h1>
+
+  <div class="field">
+    <label>API Base URL</label>
+    <input id="apiBase" value="https://api.pranavbuilds.tech" placeholder="https://api.pranavbuilds.tech" />
+  </div>
+
+  <div class="field">
+    <label>Widget URL</label>
+    <input id="widgetUrl" value="https://contextly.live/widget" placeholder="https://contextly.live/widget or http://localhost:3000/widget" />
+  </div>
+
+  <div class="field">
+    <label>Project ID</label>
+    <input id="projectId" placeholder="paste project UUID" />
+  </div>
+
+  <div class="field">
+    <label>API Key</label>
+    <input id="apiKey" placeholder="ctly_..." />
+  </div>
+
+  <button class="load-btn" id="loadBtn" onclick="loadWidget()">Load Widget</button>
+</div>
+
+<div class="status-bar" id="statusBar">
+  <span class="dot"></span> Enter your project ID and API key above, then click Load Widget.
+</div>
+
+<div class="page-content">
+  <h2>Welcome to the Demo Page</h2>
+  <p>
+    This page simulates a customer site with the Contextly chatbot embedded.
+    Fill in the config above and hit <strong>Load Widget</strong> — the chat button
+    will appear in the bottom-right corner.
+  </p>
+  <p>
+    The demo will:
+  </p>
+  <ul>
+    <li>Call <code>POST /api/v1/tokens/widget</code> with your API key to get a JWT</li>
+    <li>Inject <code>embed.js</code> from the widget URL's origin</li>
+    <li>Open the chat widget pre-authenticated</li>
+  </ul>
+
+  <div class="card">
+    <h3>How to get your credentials</h3>
+    <p>
+      1. Go to <strong>contextly.live</strong> (or localhost:3000) → create a project and index some documents.<br/>
+      2. In the project settings, create an API key.<br/>
+      3. Copy the project UUID from the URL: <code>/projects/<strong>your-uuid</strong></code><br/>
+      4. Paste both above and click Load Widget.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Equivalent embed.js snippet</h3>
+    <p>Once tested here, use this in any website:</p>
+    <div class="snippet" id="snippetBox">&lt;!-- fill in project ID and token --&gt;</div>
+  </div>
+</div>
+
+<script>
+  async function loadWidget() {
+    const apiBase   = document.getElementById('apiBase').value.trim().replace(/\/$/, '');
+    const widgetUrl = document.getElementById('widgetUrl').value.trim();
+    const projectId = document.getElementById('projectId').value.trim();
+    const apiKey    = document.getElementById('apiKey').value.trim();
+    const btn       = document.getElementById('loadBtn');
+    const status    = document.getElementById('statusBar');
+
+    if (!projectId || !apiKey) {
+      setStatus('err', 'Project ID and API key are required.');
+      return;
+    }
+
+    // Remove any previously loaded widget
+    if (window.ChatbotWidget) { window.ChatbotWidget.destroy(); }
+    const old = document.getElementById('contextly-widget-root');
+    if (old) old.remove();
+    const oldScript = document.getElementById('contextly-embed-script');
+    if (oldScript) oldScript.remove();
+
+    btn.disabled = true;
+    setStatus('loading', 'Fetching widget token...');
+
+    let token;
+    try {
+      const res = await fetch(`${apiBase}/api/v1/tokens/widget`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+        body: JSON.stringify({
+          project_id: projectId,
+          origin: window.location.origin,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus('err', `Token error ${res.status}: ${data.detail || JSON.stringify(data)}`);
+        btn.disabled = false;
+        return;
+      }
+      token = data.token;
+    } catch (e) {
+      setStatus('err', `Network error: ${e.message}`);
+      btn.disabled = false;
+      return;
+    }
+
+    setStatus('loading', 'Token received — loading widget...');
+
+    // Derive embed.js URL from widget URL origin
+    const widgetOrigin = new URL(widgetUrl).origin;
+    const embedSrc = `${widgetOrigin}/embed.js`;
+
+    const script = document.createElement('script');
+    script.id = 'contextly-embed-script';
+    script.src = embedSrc;
+    script.setAttribute('data-token', token);
+    script.setAttribute('data-project-id', projectId);
+    script.setAttribute('data-widget-url', widgetUrl);
+    script.setAttribute('data-api-base-url', `${apiBase}/api/v1`);
+    script.setAttribute('data-refresh-url', `${apiBase}/api/v1/tokens/refresh`);
+    script.setAttribute('data-open', 'true');
+    script.defer = true;
+
+    script.onload = () => {
+      setStatus('ok', `Widget loaded — project ${projectId.slice(0,8)}... — token expires in ~24h`);
+      btn.disabled = false;
+      updateSnippet(widgetOrigin, projectId, widgetUrl, apiBase);
+    };
+    script.onerror = () => {
+      setStatus('err', `Failed to load embed.js from ${embedSrc}`);
+      btn.disabled = false;
+    };
+
+    document.body.appendChild(script);
+  }
+
+  function setStatus(type, msg) {
+    const el = document.getElementById('statusBar');
+    el.className = `status-bar ${type}`;
+    el.innerHTML = `<span class="dot"></span> ${msg}`;
+  }
+
+  function updateSnippet(widgetOrigin, projectId, widgetUrl, apiBase) {
+    document.getElementById('snippetBox').textContent =
+`<!-- 1. Generate a token server-side via POST ${apiBase}/api/v1/tokens/widget -->
+<!-- 2. Inject it into the script tag below -->
+<script
+  src="${widgetOrigin}/embed.js"
+  data-token="YOUR_SERVER_GENERATED_TOKEN"
+  data-project-id="${projectId}"
+  data-widget-url="${widgetUrl}"
+  data-refresh-url="${apiBase}/api/v1/tokens/refresh"
+  defer
+><\/script>`;
+  }
+</script>
+
+</body>
+</html>

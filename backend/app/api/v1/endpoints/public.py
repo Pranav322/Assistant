@@ -45,7 +45,9 @@ def _slugify(name: str) -> str:
     return slug[:50] or "chatbot"
 
 
-async def _generate_unique_slug(name: str, db: AsyncSession, exclude_project_id: uuid.UUID | None = None) -> str:
+async def _generate_unique_slug(
+    name: str, db: AsyncSession, exclude_project_id: uuid.UUID | None = None
+) -> str:
     """Generate a unique slug from a project name, appending -2, -3 etc if needed."""
     base = _slugify(name)
     candidate = base
@@ -98,7 +100,9 @@ async def get_public_chat_token(
     )
     if not allowed:
         record_rate_limit_hit("public_chat_token")
-        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
+        raise HTTPException(
+            status_code=429, detail="Rate limit exceeded. Please try again later."
+        )
 
     # --- Determine origin for the token ---
     # The public chatbot page lives at contextly.live, so the token encodes that as the allowed origin.
@@ -139,7 +143,9 @@ async def get_public_chat_token(
     config = {
         "title": settings_data.get("title", "Assistant"),
         "primary_color": settings_data.get("primary_color", "#4f46e5"),
-        "welcome_message": settings_data.get("welcome_message", "How can I help you today?"),
+        "welcome_message": settings_data.get(
+            "welcome_message", "How can I help you today?"
+        ),
         "starter_questions": settings_data.get("starter_questions", []),
         "logo_url": settings_data.get("logo_url"),
     }

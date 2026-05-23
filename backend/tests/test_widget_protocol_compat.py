@@ -33,11 +33,15 @@ async def test_widget_chat_response_contains_citations_field(
     db.add(api_key)
     await db.commit()
 
-    async def fake_generate_response(self, project_id, query, conversation_id=None, project=None):
+    async def fake_generate_response(
+        self, project_id, query, conversation_id=None, project=None
+    ):
         return {
             "response": "ok",
             "citations": [{"source": "https://example.com/doc"}],
-            "conversation_id": str(conversation_id) if conversation_id else str(uuid.uuid4()),
+            "conversation_id": (
+                str(conversation_id) if conversation_id else str(uuid.uuid4())
+            ),
         }
 
     monkeypatch.setattr(

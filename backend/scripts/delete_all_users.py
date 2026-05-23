@@ -1,7 +1,7 @@
 import asyncio
-import sys
 import logging
 import os
+import sys
 
 # Ensure the project root is in sys.path
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -11,20 +11,23 @@ print(f"DEBUG: Project Root: {PROJECT_ROOT}")
 print(f"DEBUG: CWD: {os.getcwd()}")
 print(f"DEBUG: sys.path: {sys.path}")
 
-from sqlalchemy import select
 from firebase_admin import auth
+from sqlalchemy import select
 
 from app.api.deps import AsyncSessionLocal
-from app.models import User, Project, Source, RetrievalMetric
 from app.core.firebase import initialize_firebase
+from app.models import Project, RetrievalMetric, Source, User
 from app.services.storage import StorageService
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 async def delete_all_data():
-    confirmation = input("⚠️  WARNING: This will DELETE ALL USERS and their data from Postgres, S3, and Firebase.\nAre you sure? (type 'yes' to confirm): ")
+    confirmation = input(
+        "⚠️  WARNING: This will DELETE ALL USERS and their data from Postgres, S3, and Firebase.\nAre you sure? (type 'yes' to confirm): "
+    )
     if confirmation != "yes":
         print("Aborted.")
         return
@@ -40,7 +43,7 @@ async def delete_all_data():
         logger.info("Fetching all users from Postgres...")
         result = await db.execute(select(User))
         users = result.scalars().all()
-        
+
         logger.info(f"Found {len(users)} users in Postgres.")
 
         storage = StorageService()
@@ -58,23 +61,32 @@ async def delete_all_data():
                     try:
                         await storage.delete_file(source.storage_location)
                     except Exception as e:
-                        logger.error(f"Failed to delete file {source.storage_location}: {e}")
-            
+                        logger.error(
+                            f"Failed to delete file {source.storage_location}: {e}"
+                        )
+
             # B. Cleanup Retrieval Metrics (Missing Cascade)
             # Find all projects for this user
-            projects_result = await db.execute(select(Project.id).where(Project.owner_id == user.id))
+            projects_result = await db.execute(
+                select(Project.id).where(Project.owner_id == user.id)
+            )
             project_ids = projects_result.scalars().all()
-            
+
             if project_ids:
                 from sqlalchemy import delete
+
                 await db.execute(
-                    delete(RetrievalMetric).where(RetrievalMetric.project_id.in_(project_ids))
+                    delete(RetrievalMetric).where(
+                        RetrievalMetric.project_id.in_(project_ids)
+                    )
                 )
-                logger.info(f"Deleted retrieval metrics for {len(project_ids)} projects.")
+                logger.info(
+                    f"Deleted retrieval metrics for {len(project_ids)} projects."
+                )
 
             # C. Delete from Postgres
             await db.delete(user)
-            
+
             # D. Delete from Firebase (if email exists)
             try:
                 user_record = auth.get_user_by_email(user.email)
@@ -99,11 +111,12 @@ async def delete_all_data():
                 auth.delete_user(user.uid)
             except Exception as e:
                 logger.error(f"Failed to delete {user.uid}: {e}")
-        
+
         # Get next page
         page = page.get_next_page()
 
     logger.info("🎉 System Wipe Complete.")
+
 
 if __name__ == "__main__":
     asyncio.run(delete_all_data())

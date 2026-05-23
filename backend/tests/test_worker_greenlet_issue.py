@@ -93,6 +93,7 @@ async def test_dramatiq_worker_reproduces_greenlet_error(db):
             async_sessionmaker,
             create_async_engine,
         )
+
         from app.core.config import settings
 
         # This is what the current worker does - creates engine at import time
@@ -144,9 +145,9 @@ async def test_dramatiq_worker_reproduces_greenlet_error(db):
     if "error" in exception_holder:
         error = exception_holder["error"]
         # This should be MissingGreenlet or contain our error message
-        assert isinstance(error, MissingGreenlet) or "greenlet_spawn" in str(error), (
-            f"Expected MissingGreenlet error, got: {type(error).__name__}: {error}"
-        )
+        assert isinstance(error, MissingGreenlet) or "greenlet_spawn" in str(
+            error
+        ), f"Expected MissingGreenlet error, got: {type(error).__name__}: {error}"
     else:
         # If no error, it means the bug is already fixed
         pass
@@ -292,9 +293,9 @@ async def test_url_fetch_failure_handling(db):
             await db.refresh(source)
 
             # Verify status is failed and error is recorded
-            assert source.status == "failed", (
-                f"Source status should be 'failed', got '{source.status}'"
-            )
+            assert (
+                source.status == "failed"
+            ), f"Source status should be 'failed', got '{source.status}'"
             assert source.metadata_ is not None
             assert "error" in source.metadata_, "Error should be recorded in metadata"
 
@@ -312,6 +313,7 @@ async def test_worker_with_correct_async_engine_succeeds(db):
         async_sessionmaker,
         create_async_engine,
     )
+
     from app.core.config import settings
 
     # Create engine WITHOUT pool_pre_ping (the fix)
@@ -431,9 +433,9 @@ async def test_dramatiq_retries_exceeded_scenario(db):
                 await db.commit()
 
     # Verify the scenario
-    assert retry_count == max_retries + 1, (
-        f"Expected {max_retries + 1} attempts, got {retry_count}"
-    )
+    assert (
+        retry_count == max_retries + 1
+    ), f"Expected {max_retries + 1} attempts, got {retry_count}"
 
     # Verify dead letter entry was created
     result = await db.execute(
@@ -441,7 +443,7 @@ async def test_dramatiq_retries_exceeded_scenario(db):
     )
     dead_letter = result.scalar_one_or_none()
 
-    assert dead_letter is not None, (
-        "Dead letter entry should be created after retries exceeded"
-    )
+    assert (
+        dead_letter is not None
+    ), "Dead letter entry should be created after retries exceeded"
     assert "greenlet_spawn" in dead_letter.error

@@ -10,8 +10,8 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
-    text,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, backref, mapped_column, relationship

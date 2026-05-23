@@ -10,12 +10,12 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.models import Source
-from app.services.ingestion_events import publish_ingestion_event
-from app.worker.db import WorkerAsyncSessionLocal
 from app.services.ingestion import IngestionService
+from app.services.ingestion_events import publish_ingestion_event
 from app.services.ingestion_validation import derive_file_type
 from app.services.storage import StorageService
 from app.services.url_fetcher import fetch_url_content
+from app.worker.db import WorkerAsyncSessionLocal
 
 logger = structlog.get_logger()
 
@@ -50,7 +50,9 @@ async def process_ingestion_async(
             resolved_url = None
             content_type = None
             if not content and source_url:
-                content, content_type, resolved_url = await fetch_url_content(source_url)
+                content, content_type, resolved_url = await fetch_url_content(
+                    source_url
+                )
 
             if not content and storage_path:
                 content = await storage_service.get_file(storage_path)

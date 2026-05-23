@@ -40,7 +40,7 @@ async def upload_document(
     Upload a document for processing.
     This creates a source record and queues a background task for chunking and embedding.
     """
-    from sqlalchemy import select, update, func
+    from sqlalchemy import func, select, update
 
     # 1. Read file content
     content = await file.read()
@@ -282,7 +282,7 @@ async def ingest_url(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     content_hash = hashlib.sha256(url.encode()).hexdigest()
-    from sqlalchemy import select, update, func
+    from sqlalchemy import func, select, update
 
     existing_source = await db.execute(
         select(Source).where(
