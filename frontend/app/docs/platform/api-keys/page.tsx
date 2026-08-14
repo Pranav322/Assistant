@@ -24,7 +24,7 @@ API keys let you interact with the platform programmatically — uploading docum
 ### Via API
 
 \`\`\`bash
-curl -X POST "https://api.pranavbuilds.tech/api/v1/api-keys" \\
+curl -X POST "https://api.contextly.live/api/v1/api-keys" \\
   -H "Authorization: Bearer YOUR_JWT" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "Production Key"}'
@@ -37,7 +37,7 @@ curl -X POST "https://api.pranavbuilds.tech/api/v1/api-keys" \\
 Include the key in the \`X-API-Key\` header:
 
 \`\`\`bash
-curl "https://api.pranavbuilds.tech/api/v1/sources" \\
+curl "https://api.contextly.live/api/v1/sources" \\
   -H "X-API-Key: chat_xyz789..."
 \`\`\`
 
@@ -61,7 +61,7 @@ Example: \`chat_live_abc123xyz789\`
 ### Via API
 
 \`\`\`bash
-curl -X DELETE "https://api.pranavbuilds.tech/api/v1/api-keys/key_abc123" \\
+curl -X DELETE "https://api.contextly.live/api/v1/api-keys/key_abc123" \\
   -H "Authorization: Bearer YOUR_JWT"
 \`\`\`
 

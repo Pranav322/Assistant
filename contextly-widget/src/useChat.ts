@@ -36,7 +36,7 @@ export function generateUUID() {
 export function useChat({
   projectId,
   token,
-  apiBaseUrl = "https://api.pranavbuilds.tech/api/v1", // Default production URL per spec
+  apiBaseUrl = "https://api.contextly.live/api/v1", // Default production URL per spec
   onReady,
   onError,
 }: ChatConfig): ChatState {

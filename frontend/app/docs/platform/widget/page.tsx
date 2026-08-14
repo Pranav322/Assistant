@@ -34,7 +34,7 @@ Paste this before \`</body>\` on your website:
   data-token="YOUR_WIDGET_TOKEN"
   data-project-id="YOUR_PROJECT_ID"
   data-origin="https://yourwebsite.com"
-  data-api-base-url="https://api.pranavbuilds.tech/api/v1"
+  data-api-base-url="https://api.contextly.live/api/v1"
   data-mode="popup"
   defer
 ></script>
@@ -90,7 +90,7 @@ Copy and paste this complete example to test:
     data-token="YOUR_WIDGET_TOKEN"
     data-project-id="YOUR_PROJECT_ID"
     data-origin="https://yourwebsite.com"
-    data-api-base-url="https://api.pranavbuilds.tech/api/v1"
+    data-api-base-url="https://api.contextly.live/api/v1"
     data-mode="popup"
     defer
   ></script>
