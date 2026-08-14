@@ -629,8 +629,7 @@ class RetrievalPipeline:
                     },
                     {"role": "user", "content": query},
                 ],
-                temperature=0.7,
-                max_tokens=150,
+                max_completion_tokens=150,
             )
             text = response.choices[0].message.content or ""
             expansions = [
