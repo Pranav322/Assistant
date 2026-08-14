@@ -212,7 +212,6 @@ class ChatService:
         response = await self.client.chat.completions.create(
             model=settings.AZURE_DEPLOYMENT_NAME,
             messages=messages,
-            temperature=0.2,
         )
         content = response.choices[0].message.content or ""
         usage = getattr(response, "usage", None)
