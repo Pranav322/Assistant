@@ -25,8 +25,8 @@ from app.services.rate_limit import RateLimiter
 
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True,
-    pool_pre_ping=True,
+    echo=False,
+    pool_pre_ping=False,
     pool_recycle=300,
 )
 AsyncSessionLocal = async_sessionmaker(
