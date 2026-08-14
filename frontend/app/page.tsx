@@ -68,7 +68,7 @@ export default function Home() {
           <div className="bg-primary/10 absolute top-0 right-0 -z-10 h-64 w-64 rounded-full opacity-50 blur-3xl sm:h-96 sm:w-96 sm:opacity-100" />
           <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
             <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
-              <div className="animate-slide-in-from-bottom text-left lg:mt-12">
+              <div className="animate-slide-in-from-bottom text-left">
                 <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
                   The RAG Chatbot Platform for Developers
                 </Badge>
