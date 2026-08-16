@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import CopyBlock from "@/components/CopyBlock";
-import { CheckCircle2, Layers, Search, Zap, Shield, Code, Package, Sparkles } from "lucide-react";
+import { Layers, Search, Zap, Shield, Sparkles } from "lucide-react";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
 import { PricingTiers } from "@/components/pricing-tiers";
 import { buildPageMetadata } from "@/lib/seo";
@@ -63,139 +62,47 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden">
-          <div className="bg-muted/30 absolute inset-y-0 right-0 -z-10 w-full lg:w-1/2" />
-          <div className="bg-primary/10 absolute top-0 right-0 -z-10 h-64 w-64 rounded-full opacity-50 blur-3xl sm:h-96 sm:w-96 sm:opacity-100" />
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
-            <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
-              <div className="animate-slide-in-from-bottom text-left">
-                <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
-                  The RAG Chatbot Platform for Developers
-                </Badge>
-                <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-balance sm:text-5xl md:text-6xl lg:leading-[1.1]">
-                  Ship intelligent <span className="text-primary">RAG chatbots</span>{" "}
-                  <span className="block sm:inline">in minutes.</span>
-                </h1>
-                <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed text-balance sm:text-xl">
-                  A complete toolkit for building retrieval-augmented generation apps.
-                  <span className="text-foreground font-medium"> Embed custom chatbots</span>{" "}
-                  directly in your existing app. Handles ingestion, retrieval, auth, and
-                  observability so you can focus on your users.
-                </p>
-                <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                  <HomeHeroAuthCTA />
-                </div>
+        <section className="relative overflow-hidden border-b">
+          <div className="bg-primary/10 absolute top-0 left-1/2 -z-10 h-72 w-[36rem] -translate-x-1/2 rounded-full opacity-60 blur-3xl" />
 
-                <div className="mt-6 pt-2">
-                  <Link
-                    href="/rag-chatbot-from-documents"
-                    className="text-muted-foreground hover:text-primary inline-flex items-center gap-2 text-sm font-medium transition-colors"
-                  >
-                    <Sparkles className="text-primary h-4 w-4" />
-                    <span>Build a RAG chatbot from your documents</span>
-                    <span aria-hidden="true">&rarr;</span>
-                  </Link>
-                </div>
+          <div className="mx-auto w-full max-w-[1000px] px-4 pt-16 text-center sm:px-6 sm:pt-24 lg:px-8">
+            <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
+              Add a live chatbot to any website
+            </Badge>
+            <h1 className="mx-auto max-w-3xl text-5xl font-bold tracking-tight text-balance sm:text-6xl md:text-7xl lg:leading-[1.05]">
+              Any website,{" "}
+              <span className="text-primary">a working chatbot</span> in minutes.
+            </h1>
+            <p className="text-muted-foreground mx-auto mt-6 max-w-xl text-lg leading-relaxed text-balance sm:text-xl">
+              Point Contextly at your docs, drop in one script tag, and a grounded AI chatbot
+              goes live on your site — no infrastructure to manage.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <HomeHeroAuthCTA />
+            </div>
+            <div className="mt-6">
+              <Link
+                href="/rag-chatbot-from-documents"
+                className="text-muted-foreground hover:text-primary inline-flex items-center gap-2 text-sm font-medium transition-colors"
+              >
+                <Sparkles className="text-primary h-4 w-4" />
+                <span>Build a RAG chatbot from your documents</span>
+                <span aria-hidden="true">&rarr;</span>
+              </Link>
+            </div>
+          </div>
 
-                <div className="text-muted-foreground mt-10 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
-                    <span>Instant Chatbot Knowledge</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
-                    <span>Embed Chatbot anywhere</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
-                    <span>Production Scale RAG</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />
-                    <span>Secure by Default</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="animate-slide-in-from-top relative mt-8 w-full min-w-0 lg:mt-0">
-                <div className="bg-background overflow-hidden rounded-2xl border shadow-xl">
-                  {/* Card header */}
-                  <div className="flex items-center justify-between border-b px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary/10 text-primary flex h-7 w-7 items-center justify-center rounded-md">
-                        <Code className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="text-sm font-semibold">Embed with one line</span>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wide">
-                      HTML / Any Framework
-                    </Badge>
-                  </div>
-
-                  {/* Code snippet */}
-                  <div className="bg-muted/30 px-5 py-4">
-                    <CopyBlock
-                      className="text-xs"
-                      value={`<script
-  src="https://contextly.live/embed.js"
-  data-project-id="YOUR_PROJECT_ID"
-  data-api-key="YOUR_API_KEY"
-  defer
-></script>`}
-                    />
-                  </div>
-
-                  {/* Feature bullets */}
-                  <div className="space-y-2.5 border-t px-5 py-4">
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
-                      <span className="text-muted-foreground">
-                        Drop one tag — no server setup, no token management
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
-                      <span className="text-muted-foreground">
-                        Works in any HTML page, Next.js, Vue, or plain React
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <CheckCircle2 className="text-primary mt-0.5 h-4 w-4 shrink-0" />
-                      <span className="text-muted-foreground">
-                        Auto-updates, auto-refreshes auth — zero maintenance
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* React SDK coming soon */}
-                  <div className="border-t px-5 py-3">
-                    <div className="flex items-center gap-2.5 rounded-lg border border-dashed bg-muted/20 px-3.5 py-2.5">
-                      <Package className="text-muted-foreground h-4 w-4 shrink-0" />
-                      <span className="text-muted-foreground text-xs">
-                        React SDK — headless hooks &amp; components
-                      </span>
-                      <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">
-                        In development
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-muted-foreground mt-4 grid grid-cols-3 gap-3 text-xs">
-                  <div className="bg-background/80 rounded-xl border p-3">
-                    <p className="text-foreground text-lg font-bold">99.9%</p>
-                    <p>uptime</p>
-                  </div>
-                  <div className="bg-background/80 rounded-xl border p-3">
-                    <p className="text-foreground text-lg font-bold">30+ GB</p>
-                    <p>knowledge indexed daily</p>
-                  </div>
-                  <div className="bg-background/80 rounded-xl border p-3">
-                    <p className="text-foreground text-lg font-bold">3 min</p>
-                    <p>to first answer</p>
-                  </div>
-                </div>
-              </div>
+          {/* Product demo — large panel bleeding below the hero copy */}
+          <div className="mx-auto mt-14 w-full max-w-[1400px] px-4 sm:px-6 lg:mt-20 lg:px-8">
+            <div className="bg-background overflow-hidden rounded-t-2xl border border-b-0 shadow-2xl">
+              <video
+                className="block aspect-video w-full"
+                src="/video/hero-demo.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
             </div>
           </div>
         </section>
