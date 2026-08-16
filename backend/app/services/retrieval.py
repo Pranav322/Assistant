@@ -264,13 +264,12 @@ class ContextAssembler:
         )
 
     def _format_documents(self, chunks: Sequence[FusedResult | RerankedResult]) -> str:
-        document_numbers = assign_document_numbers(chunks)
+        document_labels = assign_document_labels(chunks)
         formatted = []
         for chunk in chunks:
-            idx = document_numbers[str(chunk.source_id)]
-            title = chunk.source_metadata.get("title") or "Document"
+            label = document_labels[str(chunk.source_id)]
             section = chunk.metadata.get("section_title")
-            header = f"[Document {idx}: {title}]"
+            header = f"[{label}]"
             if section:
                 header = f"{header} - {section}"
             formatted.append(f"{header}\n{chunk.text}")
@@ -287,14 +286,33 @@ def assign_document_numbers(
     chunks: Sequence[FusedResult | RerankedResult],
 ) -> dict[str, int]:
     """Number distinct sources in first-occurrence order, so multiple chunks
-    from the same document share one [Document N] label instead of each
-    chunk claiming its own number."""
+    from the same document share one number instead of each chunk claiming
+    its own. Used as a stable internal id for citations."""
     numbers: dict[str, int] = {}
     for chunk in chunks:
         source_id = str(chunk.source_id)
         if source_id not in numbers:
             numbers[source_id] = len(numbers) + 1
     return numbers
+
+
+def assign_document_labels(
+    chunks: Sequence[FusedResult | RerankedResult],
+) -> dict[str, str]:
+    """Label distinct sources by their actual title/filename instead of a
+    bare number, so citations read as e.g. [Return_Policy.pdf] rather than
+    [Document 3]. Disambiguates two sources that happen to share a title."""
+    labels: dict[str, str] = {}
+    title_counts: dict[str, int] = {}
+    for chunk in chunks:
+        source_id = str(chunk.source_id)
+        if source_id in labels:
+            continue
+        title = (chunk.source_metadata or {}).get("title") or "Document"
+        count = title_counts.get(title, 0)
+        labels[source_id] = title if count == 0 else f"{title} ({count + 1})"
+        title_counts[title] = count + 1
+    return labels
 
 
 def generate_citations(

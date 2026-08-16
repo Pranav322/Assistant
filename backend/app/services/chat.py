@@ -176,8 +176,9 @@ class ChatService:
             project.settings.get("system_prompt") if project.settings else None
         ) or (
             "You are a helpful assistant. Answer questions using the provided documents. "
-            "When your answer draws from a document, cite it inline using [Document N] notation "
-            "(e.g. [Document 1], [Document 2]). "
+            "Each document is headed by its name in brackets, e.g. [Return_Policy.pdf]. "
+            "When your answer draws from a document, cite it inline using that exact bracketed "
+            "name (e.g. [Return_Policy.pdf], [FAQ]) — never a generic label like [Document 1]. "
             "If the documents don't contain enough information to answer, say so clearly."
         )
 
