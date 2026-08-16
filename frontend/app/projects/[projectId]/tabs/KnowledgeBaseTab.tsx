@@ -3,8 +3,6 @@ import {
   Link as LinkIcon,
   Loader2,
   AlertCircle,
-  Play,
-  ExternalLink,
   Trash2,
   FileText,
   Globe,
@@ -49,12 +47,7 @@ type Props = {
   setIngestUrl: (value: string) => void;
   ingestUrlSubmit: () => void;
   urlIngestError: string;
-  isNewProject: boolean;
   sources: Source[] | undefined;
-  tokenLoading: boolean;
-  tokenError: string;
-  widgetToken: string | null;
-  previewSnippet: string;
   selectedSources: string[];
   openBulkDeleteModal: () => void;
   handleSelectAll: () => void;
@@ -81,12 +74,7 @@ export function KnowledgeBaseTab({
   setIngestUrl,
   ingestUrlSubmit,
   urlIngestError,
-  isNewProject,
   sources,
-  tokenLoading,
-  tokenError,
-  widgetToken,
-  previewSnippet,
   selectedSources,
   openBulkDeleteModal,
   handleSelectAll,
@@ -204,50 +192,6 @@ export function KnowledgeBaseTab({
           </CardContent>
         </Card>
       </div>
-
-      {!isNewProject && (
-        <div className="from-primary/5 via-primary/10 to-primary/5 border-primary/20 flex flex-col items-center justify-between gap-4 rounded-2xl border bg-gradient-to-br p-6 sm:flex-row md:p-8">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/10 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
-              <Play className="text-primary h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Ready to test your chatbot?</h3>
-              <p className="text-muted-foreground text-sm">
-                Chat with your bot using{" "}
-                {sources?.filter((s) => s.status === "completed").length ?? 0} documents
-              </p>
-            </div>
-          </div>
-          <Button
-            size="lg"
-            className="shrink-0 gap-2"
-            disabled={tokenLoading || !!tokenError || !widgetToken}
-            onClick={() => {
-              if (!widgetToken) return;
-              const width = 480;
-              const height = 700;
-              const left = window.screenX + (window.outerWidth - width) / 2;
-              const top = window.screenY + (window.outerHeight - height) / 2;
-              window.open(
-                previewSnippet,
-                "LivePreview",
-                `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-              );
-            }}
-          >
-            {tokenLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading...
-              </>
-            ) : (
-              <>
-                <ExternalLink className="h-4 w-4" /> Test Chatbot
-              </>
-            )}
-          </Button>
-        </div>
-      )}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
