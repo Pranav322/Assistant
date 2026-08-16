@@ -345,7 +345,7 @@ export function EmbedTab({
 
           <Accordion type="single" collapsible>
             <AccordionItem value="full-example" className="border-b-0">
-              <AccordionTrigger className="text-muted-foreground py-2 text-xs hover:no-underline">
+              <AccordionTrigger className="py-2 text-sm hover:no-underline">
                 Show a full HTML example with a custom trigger button
               </AccordionTrigger>
               <AccordionContent>
