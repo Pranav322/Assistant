@@ -105,12 +105,22 @@ async def get_public_chat_token(
         )
 
     # --- Determine origin for the token ---
-    # The public chatbot page lives at contextly.live, so the token encodes that as the allowed origin.
-    public_origin = normalize_origin(
-        deps.settings.WIDGET_PUBLIC_ORIGIN or "https://contextly.live"
+    # The public chatbot page can be served from whatever domain the app is
+    # deployed on (contextly.live today, but this must not hardcode or reuse
+    # WIDGET_PUBLIC_ORIGIN — that setting is for the separate widget *iframe*
+    # domain, e.g. widget.contextly.live, which is a different origin from
+    # this standalone page and previously caused every chat call here to
+    # fail origin validation). The request issuing this token is made from
+    # the public chat page itself, so its real Origin header is the source
+    # of truth.
+    request_origin = deps._get_request_origin(request)
+    public_origin = (
+        normalize_origin(request_origin)
+        if request_origin
+        else normalize_origin("https://contextly.live")
     )
-    # Also allow localhost in development
     token_origins = [public_origin]
+    # Also allow localhost in development
     if deps.settings.ENVIRONMENT == "development":
         token_origins.append("http://localhost:3000")
 
