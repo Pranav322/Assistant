@@ -27,8 +27,6 @@ type Params = {
   systemPrompt: string;
   logoUrl: string;
   embedMode: "popup" | "embedded";
-  embedWidth: string;
-  embedHeight: string;
   stopStatusStream: (disableReconnect?: boolean) => void;
   setError: Dispatch<SetStateAction<string>>;
   setCreatingKey: Dispatch<SetStateAction<boolean>>;
@@ -80,8 +78,6 @@ export function useProjectActions(params: Params) {
     systemPrompt,
     logoUrl,
     embedMode,
-    embedWidth,
-    embedHeight,
     stopStatusStream,
     setError,
     setCreatingKey,
@@ -145,8 +141,6 @@ export function useProjectActions(params: Params) {
         system_prompt: systemPrompt,
         logo_url: logoUrl,
         embed_mode: embedMode,
-        width: embedWidth,
-        height: embedHeight,
       };
 
       await apiRequest(`/projects/${projectId}`, {
@@ -164,9 +158,7 @@ export function useProjectActions(params: Params) {
   }, [
     botColor,
     botTitle,
-    embedHeight,
     embedMode,
-    embedWidth,
     logoUrl,
     project,
     projectId,

@@ -6,8 +6,6 @@ export type ProjectSettings = {
   system_prompt?: string;
   logo_url?: string;
   embed_mode?: "popup" | "embedded";
-  width?: string;
-  height?: string;
 };
 
 export type Project = {

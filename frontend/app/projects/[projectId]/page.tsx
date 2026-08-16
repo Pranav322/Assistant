@@ -80,8 +80,6 @@ export default function ProjectDetailPage() {
 
   // Embed Configuration State
   const [embedMode, setEmbedMode] = useState<"popup" | "embedded">("popup");
-  const [embedWidth, setEmbedWidth] = useState("");
-  const [embedHeight, setEmbedHeight] = useState("");
 
   const hasRedirectedToTryIt = useRef(false);
   const prevCompletedCount = useRef<number | null>(null);
@@ -149,8 +147,6 @@ export default function ProjectDetailPage() {
       );
       setLogoUrl(s.logo_url || "");
       setEmbedMode(s.embed_mode || "popup");
-      setEmbedWidth(s.width || "");
-      setEmbedHeight(s.height || "");
     }
     return () => {
       setTitle("Dashboard");
@@ -258,8 +254,6 @@ export default function ProjectDetailPage() {
     systemPrompt,
     logoUrl,
     embedMode,
-    embedWidth,
-    embedHeight,
     stopStatusStream,
     setError,
     setCreatingKey,
@@ -342,27 +336,9 @@ export default function ProjectDetailPage() {
     setCurrentPage(page);
   };
 
-  const originToUse = originValue;
-  const embedSnippet = `<script
-  src="${widgetBaseUrl}/embed.js"
-  data-project-id="${project.id}"
-  data-api-key="YOUR_API_KEY"${embedMode !== "popup" ? `\n  data-mode="${embedMode}"` : ""}${
-    embedWidth && /^\d+(px|%|vh|vw|rem|em)$/.test(embedWidth)
-      ? `\n  data-width="${embedWidth}"`
-      : ""
-  }${
-    embedHeight && /^\d+(px|%|vh|vw|rem|em)$/.test(embedHeight)
-      ? `\n  data-height="${embedHeight}"`
-      : ""
-  }
-  defer
-></script>`;
-
-  const previewOrigin = originToUse;
+  const previewOrigin = originValue;
   const previewToken = widgetToken || "<WIDGET_TOKEN>";
   const previewSnippet = `${widgetBaseUrl}/widget?project_id=${project.id}&projectId=${project.id}&origin=${encodeURIComponent(previewOrigin)}&token=${previewToken}&mode=${embedMode}`;
-
-  const isNewProject = (sources?.length ?? 0) === 0;
 
   return (
     <div className="bg-muted/30 min-h-screen w-full max-w-[100vw] overflow-x-hidden pb-20">
@@ -392,12 +368,7 @@ export default function ProjectDetailPage() {
             setIngestUrl={setIngestUrl}
             ingestUrlSubmit={() => void ingestUrlSubmit()}
             urlIngestError={urlIngestError}
-            isNewProject={isNewProject}
             sources={sources}
-            tokenLoading={tokenLoading}
-            tokenError={tokenError}
-            widgetToken={widgetToken}
-            previewSnippet={previewSnippet}
             selectedSources={selectedSources}
             openBulkDeleteModal={() => setIsBulkDeleteModalOpen(true)}
             handleSelectAll={handleSelectAll}
@@ -411,7 +382,27 @@ export default function ProjectDetailPage() {
             handlePageChange={handlePageChange}
           />
 
-          <EmbedTab projectId={project.id} embedSnippet={embedSnippet} />
+          <EmbedTab
+            projectId={project.id}
+            widgetBaseUrl={widgetBaseUrl}
+            embedMode={embedMode}
+            newOriginInput={newOriginInput}
+            setNewOriginInput={setNewOriginInput}
+            handleAddOrigin={handleAddOrigin}
+            isUpdatingOrigins={isUpdatingOrigins}
+            originError={originError}
+            allowedOrigins={project.allowed_origins}
+            handleRemoveOrigin={handleRemoveOrigin}
+            createKey={createKey}
+            newKeyName={newKeyName}
+            setNewKeyName={setNewKeyName}
+            creatingKey={creatingKey}
+            error={error}
+            freshKey={freshKey}
+            apiBaseUrl={apiBaseUrl}
+            keys={keys}
+            revokeKey={revokeKey}
+          />
 
           <CustomizeTab
             hasUnsavedChanges={hasUnsavedChanges}
@@ -440,22 +431,6 @@ export default function ProjectDetailPage() {
 
           <SettingsTab
             usage={usage}
-            newOriginInput={newOriginInput}
-            setNewOriginInput={setNewOriginInput}
-            handleAddOrigin={handleAddOrigin}
-            isUpdatingOrigins={isUpdatingOrigins}
-            originError={originError}
-            project={project}
-            handleRemoveOrigin={handleRemoveOrigin}
-            createKey={createKey}
-            newKeyName={newKeyName}
-            setNewKeyName={setNewKeyName}
-            creatingKey={creatingKey}
-            error={error}
-            freshKey={freshKey}
-            apiBaseUrl={apiBaseUrl}
-            keys={keys}
-            revokeKey={revokeKey}
             deleteProject={() => void deleteProject()}
             deletingProject={deletingProject}
           />
