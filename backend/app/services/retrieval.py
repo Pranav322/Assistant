@@ -264,8 +264,10 @@ class ContextAssembler:
         )
 
     def _format_documents(self, chunks: Sequence[FusedResult | RerankedResult]) -> str:
+        document_numbers = assign_document_numbers(chunks)
         formatted = []
-        for idx, chunk in enumerate(chunks, start=1):
+        for chunk in chunks:
+            idx = document_numbers[str(chunk.source_id)]
             title = chunk.source_metadata.get("title") or "Document"
             section = chunk.metadata.get("section_title")
             header = f"[Document {idx}: {title}]"
@@ -281,20 +283,41 @@ class ContextAssembler:
         return len(self.tokenizer.encode(result.text))
 
 
+def assign_document_numbers(
+    chunks: Sequence[FusedResult | RerankedResult],
+) -> dict[str, int]:
+    """Number distinct sources in first-occurrence order, so multiple chunks
+    from the same document share one [Document N] label instead of each
+    chunk claiming its own number."""
+    numbers: dict[str, int] = {}
+    for chunk in chunks:
+        source_id = str(chunk.source_id)
+        if source_id not in numbers:
+            numbers[source_id] = len(numbers) + 1
+    return numbers
+
+
 def generate_citations(
     chunks: list[FusedResult | RerankedResult],
 ) -> list[dict[str, Any]]:
-    citations = []
-    for idx, chunk in enumerate(chunks, start=1):
+    document_numbers = assign_document_numbers(chunks)
+    citations: list[dict[str, Any]] = []
+    seen_sources: set[str] = set()
+    for chunk in chunks:
+        source_id = str(chunk.source_id)
+        if source_id in seen_sources:
+            continue
+        seen_sources.add(source_id)
+
         source_meta = chunk.source_metadata or {}
         chunk_meta = chunk.metadata or {}
         confidence = (
             chunk.final_score if isinstance(chunk, RerankedResult) else chunk.rrf_score
         )
         citation = {
-            "id": idx,
+            "id": document_numbers[source_id],
             "chunk_id": str(chunk.chunk_id),
-            "source_id": str(chunk.source_id),
+            "source_id": source_id,
             "title": source_meta.get("title", "Document"),
             "url": (
                 source_meta.get("url")
@@ -312,6 +335,7 @@ def generate_citations(
             ),
         }
         citations.append(citation)
+    citations.sort(key=lambda c: c["id"])
     return citations
 
 
