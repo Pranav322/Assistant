@@ -57,8 +57,8 @@ export default function Home() {
             >
               Pricing
             </Link>
-            <ThemeToggle />
             <HomeAuthNav />
+            <ThemeToggle />
           </nav>
         </div>
       </header>

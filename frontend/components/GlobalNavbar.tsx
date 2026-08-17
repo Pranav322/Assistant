@@ -45,8 +45,8 @@ export function GlobalNavbar() {
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-2">
-          <ThemeToggle />
           <UserNav />
+          <ThemeToggle />
         </div>
       </div>
     </header>
