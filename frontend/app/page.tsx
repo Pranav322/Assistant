@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Layers, Search, Zap, Shield, Sparkles } from "lucide-react";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
 import { PricingTiers } from "@/components/pricing-tiers";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -57,6 +58,7 @@ export default function Home() {
               Pricing
             </Link>
             <HomeAuthNav />
+            <ThemeToggle />
           </nav>
         </div>
       </header>

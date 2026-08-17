@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useNavbar } from "@/components/NavbarContext";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { UserNav } from "@/components/UserNav";
 import { ArrowLeft } from "lucide-react";
 
@@ -43,8 +44,9 @@ export function GlobalNavbar() {
           </div>
         </div>
 
-        <div className="flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-2">
           <UserNav />
+          <ThemeToggle />
         </div>
       </div>
     </header>

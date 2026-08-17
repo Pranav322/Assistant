@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -80,6 +81,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             >
               GitHub
             </a>
+            <ThemeToggle />
           </nav>
         </div>
       </header>
