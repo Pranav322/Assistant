@@ -235,7 +235,7 @@ export function EmbedTab({
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="secondary"
-                      className="border-none bg-green-100 text-[10px] text-green-700"
+                      className="border-none bg-green-100 text-[10px] text-green-700 dark:bg-green-950/40 dark:text-green-400"
                     >
                       Active
                     </Badge>
