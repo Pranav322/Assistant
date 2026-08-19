@@ -1,1 +1,132 @@
 @import "tailwindcss";
+
+/* Light palette — the default. Zinc tokens match frontend/app/globals.css. */
+:root {
+  --ct-background: #ffffff;
+  --ct-backdrop: #fbfbfc;
+  --ct-surface: #ffffff;
+  --ct-surface-muted: #fafafa;
+  --ct-secondary: #f4f4f5;
+  --ct-input-bg: #ffffff;
+  --ct-border: #e4e4e7;
+  --ct-separator: #d4d4d8;
+
+  --ct-foreground: #09090b;
+  --ct-muted-foreground: #71717a;
+  --ct-placeholder: #a1a1aa;
+
+  --ct-primary: #18181b;
+  --ct-primary-foreground: #fafafa;
+
+  --ct-accent: #4f46e5;
+  --ct-accent-muted: #e0e7ff;
+  --ct-accent-tint: rgba(79, 70, 229, 0.04);
+  --ct-accent-tint-strong: rgba(79, 70, 229, 0.06);
+  --ct-accent-border: rgba(79, 70, 229, 0.2);
+  --ct-accent-border-strong: rgba(79, 70, 229, 0.5);
+  --ct-accent-ring: rgba(79, 70, 229, 0.15);
+  --ct-accent-glow-sm: rgba(79, 70, 229, 0.05);
+  --ct-accent-glow-md: rgba(79, 70, 229, 0.06);
+  --ct-accent-glow-lg: rgba(79, 70, 229, 0.1);
+  --ct-accent-shadow: rgba(79, 70, 229, 0.35);
+
+  --ct-success: #0a7d33;
+  --ct-success-icon: #22c55e;
+  --ct-destructive: #ef4444;
+
+  --ct-overlay: rgba(9, 9, 11, 0.35);
+  --ct-icon-tile: rgba(24, 24, 27, 0.05);
+  --ct-empty-fill: rgba(244, 244, 245, 0.35);
+  --ct-empty-circle: rgba(244, 244, 245, 0.9);
+  --ct-line-number: #b9bfc7;
+
+  --ct-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ct-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+  --ct-shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.08);
+  --ct-shadow-xl: 0 24px 70px rgba(0, 0, 0, 0.25);
+  --ct-shadow-panel: 0 20px 50px rgba(0, 0, 0, 0.18);
+
+  --ct-code-gutter-bg: #fafafa;
+  --ct-code-tag: #8250df;
+  --ct-code-attr: #0550ae;
+  --ct-code-str: #0a7d33;
+  --ct-code-punc: #6e7781;
+  --ct-code-text: #1f2328;
+  --ct-code-comment: #6e7781;
+  --ct-code-typed-bg: rgba(79, 70, 229, 0.05);
+
+  --ct-site-bg: #ffffff;
+  --ct-site-text: #0f172a;
+  --ct-site-muted: #64748b;
+  --ct-site-nav: #475569;
+  --ct-site-border: #eef0f3;
+  --ct-site-tile: #f1f5f9;
+  --ct-site-footer: #94a3b8;
+}
+
+/* Dark palette — applied by the HeroDemoDark composition wrapper.
+   Primary inverts (near-white on dark) exactly like shadcn's dark mode, the
+   accent lifts to indigo-400 so it stays legible, and shadows go much heavier
+   because a 4%-black shadow is invisible on a dark surface. */
+.ct-dark {
+  --ct-background: #09090b;
+  --ct-backdrop: #09090b;
+  --ct-surface: #18181b;
+  --ct-surface-muted: #202024;
+  --ct-secondary: #27272a;
+  --ct-input-bg: #0f0f11;
+  --ct-border: #2a2a2e;
+  --ct-separator: #3f3f46;
+
+  --ct-foreground: #fafafa;
+  --ct-muted-foreground: #a1a1aa;
+  --ct-placeholder: #71717a;
+
+  --ct-primary: #fafafa;
+  --ct-primary-foreground: #18181b;
+
+  --ct-accent: #818cf8;
+  --ct-accent-muted: rgba(129, 140, 248, 0.18);
+  --ct-accent-tint: rgba(129, 140, 248, 0.1);
+  --ct-accent-tint-strong: rgba(129, 140, 248, 0.14);
+  --ct-accent-border: rgba(129, 140, 248, 0.35);
+  --ct-accent-border-strong: rgba(129, 140, 248, 0.6);
+  --ct-accent-ring: rgba(129, 140, 248, 0.25);
+  --ct-accent-glow-sm: rgba(129, 140, 248, 0.1);
+  --ct-accent-glow-md: rgba(129, 140, 248, 0.12);
+  --ct-accent-glow-lg: rgba(129, 140, 248, 0.16);
+  --ct-accent-shadow: rgba(129, 140, 248, 0.45);
+
+  --ct-success: #4ade80;
+  --ct-success-icon: #4ade80;
+  --ct-destructive: #f87171;
+
+  --ct-overlay: rgba(0, 0, 0, 0.6);
+  --ct-icon-tile: rgba(250, 250, 250, 0.08);
+  --ct-empty-fill: rgba(39, 39, 42, 0.35);
+  --ct-empty-circle: rgba(39, 39, 42, 0.9);
+  --ct-line-number: #52525b;
+
+  --ct-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ct-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.45);
+  --ct-shadow-lg: 0 1px 2px rgba(0, 0, 0, 0.6), 0 16px 50px rgba(0, 0, 0, 0.55);
+  --ct-shadow-xl: 0 24px 70px rgba(0, 0, 0, 0.7);
+  --ct-shadow-panel: 0 20px 50px rgba(0, 0, 0, 0.65);
+
+  --ct-code-gutter-bg: #1c1c20;
+  --ct-code-tag: #d2a8ff;
+  --ct-code-attr: #79c0ff;
+  --ct-code-str: #a5d6ff;
+  --ct-code-punc: #8b949e;
+  --ct-code-text: #e6edf3;
+  --ct-code-comment: #8b949e;
+  --ct-code-typed-bg: rgba(129, 140, 248, 0.12);
+
+  --ct-site-bg: #0f1116;
+  --ct-site-text: #e6edf3;
+  --ct-site-muted: #94a3b8;
+  --ct-site-nav: #cbd5e1;
+  --ct-site-border: #23272f;
+  --ct-site-tile: #1e222a;
+  --ct-site-footer: #64748b;
+}

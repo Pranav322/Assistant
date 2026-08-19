@@ -28,10 +28,10 @@ export const AppWindow: React.FC<{
       top: WIN.y,
       width: WIN.w,
       height: WIN.h,
-      background: "#ffffff",
+      background: theme.surface,
       borderRadius: theme.radiusLg,
       border: `1px solid ${theme.border}`,
-      boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 16px 50px rgba(0,0,0,0.10)",
+      boxShadow: theme.shadowLg,
       opacity,
       overflow: "hidden",
     }}
@@ -104,7 +104,7 @@ export const AppWindow: React.FC<{
         const last = i === breadcrumb.length - 1;
         return (
           <React.Fragment key={crumb}>
-            {i > 0 && <span style={{ color: "#d4d4d8" }}>/</span>}
+            {i > 0 && <span style={{ color: theme.separator }}>/</span>}
             <span
               style={{
                 fontWeight: last || i === 0 ? 600 : 400,

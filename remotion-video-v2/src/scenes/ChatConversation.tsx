@@ -197,7 +197,7 @@ export const ChatConversation: React.FC = () => {
     <AbsoluteFill style={{ background: theme.background }}>
       <ParticleField tint={theme.accent} />
       <GradientGlow
-        color="rgba(79,70,229,0.06)"
+        color={theme.accentGlowMd}
         size={500}
         x="75%"
         y="60%"
@@ -215,7 +215,7 @@ export const ChatConversation: React.FC = () => {
           border: `1px solid ${theme.border}`,
           overflow: "hidden",
           background: theme.background,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)",
+          boxShadow: theme.shadowMd,
           display: "flex",
           flexDirection: "column",
         }}
@@ -270,13 +270,13 @@ export const ChatConversation: React.FC = () => {
                 fontFamily: "Inter, sans-serif",
                 fontSize: 32,
                 fontWeight: 700,
-                color: "#0f172a",
+                color: theme.siteText,
                 margin: 0,
               }}
             >
               Hardware supply since 1987.
             </h1>
-            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 15, color: "#64748b", margin: 0 }}>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 15, color: theme.siteMuted, margin: 0 }}>
               Quality tools, fast shipping, expert advice.
             </p>
           </div>
@@ -294,15 +294,15 @@ export const ChatConversation: React.FC = () => {
                 style={{
                   flex: 1,
                   borderRadius: 10,
-                  border: "1px solid #eef0f3",
+                  border: `1px solid ${theme.siteBorder}`,
                   overflow: "hidden",
                   fontFamily: "Inter, sans-serif",
                 }}
               >
-                <div style={{ height: 60, background: "#f1f5f9" }} />
+                <div style={{ height: 60, background: theme.siteTile }} />
                 <div style={{ padding: "8px 10px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{p.price}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: theme.siteText }}>{p.name}</div>
+                  <div style={{ fontSize: 11, color: theme.siteMuted, marginTop: 2 }}>{p.price}</div>
                 </div>
               </div>
             ))}
@@ -316,12 +316,12 @@ export const ChatConversation: React.FC = () => {
               right: 48,
               bottom: 28,
               paddingTop: 20,
-              borderTop: "1px solid #eef0f3",
+              borderTop: `1px solid ${theme.siteBorder}`,
               display: "flex",
               justifyContent: "space-between",
               fontFamily: "Inter, sans-serif",
               fontSize: 12,
-              color: "#94a3b8",
+              color: theme.siteFooter,
             }}
           >
             <span>&copy; 1987&ndash;2026 Acme Hardware Co.</span>
@@ -344,7 +344,7 @@ export const ChatConversation: React.FC = () => {
             overflow: "hidden",
             border: `1px solid ${theme.border}`,
             background: theme.background,
-            boxShadow: "0 20px 50px rgba(0,0,0,0.18)",
+            boxShadow: theme.shadowPanel,
             transform: `scale(${cardScale})`,
             opacity: cardOpacity,
             display: "flex",

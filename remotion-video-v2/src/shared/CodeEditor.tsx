@@ -2,7 +2,7 @@ import React from "react";
 import { useCurrentFrame } from "remotion";
 import { theme } from "./theme";
 
-// A light-theme editor pane: file tree, tab bar, gutter, syntax colours.
+// An editor pane: file tree, tab bar, gutter, syntax colours.
 // Lines marked `typed` are revealed character by character so it reads as
 // someone actually editing the file — untyped lines are already on disk.
 
@@ -10,12 +10,12 @@ export type Tok = { t: string; k?: keyof typeof TOKEN_COLORS };
 export type Line = { toks: Tok[]; indent?: number; typed?: boolean };
 
 const TOKEN_COLORS = {
-  tag: "#8250df",
-  attr: "#0550ae",
-  str: "#0a7d33",
-  punc: "#6e7781",
-  text: "#1f2328",
-  comment: "#6e7781",
+  tag: theme.codeTag,
+  attr: theme.codeAttr,
+  str: theme.codeStr,
+  punc: theme.codePunc,
+  text: theme.codeText,
+  comment: theme.codeComment,
 };
 
 const FONT = "'SF Mono', Menlo, Consolas, monospace";
@@ -65,10 +65,10 @@ export const CodeEditor: React.FC<{
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        background: "#ffffff",
+        background: theme.surface,
         borderRadius: theme.radiusLg,
         border: `1px solid ${theme.border}`,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)",
+        boxShadow: theme.shadowLg,
         overflow: "hidden",
       }}
     >
@@ -105,7 +105,7 @@ export const CodeEditor: React.FC<{
               fontFamily: "Inter, sans-serif",
               fontSize: 15,
               fontWeight: 600,
-              color: saved ? "#0a7d33" : theme.mutedForeground,
+              color: saved ? theme.success : theme.mutedForeground,
               opacity: saved ? 1 : 0.5,
               transition: "none",
             }}
@@ -122,7 +122,7 @@ export const CodeEditor: React.FC<{
             width: 210,
             flexShrink: 0,
             borderRight: `1px solid ${theme.border}`,
-            background: "#fafafa",
+            background: theme.surfaceMuted,
             padding: "16px 12px",
             display: "flex",
             flexDirection: "column",
@@ -170,7 +170,7 @@ export const CodeEditor: React.FC<{
             style={{
               display: "flex",
               borderBottom: `1px solid ${theme.border}`,
-              background: "#fafafa",
+              background: theme.surfaceMuted,
               flexShrink: 0,
             }}
           >
@@ -179,7 +179,7 @@ export const CodeEditor: React.FC<{
                 fontFamily: FONT,
                 fontSize: 16,
                 padding: "11px 20px",
-                background: "#ffffff",
+                background: theme.surface,
                 borderRight: `1px solid ${theme.border}`,
                 borderBottom: "2px solid " + theme.accent,
                 color: theme.foreground,
@@ -210,7 +210,7 @@ export const CodeEditor: React.FC<{
                     display: "flex",
                     height: LINE_HEIGHT,
                     alignItems: "center",
-                    background: line.typed ? "rgba(79,70,229,0.05)" : "transparent",
+                    background: line.typed ? theme.codeTypedBg : "transparent",
                   }}
                 >
                   <div
@@ -221,7 +221,7 @@ export const CodeEditor: React.FC<{
                       paddingRight: 16,
                       fontFamily: FONT,
                       fontSize: FONT_SIZE - 3,
-                      color: "#b9bfc7",
+                      color: theme.lineNumber,
                     }}
                   >
                     {i + 1}

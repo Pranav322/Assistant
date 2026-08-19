@@ -88,8 +88,8 @@ export const Cursor: React.FC<{
       >
         <path
           d="M2 2 L2 24 L8 18.5 L11.8 27.5 L15.6 25.8 L11.9 17.2 L20 17 Z"
-          fill="#ffffff"
-          stroke="#0f172a"
+          fill={theme.surface}
+          stroke={theme.siteText}
           strokeWidth="1.6"
           strokeLinejoin="round"
         />

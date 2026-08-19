@@ -87,10 +87,10 @@ const LivePreview: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        background: "#ffffff",
+        background: theme.surface,
         borderRadius: theme.radiusLg,
         border: `1px solid ${theme.border}`,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.08)",
+        boxShadow: theme.shadowLg,
         overflow: "hidden",
         position: "relative",
       }}
@@ -154,15 +154,15 @@ const LivePreview: React.FC = () => {
         <div
           style={{
             padding: "22px 34px",
-            borderBottom: "1px solid #eef0f3",
+            borderBottom: `1px solid ${theme.siteBorder}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             fontFamily: "Inter, sans-serif",
           }}
         >
-          <span style={{ fontWeight: 700, fontSize: 20, color: "#0f172a" }}>Acme Hardware</span>
-          <span style={{ display: "flex", gap: 24, fontSize: 16, color: "#475569" }}>
+          <span style={{ fontWeight: 700, fontSize: 20, color: theme.siteText }}>Acme Hardware</span>
+          <span style={{ display: "flex", gap: 24, fontSize: 16, color: theme.siteNav }}>
             <span>Shop</span>
             <span>Services</span>
             <span>About</span>
@@ -170,10 +170,10 @@ const LivePreview: React.FC = () => {
         </div>
 
         <div style={{ padding: "32px 34px 20px", fontFamily: "Inter, sans-serif" }}>
-          <h1 style={{ fontSize: 34, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+          <h1 style={{ fontSize: 34, fontWeight: 700, color: theme.siteText, margin: 0 }}>
             Quality tools for every job.
           </h1>
-          <p style={{ fontSize: 17, color: "#64748b", marginTop: 8 }}>
+          <p style={{ fontSize: 17, color: theme.siteMuted, marginTop: 8 }}>
             Family-owned hardware supply since 1987.
           </p>
         </div>
@@ -188,16 +188,16 @@ const LivePreview: React.FC = () => {
               key={p.name}
               style={{
                 flex: 1,
-                border: "1px solid #eef0f3",
+                border: `1px solid ${theme.siteBorder}`,
                 borderRadius: 10,
                 overflow: "hidden",
                 fontFamily: "Inter, sans-serif",
               }}
             >
-              <div style={{ height: 84, background: "#f1f5f9" }} />
+              <div style={{ height: 84, background: theme.siteTile }} />
               <div style={{ padding: "10px 12px" }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a" }}>{p.name}</div>
-                <div style={{ fontSize: 14, color: "#64748b", marginTop: 2 }}>{p.price}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: theme.siteText }}>{p.name}</div>
+                <div style={{ fontSize: 14, color: theme.siteMuted, marginTop: 2 }}>{p.price}</div>
               </div>
             </div>
           ))}
@@ -231,7 +231,7 @@ const LivePreview: React.FC = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 12px 30px rgba(79,70,229,0.35)",
+              boxShadow: `0 12px 30px ${theme.accentShadow}`,
               opacity: bubbleOpacity,
               transform: `scale(${bubbleScale})`,
             }}
@@ -272,7 +272,7 @@ export const EmbedCode: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: theme.background }}>
       <ParticleField tint={theme.accent} />
-      <GradientGlow color="rgba(79,70,229,0.05)" size={800} x="50%" y="45%" />
+      <GradientGlow color={theme.accentGlowSm} size={800} x="50%" y="45%" />
 
       <div
         style={{

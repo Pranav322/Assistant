@@ -9,8 +9,9 @@
   </a>
 </p>
 
-The Contextly hero demo. One composition, `HeroDemo` (1920x1080, 30fps),
-assembled in `src/HeroDemo.tsx` from five scenes with 12-frame fades:
+The Contextly hero demo. Two compositions — `HeroDemo` (light) and
+`HeroDemoDark` — both 1920x1080 @ 30fps, both rendering the *same* scene tree
+from `src/HeroDemo.tsx`, five scenes joined by 12-frame fades:
 
 | Scene | Frames | What it shows |
 | --- | --- | --- |
@@ -32,6 +33,30 @@ Three scenes mirror real product UI — keep them in sync if the app changes:
   Its layout is absolute because `CURSOR_KEYS` are canvas pixel coordinates
   derived from the same constants — move a card, the cursor follows.
 - `EmbedCode` ← the embed snippet from `frontend/app/projects/[projectId]/page.tsx`.
+
+## Light and dark
+
+There is one scene tree, not two. Every colour in `src/shared/theme.ts` is a
+CSS custom property (`var(--ct-*)`); `src/index.css` defines the light palette
+on `:root` and the dark palette on `.ct-dark`. The dark composition is just the
+same component wrapped in that class (`src/Composition.tsx`), so a colour fixed
+in one cut is fixed in both — there is nothing to keep in sync by hand.
+
+Adding a colour: add the token to `theme.ts`, then give it a value in **both**
+blocks of `index.css`. Never hardcode a hex in a scene — it will not switch.
+
+Dark is not a filter: `primary` inverts to near-white (as shadcn's dark mode
+does), the accent lifts to indigo-400 so it stays legible, shadows go far
+heavier because 4%-black is invisible on a dark surface, code syntax swaps to a
+GitHub-dark ramp, and inputs get their own recessed `inputBg` so they don't
+disappear into the card.
+
+Render both:
+
+```console
+npx remotion render src/index.ts HeroDemo out/hero-demo.mp4
+npx remotion render src/index.ts HeroDemoDark out/hero-demo-dark.mp4
+```
 
 Shared pieces live in `src/shared/`: `AppWindow` (browser chrome + GlobalNavbar
 breadcrumb, and the geometry both dashboard scenes lay out against), `CodeEditor` (syntax-highlighted, types
