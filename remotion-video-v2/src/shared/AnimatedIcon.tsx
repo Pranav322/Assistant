@@ -1,5 +1,6 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
+import { theme } from "./theme";
 
 // Wraps an SVG icon with a spring entrance animation.
 export const AnimatedIcon: React.FC<{
@@ -36,7 +37,7 @@ export const AnimatedIcon: React.FC<{
 
 export const PdfIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 40,
-  color = "#ef4444",
+  color = theme.destructive,
 }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
     <rect x="12" y="6" width="40" height="52" rx="6" fill={color} opacity="0.15" />
@@ -51,7 +52,7 @@ export const PdfIcon: React.FC<{ size?: number; color?: string }> = ({
 
 export const LinkIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 40,
-  color = "#6366f1",
+  color = theme.accent,
 }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
     <rect x="12" y="6" width="40" height="52" rx="6" fill={color} opacity="0.1" />
@@ -65,7 +66,7 @@ export const LinkIcon: React.FC<{ size?: number; color?: string }> = ({
 
 export const DbIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 44,
-  color = "#4f46e5",
+  color = theme.accent,
 }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
     <ellipse cx="32" cy="16" rx="18" ry="7" fill={color} opacity="0.15" stroke={color} strokeWidth="2" />
@@ -78,7 +79,7 @@ export const DbIcon: React.FC<{ size?: number; color?: string }> = ({
 
 export const SearchIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 40,
-  color = "#71717a",
+  color = theme.mutedForeground,
 }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
     <circle cx="28" cy="28" r="12" stroke={color} strokeWidth="2.5" />
@@ -88,7 +89,7 @@ export const SearchIcon: React.FC<{ size?: number; color?: string }> = ({
 
 export const CheckIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 32,
-  color = "#22c55e",
+  color = theme.successIcon,
 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
     <circle cx="16" cy="16" r="14" fill={color} opacity="0.15" />

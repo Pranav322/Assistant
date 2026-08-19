@@ -47,7 +47,7 @@ export const OutroCTA: React.FC = () => {
 
       {/* Central glow behind logo */}
       <GradientGlow
-        color="rgba(79,70,229,0.1)"
+        color={theme.accentGlowLg}
         size={450}
         x="50%"
         y="45%"
@@ -55,7 +55,7 @@ export const OutroCTA: React.FC = () => {
 
       {/* Top-right accent glow for depth */}
       <GradientGlow
-        color="rgba(79,70,229,0.06)"
+        color={theme.accentGlowMd}
         size={350}
         x="80%"
         y="25%"

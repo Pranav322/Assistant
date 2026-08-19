@@ -60,9 +60,9 @@ const CURSOR_KEYS = [
 const card = (highlight: boolean): React.CSSProperties => ({
   position: "absolute",
   borderRadius: 14,
-  border: `1px solid ${highlight ? "rgba(79,70,229,0.5)" : theme.border}`,
-  background: highlight ? "rgba(79,70,229,0.04)" : "#ffffff",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+  border: `1px solid ${highlight ? theme.accentBorderStrong : theme.border}`,
+  background: highlight ? theme.accentTint : theme.surface,
+  boxShadow: theme.shadowSm,
 });
 
 const Spinner: React.FC<{ size?: number; color?: string }> = ({
@@ -102,7 +102,7 @@ const FileIcon: React.FC = () => (
   </svg>
 );
 
-const CheckMini: React.FC<{ color?: string }> = ({ color = "#ffffff" }) => (
+const CheckMini: React.FC<{ color?: string }> = ({ color = theme.surface }) => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
     <path d="M8.5 12.4l2.5 2.5 4.5-5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -116,14 +116,14 @@ const Checkbox: React.FC = () => (
       height: 20,
       borderRadius: 5,
       border: `1.5px solid ${theme.border}`,
-      background: "#ffffff",
+      background: theme.surface,
     }}
   />
 );
 
 const TrashIcon: React.FC = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke="#ef4444" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6" stroke={theme.destructive} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -228,9 +228,9 @@ export const DashboardIngest: React.FC = () => {
   });
 
   return (
-    <AbsoluteFill style={{ background: "#fbfbfc" }}>
+    <AbsoluteFill style={{ background: theme.backdrop }}>
       <ParticleField tint={theme.accent} />
-      <GradientGlow color="rgba(79,70,229,0.05)" size={800} x="50%" y="40%" />
+      <GradientGlow color={theme.accentGlowSm} size={800} x="50%" y="40%" />
 
       <AppWindow
         opacity={winOpacity}
@@ -260,8 +260,8 @@ export const DashboardIngest: React.FC = () => {
             style={{
               padding: "8px 18px",
               borderRadius: 7,
-              background: i === 0 ? "#ffffff" : "transparent",
-              boxShadow: i === 0 ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
+              background: i === 0 ? theme.surface : "transparent",
+              boxShadow: i === 0 ? theme.shadowSm : "none",
               fontFamily: "Inter, sans-serif",
               fontSize: 18,
               fontWeight: i === 0 ? 600 : 500,
@@ -440,14 +440,14 @@ export const DashboardIngest: React.FC = () => {
           height: FIELD_H,
           borderRadius: 8,
           border: `1px solid ${focused ? theme.accent : theme.border}`,
-          boxShadow: focused ? `0 0 0 3px rgba(79,70,229,0.15)` : "none",
-          background: "#ffffff",
+          boxShadow: focused ? `0 0 0 3px ${theme.accentRing}` : "none",
+          background: theme.inputBg,
           display: "flex",
           alignItems: "center",
           padding: "0 14px",
           fontFamily: "Inter, sans-serif",
           fontSize: 18,
-          color: typed ? theme.foreground : "#a1a1aa",
+          color: typed ? theme.foreground : theme.placeholder,
           opacity: winOpacity,
         }}
       >
@@ -467,7 +467,7 @@ export const DashboardIngest: React.FC = () => {
           height: FIELD_H,
           borderRadius: 8,
           border: `1px solid ${ingesting ? theme.accent : theme.border}`,
-          background: ingesting ? "rgba(79,70,229,0.06)" : "#ffffff",
+          background: ingesting ? theme.accentGlowMd : theme.surface,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -592,7 +592,7 @@ export const DashboardIngest: React.FC = () => {
               transform: `translateY(${interpolate(rowIn, [0, 1], [14, 0], {
                 extrapolateLeft: "clamp",
               })}px)`,
-              background: rowDone ? "transparent" : "rgba(79,70,229,0.04)",
+              background: rowDone ? "transparent" : theme.accentTint,
             }}
           >
             <TD w={COLS.check}>
@@ -627,8 +627,8 @@ export const DashboardIngest: React.FC = () => {
           style={{
             marginTop: 22,
             borderRadius: 16,
-            border: `1px solid rgba(79,70,229,0.2)`,
-            background: "rgba(79,70,229,0.05)",
+            border: `1px solid ${theme.accentBorder}`,
+            background: theme.accentGlowSm,
             padding: "18px 22px",
             display: "flex",
             alignItems: "center",
@@ -643,7 +643,7 @@ export const DashboardIngest: React.FC = () => {
                 width: 48,
                 height: 48,
                 borderRadius: 12,
-                background: "rgba(79,70,229,0.12)",
+                background: theme.accentGlowLg,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

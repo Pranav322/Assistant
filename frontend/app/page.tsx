@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Layers, Search, Zap, Shield, Sparkles } from "lucide-react";
+import { HeroDemoVideo } from "@/components/hero-demo-video";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
 import { PricingTiers } from "@/components/pricing-tiers";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -97,14 +98,7 @@ export default function Home() {
           {/* Product demo — large panel bleeding below the hero copy */}
           <div className="mx-auto mt-14 w-full max-w-[1400px] px-4 sm:px-6 lg:mt-20 lg:px-8">
             <div className="bg-background overflow-hidden rounded-t-2xl border border-b-0 shadow-2xl">
-              <video
-                className="block aspect-video w-full"
-                src="/video/hero-demo.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-              />
+              <HeroDemoVideo />
             </div>
           </div>
         </section>

@@ -1,12 +1,13 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
+import { theme } from "./theme";
 
 export const GradientGlow: React.FC<{
   color?: string;
   size?: number;
   x?: string;
   y?: string;
-}> = ({ color = "rgba(79,70,229,0.08)", size = 600, x = "50%", y = "50%" }) => {
+}> = ({ color = theme.accentGlowMd, size = 600, x = "50%", y = "50%" }) => {
   const frame = useCurrentFrame();
   const pulse = 1 + Math.sin(frame * 0.02) * 0.3;
 

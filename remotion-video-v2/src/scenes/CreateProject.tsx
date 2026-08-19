@@ -128,14 +128,14 @@ const Field: React.FC<{
         height: FIELD_H,
         borderRadius: 8,
         border: `1px solid ${focused ? theme.accent : theme.border}`,
-        boxShadow: focused ? "0 0 0 3px rgba(79,70,229,0.15)" : "none",
-        background: "#ffffff",
+        boxShadow: focused ? `0 0 0 3px ${theme.accentRing}` : "none",
+        background: theme.inputBg,
         display: "flex",
         alignItems: "center",
         padding: "0 16px",
         fontFamily: "Inter, sans-serif",
         fontSize: 19,
-        color: value ? theme.foreground : "#a1a1aa",
+        color: value ? theme.foreground : theme.placeholder,
         opacity,
       }}
     >
@@ -210,9 +210,9 @@ export const CreateProject: React.FC = () => {
   });
 
   return (
-    <AbsoluteFill style={{ background: "#fbfbfc" }}>
+    <AbsoluteFill style={{ background: theme.backdrop }}>
       <ParticleField tint={theme.accent} />
-      <GradientGlow color="rgba(79,70,229,0.05)" size={800} x="50%" y="40%" />
+      <GradientGlow color={theme.accentGlowSm} size={800} x="50%" y="40%" />
 
       <AppWindow opacity={winOpacity} breadcrumb={["Contextly", "Projects"]} url="app.contextly.live/projects" />
 
@@ -284,7 +284,7 @@ export const CreateProject: React.FC = () => {
             height: 330,
             borderRadius: 14,
             border: `2px dashed ${theme.border}`,
-            background: "rgba(244,244,245,0.35)",
+            background: theme.emptyFill,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -298,7 +298,7 @@ export const CreateProject: React.FC = () => {
               width: 72,
               height: 72,
               borderRadius: 999,
-              background: "rgba(244,244,245,0.9)",
+              background: theme.emptyCircle,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -338,8 +338,8 @@ export const CreateProject: React.FC = () => {
             width: (INNER_W - 32) / 3,
             borderRadius: 14,
             border: `1px solid ${theme.border}`,
-            background: "#ffffff",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)",
+            background: theme.surface,
+            boxShadow: theme.shadowMd,
             padding: 22,
             opacity: interpolate(cardIn, [0, 1], [0, 1], { extrapolateLeft: "clamp" }),
             transform: `scale(${interpolate(cardIn, [0, 1], [0.9, 1], {
@@ -353,7 +353,7 @@ export const CreateProject: React.FC = () => {
                 width: 46,
                 height: 46,
                 borderRadius: 10,
-                background: "rgba(24,24,27,0.05)",
+                background: theme.iconTile,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -421,7 +421,7 @@ export const CreateProject: React.FC = () => {
           style={{
             position: "absolute",
             inset: 0,
-            background: "rgba(9,9,11,0.35)",
+            background: theme.overlay,
             opacity: modalOpacity,
           }}
         />
@@ -437,9 +437,9 @@ export const CreateProject: React.FC = () => {
             width: MODAL_W,
             height: 520,
             borderRadius: 16,
-            background: "#ffffff",
+            background: theme.surface,
             border: `1px solid ${theme.border}`,
-            boxShadow: "0 24px 70px rgba(0,0,0,0.25)",
+            boxShadow: theme.shadowXl,
             opacity: modalOpacity,
             transform: `scale(${modalScale})`,
             transformOrigin: "center center",
@@ -496,7 +496,7 @@ export const CreateProject: React.FC = () => {
               height: CREATE_BTN.h,
               borderRadius: 8,
               border: `1px solid ${theme.border}`,
-              background: "#ffffff",
+              background: theme.surface,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
