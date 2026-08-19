@@ -265,7 +265,7 @@ export default function RagChatbotFromDocuments() {
         {/* CTA section */}
         <section className="bg-primary text-primary-foreground px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="text-primary-foreground text-3xl font-bold tracking-tight sm:text-4xl">
               Ready to chat with your own data?
             </h2>
             <p className="text-primary-foreground/80 mt-4 text-lg text-balance">
@@ -284,7 +284,7 @@ export default function RagChatbotFromDocuments() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-primary-foreground/20 hover:bg-primary-foreground/10 h-12 bg-transparent px-8 text-base font-semibold text-white hover:text-white"
+                className="border-primary-foreground/20 hover:bg-primary-foreground/10 text-primary-foreground hover:text-primary-foreground h-12 bg-transparent px-8 text-base font-semibold"
                 asChild
               >
                 <Link href="/">Back to Home</Link>
