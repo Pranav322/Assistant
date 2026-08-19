@@ -1,15 +1,28 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
-// resolvedTheme is undefined on the server and on the client's first render
-// (next-themes resolves it from localStorage/matchMedia in its own internal
-// effect, not ours) — so this deterministically renders the light cut until
-// next-themes itself updates, with no hydration mismatch or manual
-// mounted-state bookkeeping needed on our end.
+const LIGHT_SRC = "/video/hero-demo.mp4";
+const DARK_SRC = "/video/hero-demo-dark.mp4";
+
 export function HeroDemoVideo() {
-  const { resolvedTheme } = useTheme();
-  const src = resolvedTheme === "dark" ? "/video/hero-demo-dark.mp4" : "/video/hero-demo.mp4";
+  const [src, setSrc] = useState(LIGHT_SRC);
+
+  useEffect(() => {
+    // The `dark` class on <html> is set directly by next-themes' own
+    // blocking script (before paint) or by the toggle — external DOM state
+    // next-themes owns, not a prop/context value we can just derive during
+    // render. useTheme()'s resolvedTheme lagged behind this on first mount
+    // for system-dark sessions (showed the light cut until a manual toggle
+    // forced a re-render), so this reads the class directly and stays in
+    // sync via MutationObserver instead of trusting hook timing.
+    const root = document.documentElement;
+    const sync = () => setSrc(root.classList.contains("dark") ? DARK_SRC : LIGHT_SRC);
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <video
