@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
@@ -13,6 +13,11 @@ const inter = Inter({
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
@@ -101,7 +106,8 @@ export default function RootLayout({
         className={cn(
           "bg-background min-h-screen font-sans antialiased",
           inter.variable,
-          jetbrainsMono.variable
+          jetbrainsMono.variable,
+          spaceGrotesk.variable
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

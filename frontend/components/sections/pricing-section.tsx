@@ -11,7 +11,7 @@ export function PricingSection() {
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
             Pricing
           </p>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             Start free, scale with confidence
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">

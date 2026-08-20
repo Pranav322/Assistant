@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "framer-motion";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/animated-section";
@@ -15,8 +15,87 @@ const embedSnippet = `<script
   async
 ></script>`;
 
+type Token = { text: string; cls: string };
+
+function tokenize(code: string): Token[] {
+  const parts = code.match(/<\/?|>|"[^"]*"|=|[\w-]+|\s+/g) ?? [];
+  const tokens: Token[] = [];
+  let afterAngle = false;
+  for (const part of parts) {
+    if (part === "<" || part === "</") {
+      tokens.push({ text: part, cls: "text-zinc-500" });
+      afterAngle = true;
+    } else if (part === ">") {
+      tokens.push({ text: part, cls: "text-zinc-500" });
+      afterAngle = false;
+    } else if (part === "=") {
+      tokens.push({ text: part, cls: "text-zinc-500" });
+    } else if (part.startsWith('"')) {
+      tokens.push({ text: part, cls: "text-emerald-400" });
+    } else if (/^\s+$/.test(part)) {
+      tokens.push({ text: part, cls: "" });
+    } else if (afterAngle) {
+      tokens.push({ text: part, cls: "text-sky-400" });
+      afterAngle = false;
+    } else {
+      tokens.push({ text: part, cls: "text-amber-300" });
+    }
+  }
+  return tokens;
+}
+
+const tokens = tokenize(embedSnippet);
+const totalLength = embedSnippet.length;
+
+function renderTokens(charCount: number) {
+  let consumed = 0;
+  const out: React.ReactNode[] = [];
+  for (let i = 0; i < tokens.length && consumed < charCount; i++) {
+    const t = tokens[i];
+    const remaining = charCount - consumed;
+    const text = t.text.length <= remaining ? t.text : t.text.slice(0, remaining);
+    out.push(
+      <span key={i} className={t.cls}>
+        {text}
+      </span>
+    );
+    consumed += t.text.length;
+  }
+  return out;
+}
+
 export function CodeIntegration() {
+  const shouldReduceMotion = useReducedMotion();
   const [copied, setCopied] = useState(false);
+  const [charCount, setCharCount] = useState(shouldReduceMotion ? totalLength : 0);
+  const [hasPlayed, setHasPlayed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || hasPlayed) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasPlayed(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasPlayed]);
+
+  useEffect(() => {
+    if (!hasPlayed || shouldReduceMotion) return;
+    const interval = setInterval(() => {
+      setCharCount((n) => Math.min(n + 3, totalLength));
+    }, 18);
+    return () => clearInterval(interval);
+  }, [hasPlayed, shouldReduceMotion]);
+
+  const done = charCount >= totalLength;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(embedSnippet);
@@ -32,7 +111,7 @@ export function CodeIntegration() {
             <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
               Integration
             </p>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               Add Contextly to your site in seconds
             </h2>
             <p className="mt-4 text-muted-foreground">
@@ -81,16 +160,18 @@ export function CodeIntegration() {
                   )}
                 </Button>
               </div>
-              <div className="relative overflow-x-auto bg-zinc-950 p-5 text-sm">
-                <motion.pre
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  className="font-mono leading-relaxed text-zinc-100"
-                >
-                  <code>{embedSnippet}</code>
-                </motion.pre>
+              <div
+                ref={containerRef}
+                className="relative overflow-x-auto bg-zinc-950 p-5 text-sm"
+              >
+                <pre className="font-mono leading-relaxed">
+                  <code>
+                    {renderTokens(charCount)}
+                    {!shouldReduceMotion && !done && (
+                      <span className="animate-pulse text-zinc-100">▍</span>
+                    )}
+                  </code>
+                </pre>
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-zinc-950/50" />
               </div>
             </GradientCard>

@@ -31,14 +31,14 @@ export function PricingTiers() {
   return (
     <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
       {/* Free Tier */}
-      <div className="bg-background hover:border-primary/50 rounded-xl border p-8 shadow-sm transition-colors">
+      <div className="bg-background hover:border-primary/50 flex flex-col rounded-xl border p-8 shadow-sm transition-colors">
         <h3 className="text-xl font-semibold tracking-tight">Free</h3>
         <p className="text-muted-foreground mt-1 text-sm">For getting started</p>
         <div className="mt-6 mb-8">
           <span className="text-4xl font-extrabold">₹0</span>
           <span className="text-muted-foreground ml-2">forever</span>
         </div>
-        <ul className="space-y-3 text-sm">
+        <ul className="flex-1 space-y-3 text-sm">
           <li className="flex items-center gap-3">
             <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />1 project
           </li>
@@ -60,7 +60,7 @@ export function PricingTiers() {
 
       {/* Pro Tier */}
       <div
-        className={`rounded-xl border-2 ${isPro ? "border-primary bg-primary/5" : "border-primary/30 bg-background"} relative p-8 shadow-md transition-colors`}
+        className={`relative flex flex-col rounded-xl border-2 ${isPro ? "border-primary bg-primary/5" : "border-primary/30 bg-background"} p-8 shadow-md transition-colors`}
       >
         <Badge className="absolute -top-2.5 left-6 text-[10px]">
           {isPro ? "Current Plan" : "Most Popular"}
@@ -74,7 +74,7 @@ export function PricingTiers() {
           <span className="text-4xl font-extrabold">₹499</span>
           <span className="text-muted-foreground ml-2">/ 30 days</span>
         </div>
-        <ul className="space-y-3 text-sm">
+        <ul className="flex-1 space-y-3 text-sm">
           <li className="flex items-center gap-3">
             <CheckCircle2 className="text-primary h-4 w-4 shrink-0" />5 projects
           </li>

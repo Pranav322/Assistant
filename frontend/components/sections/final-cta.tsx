@@ -27,7 +27,7 @@ export function FinalCta() {
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">
             Ready to ship your AI assistant?
           </h2>
           <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground">

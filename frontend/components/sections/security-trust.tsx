@@ -41,7 +41,7 @@ export function SecurityTrust() {
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
             Security
           </p>
-          <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
             Built safe by default
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
@@ -54,7 +54,7 @@ export function SecurityTrust() {
           <AnimatedSection>
             <div className="relative overflow-hidden rounded-2xl border bg-background p-8 shadow-sm sm:p-10">
               <div className="grid gap-8 sm:grid-cols-[auto_1fr] sm:items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <leadFeature.icon className="h-7 w-7" />
                 </div>
                 <div className="max-w-xl">
@@ -72,7 +72,7 @@ export function SecurityTrust() {
                   WHERE project_id = $1
                 </span>
                 <span className="text-muted-foreground/50">+</span>
-                <span className="rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-600 dark:text-emerald-400">
+                <span className="rounded-md bg-primary/10 px-2 py-1 text-primary">
                   ROW LEVEL SECURITY
                 </span>
               </div>
@@ -86,7 +86,7 @@ export function SecurityTrust() {
             {securityFeatures.map((feature) => (
               <StaggerItem key={feature.title}>
                 <GradientCard className="h-full">
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <feature.icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-base font-semibold tracking-tight">

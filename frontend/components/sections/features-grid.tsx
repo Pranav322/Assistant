@@ -75,14 +75,14 @@ export function FeaturesGrid() {
   return (
     <section className="border-b py-16 sm:py-24 lg:py-32">
       <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <AnimatedSection className="mb-12 text-center sm:mb-16">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
+        <AnimatedSection className="mb-12 sm:mb-16">
+          <span className="mb-4 inline-block rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
             Capabilities
-          </p>
-          <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          </span>
+          <h2 className="font-display max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
             Everything you need to ship a production RAG chatbot
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+          <p className="mt-4 max-w-xl text-muted-foreground">
             No infrastructure to manage. We handle ingestion, retrieval, auth,
             and monitoring so you can focus on your users.
           </p>

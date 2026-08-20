@@ -7,6 +7,7 @@
 @theme {
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-display);
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));

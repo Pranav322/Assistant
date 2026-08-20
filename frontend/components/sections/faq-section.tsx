@@ -44,7 +44,7 @@ export function FaqSection() {
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
             FAQ
           </p>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             Questions? Answered.
           </h2>
         </AnimatedSection>

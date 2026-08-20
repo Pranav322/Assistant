@@ -84,7 +84,7 @@ export default function Home() {
             <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
               Add a live chatbot to any website
             </Badge>
-            <h1 className="mx-auto max-w-3xl text-5xl font-bold tracking-tight text-balance sm:text-6xl md:text-7xl lg:leading-[1.05]">
+            <h1 className="font-display mx-auto max-w-3xl text-5xl font-bold tracking-tight text-balance sm:text-6xl md:text-7xl lg:leading-[1.05]">
               Any website,{" "}
               <span className="text-primary">a working chatbot</span> in minutes.
             </h1>
