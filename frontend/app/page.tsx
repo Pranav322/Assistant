@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Layers, Search, Zap, Shield, Sparkles } from "lucide-react";
 import { HeroDemoVideo } from "@/components/hero-demo-video";
+import { HeroDotsBackground } from "@/components/hero-dots-background";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
 import { PricingTiers } from "@/components/pricing-tiers";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -66,7 +67,10 @@ export default function Home() {
 
       <main className="flex-1">
         <section className="relative overflow-hidden border-b">
-          <div className="bg-primary/10 absolute top-0 left-1/2 -z-10 h-72 w-[36rem] -translate-x-1/2 rounded-full opacity-60 blur-3xl" />
+          <div className="absolute inset-0 -z-10">
+            <HeroDotsBackground />
+            <div className="from-background pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent to-transparent" />
+          </div>
 
           <div className="mx-auto w-full max-w-[1000px] px-4 pt-16 text-center sm:px-6 sm:pt-24 lg:px-8">
             <Badge variant="secondary" className="mb-6 rounded-full px-4 py-1.5 font-normal">
