@@ -67,7 +67,7 @@ export function HomeHeroAuthCTA() {
         <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
           <Link href="/rag-chatbot-from-documents">
             <Sparkles className="h-4 w-4" />
-            Build a RAG Chatbot
+            Learn How
           </Link>
         </Button>
       </>
@@ -82,7 +82,7 @@ export function HomeHeroAuthCTA() {
       <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
         <Link href="/rag-chatbot-from-documents">
           <Sparkles className="h-4 w-4" />
-          Build a RAG Chatbot
+          Learn How
         </Link>
       </Button>
     </>

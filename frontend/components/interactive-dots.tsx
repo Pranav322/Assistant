@@ -159,7 +159,7 @@ const InteractiveDots = ({
       dot.x = dot.originalX;
       dot.y = dot.originalY;
 
-      const baseDotSize = 2.75;
+      const baseDotSize = 5;
       const dotSize =
         baseDotSize + totalInfluence * 6 + Math.sin(timeRef.current + dot.phase) * 0.5;
       const opacity = Math.max(
