@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Layers, Search, Zap, Shield, Sparkles } from "lucide-react";
+import { Layers, Search, Zap, Shield } from "lucide-react";
 import { HeroDemoVideo } from "@/components/hero-demo-video";
 import { HeroDotsBackground } from "@/components/hero-dots-background";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
@@ -86,16 +86,6 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <HomeHeroAuthCTA />
-            </div>
-            <div className="mt-6">
-              <Link
-                href="/rag-chatbot-from-documents"
-                className="text-muted-foreground hover:text-primary inline-flex items-center gap-2 text-sm font-medium transition-colors"
-              >
-                <Sparkles className="text-primary h-4 w-4" />
-                <span>Build a RAG chatbot from your documents</span>
-                <span aria-hidden="true">&rarr;</span>
-              </Link>
             </div>
           </div>
 

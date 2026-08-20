@@ -212,13 +212,21 @@ const InteractiveDots = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = canvas?.parentElement;
+    if (!canvas || !container) return;
 
     resizeCanvas();
 
-    const handleResize = () => resizeCanvas();
+    // A plain `resize` listener only fires on viewport changes. This
+    // container is sized via absolute positioning against a `position:
+    // relative` section, not the viewport directly, so its size can settle
+    // a frame after mount (e.g. late-loading fonts nudging the hero's
+    // height) — ResizeObserver re-measures whenever that actually happens,
+    // instead of leaving the dot grid stuck with whatever size it read
+    // first.
+    const resizeObserver = new ResizeObserver(() => resizeCanvas());
+    resizeObserver.observe(container);
 
-    window.addEventListener("resize", handleResize);
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mouseup", handleMouseUp);
@@ -226,7 +234,7 @@ const InteractiveDots = ({
     animate();
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("mousedown", handleMouseDown);
       canvas.removeEventListener("mouseup", handleMouseUp);

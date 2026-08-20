@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isAuthenticated } from "@/lib/auth";
 
@@ -59,9 +60,17 @@ export function HomeHeroAuthCTA() {
 
   if (isAuth) {
     return (
-      <Button size="lg" className="h-12 w-full px-8 text-base shadow-sm sm:w-auto" asChild>
-        <Link href="/projects">Go to Dashboard</Link>
-      </Button>
+      <>
+        <Button size="lg" className="h-12 w-full px-8 text-base shadow-sm sm:w-auto" asChild>
+          <Link href="/projects">Go to Dashboard</Link>
+        </Button>
+        <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
+          <Link href="/rag-chatbot-from-documents">
+            <Sparkles className="h-4 w-4" />
+            Build a RAG Chatbot
+          </Link>
+        </Button>
+      </>
     );
   }
 
@@ -71,7 +80,10 @@ export function HomeHeroAuthCTA() {
         <Link href="/auth/register">Create Workspace</Link>
       </Button>
       <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
-        <Link href="/auth/login">View Demo</Link>
+        <Link href="/rag-chatbot-from-documents">
+          <Sparkles className="h-4 w-4" />
+          Build a RAG Chatbot
+        </Link>
       </Button>
     </>
   );
