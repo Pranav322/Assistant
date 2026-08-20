@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { HeroDemoVideo } from "@/components/hero-demo-video";
-import { HeroDotsBackground } from "@/components/hero-dots-background";
+import { ShaderBackground } from "@/components/ui/shader-background";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buildPageMetadata } from "@/lib/seo";
@@ -76,7 +76,7 @@ export default function Home() {
       <main className="flex-1">
         <section className="relative isolate overflow-hidden border-b">
           <div className="absolute inset-0 -z-10">
-            <HeroDotsBackground />
+            <ShaderBackground />
             <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t to-transparent" />
           </div>
 
