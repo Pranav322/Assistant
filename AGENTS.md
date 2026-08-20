@@ -147,8 +147,11 @@ gh secret list --env deploy-ssh
 ### Frontend (`frontend/`)
 | Layer | Tech |
 |---|---|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Hosting | Vercel |
+| Styling | Tailwind CSS v4 |
+| UI components | shadcn/ui + Radix |
+| Animations | framer-motion |
 | Widget embed | `frontend/public/embed.js` (vanilla JS, creates iframe) |
 | Widget UI | `frontend/app/widget/page.tsx` (iframe content, React) |
 | Package manager | pnpm |
