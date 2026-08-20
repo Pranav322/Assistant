@@ -27,6 +27,7 @@ const cspHeader = `
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://checkout.razorpay.com https://apis.google.com https://www.gstatic.com https://*.firebaseapp.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https:;
+    media-src 'self' https://pub-45254b84e2fa4807b488766ecf42a2b8.r2.dev;
     font-src 'self' data:;
     object-src 'none';
     base-uri 'self';
