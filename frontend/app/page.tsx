@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Layers, Search, Zap, Shield } from "lucide-react";
 import { HeroDemoVideo } from "@/components/hero-demo-video";
 import { HeroDotsBackground } from "@/components/hero-dots-background";
 import { HomeAuthNav, HomeHeroAuthCTA } from "@/components/marketing-auth";
-import { PricingTiers } from "@/components/pricing-tiers";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buildPageMetadata } from "@/lib/seo";
+import { TrustStrip } from "@/components/sections/trust-strip";
+import { FeaturesGrid } from "@/components/sections/features-grid";
+import { HowItWorks } from "@/components/sections/how-it-works";
+import { CodeIntegration } from "@/components/sections/code-integration";
+import { SecurityTrust } from "@/components/sections/security-trust";
+import { StatsStrip } from "@/components/sections/stats-strip";
+import { PricingSection } from "@/components/sections/pricing-section";
+import { FaqSection } from "@/components/sections/faq-section";
+import { FinalCta } from "@/components/sections/final-cta";
+import { SiteFooter } from "@/components/sections/site-footer";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Enterprise RAG Chatbots for Your Platform",
@@ -54,6 +61,12 @@ export default function Home() {
           </div>
           <nav className="flex items-center gap-2 sm:gap-4">
             <Link
+              href="#features"
+              className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:block"
+            >
+              Features
+            </Link>
+            <Link
               href="#pricing"
               className="text-muted-foreground hover:text-primary text-sm font-medium transition-colors"
             >
@@ -66,11 +79,9 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b">
+        <section className="relative isolate overflow-hidden border-b">
           <div className="absolute inset-0 -z-10">
             <HeroDotsBackground />
-            {/* Fade only the bottom edge, where the dots would otherwise
-                cut off abruptly against the video panel below. */}
             <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t to-transparent" />
           </div>
 
@@ -91,7 +102,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Product demo — large panel bleeding below the hero copy */}
           <div className="mx-auto mt-14 w-full max-w-[1400px] px-4 sm:px-6 lg:mt-20 lg:px-8">
             <div className="bg-background overflow-hidden rounded-t-2xl border border-b-0 shadow-2xl">
               <HeroDemoVideo />
@@ -99,122 +109,28 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-muted/20 border-t">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="grid gap-12 lg:grid-cols-[0.35fr_0.65fr]">
-              <div className="space-y-4">
-                <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">
-                  Integration
-                </p>
-                <h2 className="text-3xl font-semibold tracking-tight">
-                  Seamlessly integrate AI chat into your product
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  Drop our pre-built widget into your frontend or use the API for full control. We
-                  handle the complexity of RAG so you can focus on your users.
-                </p>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="bg-background rounded-xl border p-6 shadow-sm">
-                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
-                    <Layers className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold tracking-tight">Document Ingestion</h3>
-                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                    Upload PDFs, Markdown, or simply paste your website URL to instantly train the
-                    chatbot on your specific knowledge base.
-                  </p>
-                </div>
-                <div className="bg-background rounded-xl border p-6 shadow-sm">
-                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
-                    <Search className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold tracking-tight">Semantic Search</h3>
-                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                    High-performance vector retrieval tuned for accuracy, relevance, and context
-                    window limits.
-                  </p>
-                </div>
-                <div className="bg-background rounded-xl border p-6 shadow-sm">
-                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
-                    <Zap className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold tracking-tight">Embeddable Widget & SDK</h3>
-                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                    Use our pre-built widget or the{" "}
-                    <code className="bg-secondary text-secondary-foreground rounded border px-1 py-0.5 text-xs font-semibold">
-                      contextly
-                    </code>{" "}
-                    npm package for React apps. Full control, zero config.
-                  </p>
-                </div>
-                <div className="bg-background rounded-xl border p-6 shadow-sm">
-                  <div className="bg-primary/10 text-primary mb-4 w-fit rounded-lg p-3">
-                    <Shield className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold tracking-tight">Secure by Default</h3>
-                  <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                    Enterprise-grade auth with API keys, rate limiting, and tenant isolation built
-                    in.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <TrustStrip />
 
-        {/* Pricing Section */}
-        <section id="pricing" className="border-t">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="mb-12 text-center">
-              <p className="text-muted-foreground mb-4 text-xs tracking-[0.3em] uppercase">
-                Pricing
-              </p>
-              <h2 className="text-3xl font-semibold tracking-tight">
-                Start free, scale when ready
-              </h2>
-              <p className="text-muted-foreground mx-auto mt-4 max-w-lg">
-                Get started with a generous free tier. Upgrade to Pro when you need more projects
-                and higher limits.
-              </p>
-            </div>
+        <div id="features">
+          <FeaturesGrid />
+        </div>
 
-            <PricingTiers />
-          </div>
-        </section>
+        <HowItWorks />
 
-        <section className="border-t">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="bg-background flex flex-col gap-6 rounded-2xl border p-8 shadow-sm sm:p-10 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h3 className="text-2xl font-bold tracking-tight sm:text-3xl">Ready to build?</h3>
-                <p className="text-muted-foreground mt-4 max-w-[520px]">
-                  Join developers building the next generation of AI assistants with Contextly.
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <Button size="lg" className="w-full sm:w-auto" asChild>
-                  <Link href="/auth/register">Start for free</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+        <CodeIntegration />
+
+        <SecurityTrust />
+
+        <StatsStrip />
+
+        <PricingSection />
+
+        <FaqSection />
+
+        <FinalCta />
       </main>
 
-      <footer className="border-t py-12">
-        <div className="text-muted-foreground mx-auto flex w-full max-w-[1400px] flex-col items-center justify-between gap-6 px-4 text-sm sm:px-6 md:flex-row lg:px-8">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold">
-              O
-            </div>
-            <span className="text-foreground font-semibold">Contextly</span>
-          </div>
-          <div className="flex gap-6">
-            <p>&copy; {new Date().getFullYear()} Contextly Inc.</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

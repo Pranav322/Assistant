@@ -26,13 +26,14 @@ const InteractiveDots = ({
     Array<{ x: number; y: number; originalX: number; originalY: number; phase: number }>
   >([]);
   const dprRef = useRef<number>(1);
+  const lastSizeRef = useRef({ w: 0, h: 0 });
   const animateRef = useRef<() => void>(() => {});
 
   const getMouseInfluence = (x: number, y: number): number => {
     const dx = x - mouseRef.current.x;
     const dy = y - mouseRef.current.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const maxDistance = 150;
+    const maxDistance = 100;
     return Math.max(0, 1 - distance / maxDistance);
   };
 
@@ -46,7 +47,7 @@ const InteractiveDots = ({
         const dy = y - ripple.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const rippleRadius = (age / maxAge) * 300;
-        const rippleWidth = 60;
+        const rippleWidth = 40;
         if (Math.abs(distance - rippleRadius) < rippleWidth) {
           const rippleStrength = (1 - age / maxAge) * ripple.intensity;
           const proximityToRipple = 1 - Math.abs(distance - rippleRadius) / rippleWidth;
@@ -94,8 +95,20 @@ const InteractiveDots = ({
     const displayWidth = container.clientWidth;
     const displayHeight = container.clientHeight;
 
-    canvas.width = displayWidth * dpr;
-    canvas.height = displayHeight * dpr;
+    const pixelWidth = displayWidth * dpr;
+    const pixelHeight = displayHeight * dpr;
+
+    if (
+      pixelWidth === lastSizeRef.current.w &&
+      pixelHeight === lastSizeRef.current.h &&
+      dotsRef.current.length > 0
+    ) {
+      return;
+    }
+    lastSizeRef.current = { w: pixelWidth, h: pixelHeight };
+
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
     canvas.style.width = displayWidth + "px";
     canvas.style.height = displayHeight + "px";
 
@@ -125,7 +138,7 @@ const InteractiveDots = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    ripples.current.push({ x, y, time: Date.now(), intensity: 2 });
+    ripples.current.push({ x, y, time: Date.now(), intensity: 1.2 });
 
     const now = Date.now();
     ripples.current = ripples.current.filter((ripple) => now - ripple.time < 3000);
@@ -151,6 +164,10 @@ const InteractiveDots = ({
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+    const red = Number.parseInt(dotColor.slice(1, 3), 16);
+    const green = Number.parseInt(dotColor.slice(3, 5), 16);
+    const blue = Number.parseInt(dotColor.slice(5, 7), 16);
+
     dotsRef.current.forEach((dot) => {
       const mouseInfluence = getMouseInfluence(dot.originalX, dot.originalY);
       const rippleInfluence = getRippleInfluence(dot.originalX, dot.originalY, currentTime);
@@ -159,9 +176,9 @@ const InteractiveDots = ({
       dot.x = dot.originalX;
       dot.y = dot.originalY;
 
-      const baseDotSize = 5;
+      const baseDotSize = 1.2;
       const dotSize =
-        baseDotSize + totalInfluence * 6 + Math.sin(timeRef.current + dot.phase) * 0.5;
+        baseDotSize + totalInfluence * 2 + Math.sin(timeRef.current + dot.phase) * 0.3;
       const opacity = Math.max(
         0.3,
         0.6 + totalInfluence * 0.4 + Math.abs(Math.sin(timeRef.current * 0.5 + dot.phase)) * 0.1
@@ -170,9 +187,6 @@ const InteractiveDots = ({
       ctx.beginPath();
       ctx.arc(dot.x, dot.y, dotSize, 0, Math.PI * 2);
 
-      const red = Number.parseInt(dotColor.slice(1, 3), 16);
-      const green = Number.parseInt(dotColor.slice(3, 5), 16);
-      const blue = Number.parseInt(dotColor.slice(5, 7), 16);
       ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
       ctx.fill();
     });
