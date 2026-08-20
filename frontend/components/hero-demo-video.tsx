@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-const LIGHT_SRC = "/video/hero-demo.mp4";
-const DARK_SRC = "/video/hero-demo-dark.mp4";
+// Served from Cloudflare R2 (zero egress cost) instead of bundled as a
+// Vercel static asset — keeps large re-renderable video binaries out of
+// git history and off Vercel's bandwidth as this page scales.
+const ASSETS_BASE_URL =
+  process.env.NEXT_PUBLIC_ASSETS_BASE_URL || "https://pub-45254b84e2fa4807b488766ecf42a2b8.r2.dev";
+const LIGHT_SRC = `${ASSETS_BASE_URL}/marketing/hero-demo.mp4`;
+const DARK_SRC = `${ASSETS_BASE_URL}/marketing/hero-demo-dark.mp4`;
 
 export function HeroDemoVideo() {
   const [src, setSrc] = useState(LIGHT_SRC);
