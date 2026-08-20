@@ -5,6 +5,13 @@ import { GradientCard } from "@/components/gradient-card";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 
+const leadFeature = {
+  icon: Fingerprint,
+  title: "Tenant isolation",
+  description:
+    "Every database query includes project_id. Combined with Row-Level Security, your data stays strictly separated — no cross-tenant leakage, ever.",
+};
+
 const securityFeatures = [
   {
     icon: Lock,
@@ -17,12 +24,6 @@ const securityFeatures = [
     title: "JWT widget tokens",
     description:
       "Short-lived tokens validated for signature, expiry, issuer, audience, and origin on every request.",
-  },
-  {
-    icon: Fingerprint,
-    title: "Tenant isolation",
-    description:
-      "Every database query includes project_id. Combined with RLS, your data stays strictly separated.",
   },
   {
     icon: Eye,
@@ -49,26 +50,56 @@ export function SecurityTrust() {
           </p>
         </AnimatedSection>
 
-        <StaggerContainer
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-          staggerDelay={0.08}
-        >
-          {securityFeatures.map((feature) => (
-            <StaggerItem key={feature.title}>
-              <GradientCard className="h-full">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <feature.icon className="h-6 w-6" />
+        <div className="grid gap-4">
+          <AnimatedSection>
+            <div className="relative overflow-hidden rounded-2xl border bg-background p-8 shadow-sm sm:p-10">
+              <div className="grid gap-8 sm:grid-cols-[auto_1fr] sm:items-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <leadFeature.icon className="h-7 w-7" />
                 </div>
-                <h3 className="text-base font-semibold tracking-tight">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {feature.description}
-                </p>
-              </GradientCard>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
+                <div className="max-w-xl">
+                  <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                    {leadFeature.title}
+                  </h3>
+                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                    {leadFeature.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-2 border-t pt-6 font-mono text-xs text-muted-foreground">
+                <span className="rounded-md bg-muted px-2 py-1">
+                  WHERE project_id = $1
+                </span>
+                <span className="text-muted-foreground/50">+</span>
+                <span className="rounded-md bg-emerald-500/10 px-2 py-1 text-emerald-600 dark:text-emerald-400">
+                  ROW LEVEL SECURITY
+                </span>
+              </div>
+            </div>
+          </AnimatedSection>
+
+          <StaggerContainer
+            className="grid gap-4 sm:grid-cols-3"
+            staggerDelay={0.08}
+          >
+            {securityFeatures.map((feature) => (
+              <StaggerItem key={feature.title}>
+                <GradientCard className="h-full">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <feature.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-base font-semibold tracking-tight">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </GradientCard>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </div>
       </div>
     </section>
   );
