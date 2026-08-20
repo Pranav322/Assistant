@@ -7,7 +7,7 @@ import InteractiveDots from "@/components/interactive-dots";
 // --background/zinc-400 (dot). Read via .dark class + MutationObserver
 // rather than useTheme(), which lagged behind on first mount for
 // system-dark sessions (see hero-demo-video.tsx for the same bug).
-const LIGHT = { backgroundColor: "#ffffff", dotColor: "#71717a" };
+const LIGHT = { backgroundColor: "#ffffff", dotColor: "#52525b" };
 const DARK = { backgroundColor: "#09090b", dotColor: "#a1a1aa" };
 
 export function HeroDotsBackground() {

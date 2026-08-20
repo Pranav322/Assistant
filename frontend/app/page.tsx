@@ -69,7 +69,9 @@ export default function Home() {
         <section className="relative overflow-hidden border-b">
           <div className="absolute inset-0 -z-10">
             <HeroDotsBackground />
-            <div className="from-background pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent to-transparent" />
+            {/* Fade only the bottom edge, where the dots would otherwise
+                cut off abruptly against the video panel below. */}
+            <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t to-transparent" />
           </div>
 
           <div className="mx-auto w-full max-w-[1000px] px-4 pt-16 text-center sm:px-6 sm:pt-24 lg:px-8">
