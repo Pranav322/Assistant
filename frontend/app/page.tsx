@@ -38,11 +38,6 @@ export default function Home() {
     },
     description:
       "Build, embed, and monitor production RAG chatbots in minutes. Contextly handles ingestion, retrieval, auth, and observability.",
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "120",
-    },
   };
 
   return (

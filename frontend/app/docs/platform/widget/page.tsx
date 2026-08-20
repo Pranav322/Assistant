@@ -120,30 +120,13 @@ Copy and paste this complete example to test:
 
 ---
 
-## React SDK
+## React & Next.js projects
 
-For React & Next.js projects:
-
-### 1. Install
-
-\`\`\`bash
-npm install contextly
-\`\`\`
-
-### 2. Usage
-
-\`\`\`tsx
-import { Chat } from "contextly";
-
-function App() {
-  return (
-    <Chat 
-      projectId="YOUR_PROJECT_ID" 
-      token="YOUR_WIDGET_TOKEN"
-    />
-  );
-}
-\`\`\`
+There is no dedicated React SDK — the script-tag embed above is the
+canonical integration for React, Next.js, and every other framework. Load
+it once (for example in your root layout or a shared script component) and
+it works the same way it does on any other page. See the
+[Quickstart](/docs/getting-started/quickstart) for a full walkthrough.
 
 ---
 

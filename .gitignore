@@ -18,3 +18,5 @@ contextly-86e4d-firebase-adminsdk-fbsvc-ee1a051661.json
 # CodeWiki
 site/
 .codewiki_manifest.json
+.agents/
+skills-lock.json

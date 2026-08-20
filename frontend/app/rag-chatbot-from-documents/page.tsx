@@ -140,7 +140,7 @@ export default function RagChatbotFromDocuments() {
                 </div>
                 <h3 className="mb-2 text-xl font-semibold">3. Embed the Widget</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Copy our lightweight script tag or use our React package. Drop it into any site,
+                  Copy our lightweight script tag, drop it into any site,
                   test the responses, and let users chat with your data instantly.
                 </p>
               </div>

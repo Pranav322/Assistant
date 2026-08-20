@@ -16,8 +16,8 @@ const footerLinks = {
     { label: "Self-Hosting", href: "/docs/self-hosting" },
   ],
   Legal: [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
   ],
 };
 
