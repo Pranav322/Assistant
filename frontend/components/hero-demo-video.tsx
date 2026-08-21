@@ -38,6 +38,8 @@ export function HeroDemoVideo() {
       loop
       muted
       playsInline
+      preload="none"
+      {...{ loading: "lazy" }}
     />
   );
 }
