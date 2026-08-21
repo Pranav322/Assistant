@@ -217,20 +217,44 @@ export function ShaderBackground() {
 
     if (prefersReducedMotion) {
       draw(0);
-    } else {
-      const startTime = performance.now();
-      const animate = () => {
-        if (disposed) return;
-        draw((performance.now() - startTime) / 1000);
-        animationFrameId = requestAnimationFrame(animate);
+
+      return () => {
+        disposed = true;
+        resizeObserver.disconnect();
+        themeObserver.disconnect();
+        gl.deleteProgram(program);
+        gl.deleteBuffer(positionBuffer);
       };
-      animationFrameId = requestAnimationFrame(animate);
     }
+
+    const startTime = performance.now();
+    const animate = () => {
+      if (disposed) return;
+      draw((performance.now() - startTime) / 1000);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    // Pause the RAF loop (and its GPU draw calls) while the hero is scrolled
+    // out of view; startTime is never reset, so time stays continuous on resume.
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (disposed) return;
+        if (entry.isIntersecting) {
+          if (animationFrameId === null) animationFrameId = requestAnimationFrame(animate);
+        } else if (animationFrameId !== null) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      },
+      { threshold: 0 },
+    );
+    if (canvas.parentElement) intersectionObserver.observe(canvas.parentElement);
 
     return () => {
       disposed = true;
       if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       themeObserver.disconnect();
       gl.deleteProgram(program);
       gl.deleteBuffer(positionBuffer);
