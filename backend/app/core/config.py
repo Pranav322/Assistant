@@ -92,6 +92,7 @@ class Settings(BaseSettings):
     MAX_PDF_PAGES: int = 1000
     URL_FETCH_TIMEOUT_SECONDS: int = 30
     URL_FETCH_MAX_REDIRECTS: int = 5
+    URL_FETCH_MIN_INTERVAL_SECONDS: int = 1  # min gap between fetches to the same host
 
 
 settings = Settings()
