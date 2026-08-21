@@ -6,9 +6,9 @@ from typing import Optional
 
 import pdfplumber
 import pytesseract
-from pdf2image import convert_from_bytes
 import redis.asyncio as redis
 from markdownify import markdownify
+from pdf2image import convert_from_bytes
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
