@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import uuid
 from typing import Optional
 from urllib.parse import urlparse
@@ -104,6 +105,50 @@ async def process_ingestion_async(
                     await redis_client.close()
             return
 
+        content_hash: Optional[str] = None
+        if source_url:
+            # Content-based dedupe (C1): identical content from a different URL
+            # is a duplicate, even if the URL string differs (e.g. tracking params).
+            content_hash = hashlib.sha256(content).hexdigest()
+            dup_result = await db.execute(
+                select(Source).where(
+                    Source.project_id == project_uuid,
+                    Source.content_hash == content_hash,
+                    Source.status.in_(["completed", "processing"]),
+                    Source.id != source_uuid,
+                )
+            )
+            existing = dup_result.scalar_one_or_none()
+            if existing is not None:
+                result = await db.execute(
+                    select(Source).where(
+                        Source.id == source_uuid, Source.project_id == project_uuid
+                    )
+                )
+                dup_source = result.scalar_one_or_none()
+                if dup_source:
+                    dup_source.status = "completed"
+                    dup_source.metadata_ = {
+                        **(dup_source.metadata_ or {}),
+                        "source_url": source_url,
+                        "resolved_url": resolved_url,
+                        "duplicate_of": str(existing.id),
+                    }
+                    dup_source.progress = {"stage": "completed", "percent": 100}
+                    await db.commit()
+                    logger.info(
+                        "ingestion_task_duplicate_collapsed",
+                        source_id=source_id,
+                        duplicate_of=str(existing.id),
+                    )
+                close_method = getattr(redis_client, "aclose", None)
+                if close_method:
+                    await close_method()
+                else:
+                    await redis_client.close()
+                await engine.dispose()
+                return
+
         try:
             ingest_filename = filename
             ingest_type = file_type
@@ -130,6 +175,8 @@ async def process_ingestion_async(
                     source_record = result.scalar_one_or_none()
                     if source_record:
                         source_record.storage_location = uploaded
+                        if content_hash:
+                            source_record.content_hash = content_hash
                         source_record.metadata_ = {
                             **(source_record.metadata_ or {}),
                             "source_url": source_url,
