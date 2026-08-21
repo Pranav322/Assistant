@@ -9,6 +9,12 @@ from urllib.parse import urljoin, urlparse
 import aiohttp
 
 from app.core.config import settings
+from app.services.robots import (
+    _mark_fetched,
+    _should_throttle,
+    fetch_robots_with_cache,
+    is_allowed,
+)
 
 BLOCKED_HOSTNAMES = {
     "metadata.google.internal",
@@ -78,6 +84,16 @@ async def fetch_url_content(url: str) -> tuple[bytes, Optional[str], str]:
     async with aiohttp.ClientSession(timeout=timeout) as session:
         current_url = validated_url
         try:
+            hostname = urlparse(validated_url).hostname or ""
+            if _should_throttle(hostname):
+                raise ValueError("Rate limited: fetching this host too frequently")
+            parser = await fetch_robots_with_cache(session, hostname)
+            if parser is not None and not is_allowed(
+                parser, urlparse(validated_url).path
+            ):
+                raise ValueError("Blocked by site robots.txt")
+            _mark_fetched(hostname)
+
             for _ in range(settings.URL_FETCH_MAX_REDIRECTS + 1):
                 async with session.get(current_url, allow_redirects=False) as response:
                     if response.status in (301, 302, 303, 307, 308):
