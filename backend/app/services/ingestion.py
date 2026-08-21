@@ -6,9 +6,9 @@ from typing import Optional
 
 import pdfplumber
 import pytesseract
-from pdf2image import convert_from_bytes
 import redis.asyncio as redis
 from markdownify import markdownify
+from pdf2image import convert_from_bytes
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,7 @@ from app.core.chunking import DocumentChunker
 from app.models import Chunk, Embedding, Source
 from app.schemas.chunk import ProcessedChunk
 from app.services.embedding import EmbeddingService
+from app.services.extraction import extract_html_main_content
 from app.services.ingestion_events import publish_ingestion_event
 from app.services.ingestion_validation import validate_file_content
 
@@ -142,10 +143,15 @@ class IngestionService:
                     loop = asyncio.get_running_loop()
                     html_content = file_content.decode("utf-8", errors="ignore")
                     text_content = await loop.run_in_executor(
-                        None,
-                        lambda h: markdownify(h, heading_style="ATX"),
-                        html_content,
+                        None, extract_html_main_content, html_content
                     )
+                    if not text_content.strip():
+                        # trafilatura found nothing usable; fall back to whole-doc markdown
+                        text_content = await loop.run_in_executor(
+                            None,
+                            lambda h: markdownify(h, heading_style="ATX"),
+                            html_content,
+                        )
                 else:
                     text_content = file_content.decode("utf-8", errors="ignore")
 

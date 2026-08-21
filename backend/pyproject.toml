@@ -46,6 +46,7 @@ dependencies = [
     "greenlet>=3.3.1",
     "pytesseract>=0.3.10",
     "pdf2image>=1.17.0",
+    "trafilatura>=2.2.0",
 ]
 
 [build-system]
