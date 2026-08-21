@@ -11,33 +11,40 @@ User's Browser
     │       frontend/public/embed.js      ← loaded by customer sites
     │       frontend/app/widget/page.tsx  ← widget iframe content
     │
-    └─► api.pranavbuilds.tech  (Caddy → Docker → FastAPI)
+    └─► api.contextly.live  (Caddy → Docker → FastAPI)
             │
-            ├─ chatbot-api     (FastAPI, port 8001 inside container → 8001 on host)
+            ├─ chatbot-api     (FastAPI, port 8001 on host → 8000 in container)
             ├─ chatbot-worker  (Dramatiq async task worker)
             ├─ chatbot-redis   (Redis 7, broker + cache, port 6379 localhost-only)
-            └─ Neon PostgreSQL (external, pgvector enabled, not in Docker)
+            └─ Neon PostgreSQL (external, ap-southeast-1 / Singapore, pgvector enabled, not in Docker)
 ```
 
 ---
 
 ## VPS
 
+**Migrated from DigitalOcean to Azure (2026-08-14).** The DigitalOcean droplet (`pranawww`) was destroyed. A first Azure VM (`deepdoc-fix-vm`, `eastus`/Virginia) was also provisioned and is now **deallocated** (stopped, not deleted) after being replaced — it put the backend ~250-300ms further from the Neon DB (Singapore) than the old droplet ever was, causing slow logins/`/projects` loads. Current VM below fixes that.
+
 | Field | Value |
 |---|---|
-| Provider | DigitalOcean |
-| Droplet name | `pranawww` |
-| IP | `143.110.247.23` |
-| OS | Ubuntu 24.04.3 LTS |
-| RAM | 2 GB + 2 GB swap (`/swapfile`) |
-| Disk | 48 GB (19 GB used) |
-| SSH key | `~/.ssh/contextly_deploy` (passphrase-free deploy key) |
-| Project path | `/root/Assistant` |
+| Provider | Azure |
+| VM name | `latency-test-vm-in` |
+| Resource group | `latency-test-vm-in_group` |
+| Region | Central India (Pune) — chosen for proximity to Neon DB (`ap-southeast-1`) and to users |
+| IP | `20.192.11.41` |
+| Size | `Standard_D2s_v5` (2 vCPU, 8 GB RAM) |
+| OS | Ubuntu 24.04 LTS |
+| SSH key | `~/Downloads/deepdoc-fix-vm_key.pem` (user `azureuser`, no passphrase) |
+| Project path | `/opt/Assistant` |
 
 **SSH in:**
 ```bash
-ssh -i ~/.ssh/contextly_deploy root@143.110.247.23
+ssh -i ~/Downloads/deepdoc-fix-vm_key.pem azureuser@20.192.11.41
 ```
+
+**Deallocated standby VM** (`deepdoc-fix-vm`, `eastus`, `DEEPDOC-FIX-VM_GROUP`, IP `20.127.165.189`): kept as a fallback, not deleted yet. Safe to delete once the Central India VM has run stable for a while.
+
+**Azure OpenAI**: also recreated fresh (the prior deployment was destroyed alongside DigitalOcean). Chat model is `gpt-5-mini` (reasoning model — requires `max_completion_tokens` not `max_tokens`, and only supports default `temperature=1`; see `app/services/retrieval.py`). Embedding model is `text-embedding-3-small` (1536 dims, matches `schema.sql`/`retrieval.md`).
 
 ---
 
@@ -45,15 +52,13 @@ ssh -i ~/.ssh/contextly_deploy root@143.110.247.23
 
 Config: `/etc/caddy/Caddyfile`
 ```
-api.pranavbuilds.tech {
+api.contextly.live {
     reverse_proxy 127.0.0.1:8001
-}
-
-watch.contextly.live {
-    reverse_proxy 127.0.0.1:3000
 }
 ```
 Caddy handles TLS automatically (Let's Encrypt). Systemd service: `caddy`.
+
+⚠️ `watch.contextly.live` DNS points here too but has **no Caddy block yet** — Grafana/Prometheus (`backend/docker-compose.observability.yml`, Grafana on host port `3001`, default `admin`/`admin`) were never brought up on this VM. Deferred; add a `watch.contextly.live { reverse_proxy 127.0.0.1:3001 }` block and `docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d` when observability is prioritized. Change the Grafana password before exposing it publicly.
 
 **Diagnose:**
 ```bash
@@ -65,7 +70,7 @@ journalctl -u caddy -n 50
 
 ## Docker Compose (Backend)
 
-File: `/root/Assistant/backend/docker-compose.yml`
+File: `/opt/Assistant/backend/docker-compose.yml`
 
 | Container | Image | Role | Port |
 |---|---|---|---|
@@ -78,17 +83,17 @@ Worker runs: `dramatiq app.worker app.worker.tasks --processes 1 --threads 4`
 
 **Common commands:**
 ```bash
-cd /root/Assistant/backend
+cd /opt/Assistant/backend
 
-docker compose ps                    # container status
-docker compose logs chatbot-api -f   # live API logs
-docker compose logs chatbot-worker -f # live worker logs
-docker stats --no-stream             # memory per container
-docker compose down && docker compose up -d --build  # full redeploy
-docker compose restart api           # restart just API
+sudo docker compose ps                    # container status
+sudo docker compose logs chatbot-api -f   # live API logs
+sudo docker compose logs chatbot-worker -f # live worker logs
+sudo docker stats --no-stream             # memory per container
+sudo docker compose up -d --build         # rebuild + redeploy (no down needed)
+sudo docker compose restart api           # restart just API
 ```
 
-**Env file:** `/root/Assistant/backend/.env` (gitignored, must be managed manually on VPS)
+**Env file:** `/opt/Assistant/backend/.env` (gitignored, must be managed manually on VPS)
 
 ---
 
@@ -103,15 +108,19 @@ git push origin main
             environment: deploy-ssh
             │
             └─► appleboy/ssh-action@v1.0.3
-                    secrets: VPS_HOST, VPS_USERNAME (root), VPS_SSH_KEY, VPS_PROJECT_PATH
-                    script:
+                    secrets: VPS_HOST, VPS_USERNAME (azureuser), VPS_SSH_KEY, VPS_PROJECT_PATH
+                    script (hardened 2026-08-14 — set -euo pipefail, fetch+reset instead of pull,
+                            real post-deploy health check against /health, fails loudly + prints
+                            container logs instead of silently reporting success on a bad deploy):
+                        set -euo pipefail
                         cd $VPS_PROJECT_PATH/backend
-                        git pull origin main
-                        docker compose down
+                        git fetch origin main
+                        git reset --hard origin/main
                         docker compose up -d --build
+                        # polls http://127.0.0.1:8001/health for ~30s, exits 1 with logs if unhealthy
 ```
 
-**Frontend deploy:** Vercel auto-deploys on push to `main` — no config needed.
+**Frontend deploy:** Vercel auto-deploys on push to `main` — no config needed (any push to `main` triggers it, not path-filtered like the backend one).
 
 **Check deploy status:**
 ```bash
@@ -122,7 +131,7 @@ gh run view <run-id> --log-failed
 **GitHub secrets to verify if deploy breaks:**
 ```bash
 gh secret list --env deploy-ssh
-# Required: VPS_HOST=143.110.247.23, VPS_USERNAME=root, VPS_SSH_KEY, VPS_PROJECT_PATH=/root/Assistant
+# Required: VPS_HOST=20.192.11.41, VPS_USERNAME=azureuser, VPS_SSH_KEY, VPS_PROJECT_PATH=/opt/Assistant
 ```
 
 ---
@@ -135,11 +144,11 @@ gh secret list --env deploy-ssh
 | Language | Python 3.11 |
 | Framework | FastAPI + Uvicorn |
 | ORM | SQLAlchemy 2 async (asyncpg driver) |
-| DB | Neon PostgreSQL + pgvector |
+| DB | Neon PostgreSQL + pgvector (`ap-southeast-1`, external, not on Azure) |
 | Cache/Broker | Redis 7 |
 | Task queue | Dramatiq |
-| LLM | Azure OpenAI (`gpt-4` via `AZURE_DEPLOYMENT_NAME`) |
-| Embeddings | Azure OpenAI (`text-embedding-3-small`) |
+| LLM | Azure OpenAI (`gpt-5-mini` via `AZURE_DEPLOYMENT_NAME`) |
+| Embeddings | Azure OpenAI (`text-embedding-3-small`, 1536 dims) |
 | Auth | Firebase Admin SDK (user auth) + bcrypt API keys + JWT widget tokens |
 | Package manager | `uv` (pyproject.toml / uv.lock) |
 | Linter/Formatter | Black + isort |
@@ -170,15 +179,23 @@ JWT_SECRET=...
 ENVIRONMENT=production
 AZURE_OPENAI_API_KEY=...
 AZURE_OPENAI_ENDPOINT=https://....openai.azure.com/
-AZURE_OPENAI_API_VERSION=2023-05-15
-AZURE_DEPLOYMENT_NAME=...                     # e.g. gpt-4
-AZURE_EMBEDDING_DEPLOYMENT_NAME=...
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+AZURE_DEPLOYMENT_NAME=gpt-5-mini
+AZURE_EMBEDDING_DEPLOYMENT_NAME=text-embedding-3-small
+AZURE_EMBEDDING_API_KEY=...
+AZURE_EMBEDDING_ENDPOINT=https://....services.ai.azure.com
+AZURE_EMBEDDING_API_VERSION=2024-12-01-preview
 BACKEND_CORS_ORIGINS=["https://contextly.live","https://www.contextly.live","http://localhost:3000"]
 WIDGET_PUBLIC_ORIGIN=https://contextly.live
-FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
 ```
 
 ⚠️ **Do NOT wrap values in single quotes** — Docker passes them literally, breaking Pydantic JSON parsing.
+
+⚠️ **Firebase credentials filename**: `FIREBASE_CREDENTIALS_PATH` is *not actually set* in the real `.env`. `app/core/config.py`'s default is the literal filename `contextly-86e4d-firebase-adminsdk-fbsvc-ee1a051661.json`, expected at `/app/<that name>` inside the container (`Dockerfile.api` does `COPY . .` from `backend/`, so the JSON file must exist under `backend/` with that exact name at build time). Renaming it (e.g. to `firebase-credentials.json`) without also setting `FIREBASE_CREDENTIALS_PATH` breaks Firebase Admin SDK init silently (auth still returns 200, but every request logs "Firebase initialization skipped or failed").
+
+⚠️ **DB engine settings** (`app/api/deps.py`): `pool_pre_ping` and `echo` are `False` (as of 2026-08-14) — `pool_pre_ping=True` forces an extra network round trip before every query, which is expensive given the DB isn't co-located with the VM (see VPS section). Don't re-enable without a reason; workers already ran fine without it (`app/worker/db.py`).
+
+⚠️ **JWT_SECRET**: rotated 2026-08-14 off the old dev placeholder value. If you need to rotate again, all existing sessions/widget tokens invalidate immediately — widget tokens auto-refresh so they self-heal fast, user sessions require re-login.
 
 ---
 
@@ -186,9 +203,9 @@ FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
 
 ### API down / 502
 ```bash
-ssh -i ~/.ssh/contextly_deploy root@143.110.247.23
-docker compose -f /root/Assistant/backend/docker-compose.yml ps
-docker logs chatbot-api --tail 50
+ssh -i ~/Downloads/deepdoc-fix-vm_key.pem azureuser@20.192.11.41
+sudo docker compose -f /opt/Assistant/backend/docker-compose.yml ps
+sudo docker logs chatbot-api --tail 50
 # Common causes:
 # 1. .env has bad formatting (single-quoted JSON values → Pydantic parse error)
 # 2. DB connection failed (check DATABASE_URL, Neon dashboard)
@@ -197,7 +214,7 @@ docker logs chatbot-api --tail 50
 
 ### Worker not processing ingestion jobs
 ```bash
-docker logs chatbot-worker --tail 80
+sudo docker logs chatbot-worker --tail 80
 # Common errors:
 # "another operation is in progress" → asyncpg engine shared across threads
 #   Fix: ensure tasks.py uses create_worker_engine() per call, NOT WorkerAsyncSessionLocal singleton
@@ -205,15 +222,17 @@ docker logs chatbot-worker --tail 80
 #   Fix: capture source.id before try block
 # "Retries exceeded" → check dead letter table in DB
 # Worker OOM-killed (exit code -9) → check: dmesg | grep -i oom
-#   Fix: docker compose -f ... restart worker (swap is enabled, should recover)
+#   Fix: sudo docker compose -f ... restart worker
 ```
 
 ### OOM / memory issues
 ```bash
-free -h                     # check swap usage
-docker stats --no-stream    # per-container memory
+free -h                     # check memory usage
+sudo docker stats --no-stream    # per-container memory
 dmesg | grep -i "oom\|killed process" | tail -10
-# Swap: /swapfile (2GB) — persistent across reboots (in /etc/fstab)
+# No swapfile configured on this VM (Standard_D2s_v5, 8GB RAM) — the old
+# DigitalOcean droplet needed a 2GB swapfile because it only had 2GB RAM.
+# Add one if memory pressure shows up here.
 # If worker baseline > 400MB something is leaking
 ```
 
@@ -242,7 +261,7 @@ gh run list --limit 5
 
 **What happens:**
 1. `embed.js` reads `data-api-key` + `data-project-id`
-2. Calls `POST https://api.pranavbuilds.tech/api/v1/tokens/widget` with `X-API-Key` header
+2. Calls `POST https://api.contextly.live/api/v1/tokens/widget` with `X-API-Key` header
 3. Backend validates key, checks `window.location.origin` against `project.allowed_origins`
 4. Returns short-lived JWT (24h)
 5. `embed.js` creates `<iframe src="https://contextly.live/widget?token=...">` 
