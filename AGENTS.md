@@ -33,6 +33,7 @@ User's Browser
 | Region | Central India (Pune) — chosen for proximity to Neon DB (`ap-southeast-1`) and to users |
 | IP | `20.192.11.41` |
 | Size | `Standard_D2s_v5` (2 vCPU, 8 GB RAM) |
+| Disk | 29 GB (~8 GB used) |
 | OS | Ubuntu 24.04 LTS |
 | SSH key | `~/Downloads/deepdoc-fix-vm_key.pem` (user `azureuser`, no passphrase) |
 | Project path | `/opt/Assistant` |
