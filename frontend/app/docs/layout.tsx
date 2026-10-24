@@ -1,3 +1,4 @@
+import { authHref, authLabel } from "@/lib/waitlist";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -65,10 +66,10 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           </Link>
           <nav className="ml-auto flex items-center gap-8 text-sm font-medium">
             <Link
-              href="/projects"
+              href={authHref("/projects")}
               className="text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
-              Dashboard
+              {authLabel("Dashboard", "Join the waitlist")}
             </Link>
             <Link href="/docs" className="text-zinc-900 dark:text-zinc-100">
               Docs

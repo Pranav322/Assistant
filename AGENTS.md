@@ -2,6 +2,17 @@
 
 ---
 
+## Waitlist mode (while the backend is offline)
+
+Since 2026-10-25 the Azure backend is down, so the site runs in **waitlist mode** instead of
+showing login screens that cannot work:
+
+- `frontend/lib/waitlist.ts`: `WAITLIST_MODE` (on unless `NEXT_PUBLIC_WAITLIST_MODE=off`), plus `authHref()`/`authLabel()` used by every sign-in / sign-up / dashboard link.
+- `frontend/next.config.ts`: 307-redirects `/auth/*`, `/projects*`, `/billing*`, `/chat/*` to `/waitlist` while the mode is on.
+- `frontend/app/waitlist/page.tsx` + `components/waitlist-form.tsx`: the page. `lib/auth.ts` `isAuthenticated()` returns false in this mode so a stale token never shows "Go to Dashboard".
+- `frontend/app/api/waitlist/route.ts` proxies to the Cloudflare Worker in `waitlist-worker/` (Worker + D1, free tier). See `waitlist-worker/README.md` for reading the list.
+- **To go live again:** set `NEXT_PUBLIC_WAITLIST_MODE=off` in Vercel and redeploy (or flip the default in both `lib/waitlist.ts` and `next.config.ts`). `/widget` is untouched, so embeds on customer sites still need the API.
+
 ## Infrastructure Overview
 
 ```

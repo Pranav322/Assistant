@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { isAuthenticated } from "@/lib/auth";
 import { apiRequest } from "@/lib/api";
+import { authHref, authLabel } from "@/lib/waitlist";
 
 export function PricingTiers() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
@@ -53,7 +54,7 @@ export function PricingTiers() {
         </ul>
         <div className="mt-8">
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/auth/register">Get Started</Link>
+            <Link href={authHref("/auth/register")}>{authLabel("Get Started")}</Link>
           </Button>
         </div>
       </div>
@@ -93,8 +94,12 @@ export function PricingTiers() {
         </ul>
         <div className="mt-8">
           <Button className="w-full" variant={isPro ? "outline" : "default"} asChild>
-            <Link href={isAuth ? "/billing" : "/auth/register"}>
-              {isPro ? "Manage Subscription" : isAuth ? "Upgrade Now" : "Start Free, Upgrade Later"}
+            <Link href={isAuth ? "/billing" : authHref("/auth/register")}>
+              {isPro
+                ? "Manage Subscription"
+                : isAuth
+                  ? "Upgrade Now"
+                  : authLabel("Start Free, Upgrade Later")}
             </Link>
           </Button>
         </div>

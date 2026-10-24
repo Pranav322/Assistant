@@ -1,3 +1,4 @@
+import { authHref, authLabel } from "@/lib/waitlist";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -140,8 +141,8 @@ export default function RagChatbotFromDocuments() {
                 </div>
                 <h3 className="mb-2 text-xl font-semibold">3. Embed the Widget</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Copy our lightweight script tag, drop it into any site,
-                  test the responses, and let users chat with your data instantly.
+                  Copy our lightweight script tag, drop it into any site, test the responses, and
+                  let users chat with your data instantly.
                 </p>
               </div>
             </div>
@@ -279,7 +280,7 @@ export default function RagChatbotFromDocuments() {
                 className="text-primary h-12 px-8 text-base font-semibold"
                 asChild
               >
-                <Link href="/auth/register">Create Free Account</Link>
+                <Link href={authHref("/auth/register")}>{authLabel("Create Free Account")}</Link>
               </Button>
               <Button
                 size="lg"
