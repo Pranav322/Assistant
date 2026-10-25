@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isAuthenticated } from "@/lib/auth";
+import { WAITLIST_MODE, authHref, authLabel } from "@/lib/waitlist";
 
 export function HomeAuthNav() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
@@ -28,14 +29,16 @@ export function HomeAuthNav() {
 
   return (
     <>
-      <Link
-        href="/auth/login"
-        className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-block"
-      >
-        Sign in
-      </Link>
+      {!WAITLIST_MODE && (
+        <Link
+          href="/auth/login"
+          className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-block"
+        >
+          Sign in
+        </Link>
+      )}
       <Button asChild size="sm">
-        <Link href="/auth/register">Get Started</Link>
+        <Link href={authHref("/auth/register")}>{authLabel("Get Started")}</Link>
       </Button>
     </>
   );
@@ -64,7 +67,12 @@ export function HomeHeroAuthCTA() {
         <Button size="lg" className="h-12 w-full px-8 text-base shadow-sm sm:w-auto" asChild>
           <Link href="/projects">Go to Dashboard</Link>
         </Button>
-        <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
+        <Button
+          size="lg"
+          variant="outline"
+          className="h-12 w-full px-8 text-base sm:w-auto"
+          asChild
+        >
           <Link href="/rag-chatbot-from-documents">
             <Sparkles className="h-4 w-4" />
             Learn How
@@ -77,7 +85,7 @@ export function HomeHeroAuthCTA() {
   return (
     <>
       <Button size="lg" className="h-12 w-full px-8 text-base shadow-sm sm:w-auto" asChild>
-        <Link href="/auth/register">Create Workspace</Link>
+        <Link href={authHref("/auth/register")}>{authLabel("Create Workspace")}</Link>
       </Button>
       <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
         <Link href="/rag-chatbot-from-documents">
@@ -109,12 +117,16 @@ export function RagHeroAuthCTA() {
   return (
     <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
       <Button size="lg" className="h-12 w-full px-8 text-base shadow-sm sm:w-auto" asChild>
-        <Link href={isAuth ? "/projects" : "/auth/register"}>
-          {isAuth ? "Go to Dashboard" : "Start Building for Free"}
+        <Link href={isAuth ? "/projects" : authHref("/auth/register")}>
+          {isAuth ? "Go to Dashboard" : authLabel("Start Building for Free")}
         </Link>
       </Button>
       <Button size="lg" variant="outline" className="h-12 w-full px-8 text-base sm:w-auto" asChild>
-        <Link href="/auth/login">Watch Demo</Link>
+        {WAITLIST_MODE ? (
+          <Link href="/#features">See how it works</Link>
+        ) : (
+          <Link href="/auth/login">Watch Demo</Link>
+        )}
       </Button>
     </div>
   );

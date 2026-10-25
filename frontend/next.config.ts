@@ -10,6 +10,18 @@ function getApiOrigin(): string {
   }
 }
 
+// While the backend is offline, routes that need it show the waitlist instead.
+// Keep in sync with lib/waitlist.ts (same env var, same default).
+const waitlistMode = process.env.NEXT_PUBLIC_WAITLIST_MODE !== "off";
+const waitlistRedirects = [
+  "/auth/:path*",
+  "/projects",
+  "/projects/:path*",
+  "/billing",
+  "/billing/:path*",
+  "/chat/:path*",
+].map((source) => ({ source, destination: "/waitlist", permanent: false }));
+
 const apiOrigin = getApiOrigin();
 const connectSrc = ["'self'", apiOrigin];
 
@@ -46,6 +58,7 @@ const nextConfig: NextConfig = {
         destination: "https://contextly.live/:path*",
         permanent: true,
       },
+      ...(waitlistMode ? waitlistRedirects : []),
     ];
   },
 

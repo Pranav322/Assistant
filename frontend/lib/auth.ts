@@ -1,3 +1,5 @@
+import { WAITLIST_MODE } from "@/lib/waitlist";
+
 const TOKEN_KEY = "rag_user_token";
 const USER_EMAIL_KEY = "rag_user_email";
 
@@ -30,6 +32,8 @@ export function clearToken(): void {
 }
 
 export function isAuthenticated(): boolean {
+  // Waitlist mode: the API is offline, so a leftover token means nothing.
+  if (WAITLIST_MODE) return false;
   return !!getToken();
 }
 

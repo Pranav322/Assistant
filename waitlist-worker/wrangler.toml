@@ -1,0 +1,10 @@
+name = "contextly-waitlist"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+# Free-tier only: one Worker plus one D1 database. ADMIN_KEY is a secret:
+#   wrangler secret put ADMIN_KEY
+[[d1_databases]]
+binding = "DB"
+database_name = "contextly-waitlist"
+database_id = "f225643a-089e-4181-a1ff-53d96c703748"
